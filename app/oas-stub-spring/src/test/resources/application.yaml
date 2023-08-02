@@ -1,0 +1,3 @@
+storage:
+  persistent: in-memory
+  session: in-memory
