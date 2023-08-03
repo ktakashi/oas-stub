@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
+import org.springframework.http.HttpStatus
 
 @WebServlet(urlPatterns = [ "$OAS_API_PREFIX/*" ], asyncSupported = true)
 class OasDispatchServlet(private val apiService: ApiService): HttpServlet() {
@@ -27,10 +28,16 @@ class OasDispatchServlet(private val apiService: ApiService): HttpServlet() {
                     } else if (apiContext.isPresent) {
                         processApi(asyncContext, req, apiContext.get())
                     } else {
-                        res.status = 404
+                        res.status = HttpStatus.NOT_FOUND.value()
                         CompletableFuture.completedFuture(asyncContext)
                     }
-                }
+                }.exceptionally { e ->
+                    if (!listener.isCompleted) {
+                        res.status = HttpStatus.INTERNAL_SERVER_ERROR.value()
+                        res.outputStream.write(e.message?.toByteArray() ?: byteArrayOf())
+                    }
+                    asyncContext
+                }.thenAccept(AsyncContext::complete)
     }
 
     private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletableFuture<AsyncContext> {
@@ -52,9 +59,8 @@ private class OasDispatchServletAsyncListener: AsyncListener {
 
     override fun onTimeout(event: AsyncEvent) {
         completed.set(true)
-//        val request = event.suppliedRequest as HttpServletRequest
         val response = event.suppliedResponse as HttpServletResponse
-        response.status = 408
+        response.status = HttpStatus.REQUEST_TIMEOUT.value()
         event.asyncContext.complete()
     }
 

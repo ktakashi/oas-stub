@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.engine.apis
 
-import com.github.fge.uritemplate.URITemplate
 import com.github.fge.uritemplate.expression.TemplateExpression
 import com.github.fge.uritemplate.parse.URITemplateParser
 import jakarta.inject.Inject

@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Validation test 3.0.x
+  version: 0.0.1
+paths:
+  /object:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Object"
+      responses:
+        '200':
+          description: object response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Object"
+components:
+  schemas:
+    Object:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        values:
+          $ref: "#/components/schemas/Array"
+    Array:
+      type: array
+      maximum: 2
+      minimum: 1
+      items:
+        anyOf:
+          - type: string
+            enum:
+              - OK
+              - Nok
+          - type: boolean
+          - type: integer
+            maximum: 100
+            minimum: 1
+          - type: number
+            maximum: 200
+            minimum: 101
