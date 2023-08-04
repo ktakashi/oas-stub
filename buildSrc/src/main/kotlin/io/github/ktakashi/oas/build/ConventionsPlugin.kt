@@ -4,15 +4,14 @@ import java.net.URI
 import java.util.TreeMap
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaLibraryPlugin
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -27,8 +26,11 @@ class ConventionsPlugin: Plugin<Project> {
 }
 
 internal fun configureJavaConventions(project: Project) {
-    project.plugins.withType(JavaBasePlugin::class.java) { _ ->
+    project.plugins.withType(JavaLibraryPlugin::class.java) { _ ->
         configureJavaManifestConventions(project)
+        project.tasks.named("test", Test::class.java) {
+            it.useJUnitPlatform()
+        }
     }
 }
 

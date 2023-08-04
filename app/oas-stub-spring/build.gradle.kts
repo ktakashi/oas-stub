@@ -1,5 +1,10 @@
 plugins {
     alias(libs.plugins.kotlin.spring)
+    `java-library`
+    `maven-publish`
+    id(libs.plugins.kotlin.jvm.get().pluginId)
+    id(libs.plugins.dokka.get().pluginId)
+    id("io.github.ktakashi.oas.conventions")
 }
 
 description = "OAS stub Spring Boot application"
@@ -12,14 +17,15 @@ dependencyManagement {
 }
 
 dependencies {
+    implementation(project(":lib:oas-stub-plugin"))
     implementation(project(":lib:oas-stub-engine"))
+    implementation(project(":lib:storages:inmemory:oas-stub-inmemory-storage-starter"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("jakarta.servlet:jakarta.servlet-api")
 
-    testImplementation(project(":lib:storages:inmemory:oas-stub-inmemory-storage-starter"))
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

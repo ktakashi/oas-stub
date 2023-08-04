@@ -1,7 +1,7 @@
 package io.github.ktakashi.oas.engine.apis.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.ktakashi.oas.engine.apis.ApiDataValidator
+import io.github.ktakashi.oas.engine.apis.AbstractApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiValidationResult
 import io.github.ktakashi.oas.engine.apis.success
 import io.github.ktakashi.oas.engine.validators.Validator
@@ -14,7 +14,7 @@ import jakarta.inject.Singleton
 @Named @Singleton
 class JsonOpenApi31DataValidator
 @Inject constructor(private val objectMapper: ObjectMapper,
-                    private val validators: Set<Validator<Any>>) : ApiDataValidator(SpecVersion.V30), JsonMediaSupport {
+                    private val validators: Set<Validator<Any>>) : AbstractApiDataValidator(SpecVersion.V30), JsonMediaSupport {
     // TODO implement it,
     // NOTE since OAS 3.1.x, it only returns JsonSchema, so we need to implement JSON Schema :(
     //      we might be able to use one of the implementation listed here

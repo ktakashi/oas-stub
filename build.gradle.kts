@@ -1,10 +1,5 @@
 plugins {
-    id(libs.plugins.kotlin.jvm.get().pluginId)
-    id(libs.plugins.dokka.get().pluginId)
     id("io.spring.dependency-management") version "1.1.2"
-    id("io.github.ktakashi.oas.conventions")
-    `java-library`
-    `maven-publish`
 }
 
 val kotlinVersion = property("kotlin.version")
@@ -23,11 +18,7 @@ allprojects {
 }
 
 subprojects {
-    apply(plugin = "kotlin")
     apply(plugin = "io.spring.dependency-management")
-    apply(plugin = "io.github.ktakashi.oas.conventions")
-    apply(plugin = "java-library")
-    apply(plugin = "maven-publish")
 
     dependencyManagement {
         dependencies {
@@ -45,9 +36,5 @@ subprojects {
             mavenBom("org.jetbrains.kotlin:kotlin-bom:${kotlinVersion}")
             mavenBom("org.junit:junit-bom:${junitVersion}")
         }
-    }
-
-    tasks.named<Test>("test") {
-        useJUnitPlatform()
     }
 }

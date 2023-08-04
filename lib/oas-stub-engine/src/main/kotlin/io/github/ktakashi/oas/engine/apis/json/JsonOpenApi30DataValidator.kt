@@ -2,7 +2,7 @@ package io.github.ktakashi.oas.engine.apis.json
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.ktakashi.oas.engine.apis.ApiDataValidator
+import io.github.ktakashi.oas.engine.apis.AbstractApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiValidationResult
 import io.github.ktakashi.oas.engine.apis.failedResult
 import io.github.ktakashi.oas.engine.apis.success
@@ -35,7 +35,7 @@ private fun toPrettyString(schema: List<Schema<*>>): String = Yaml.pretty(schema
 @Named @Singleton
 class JsonOpenApi30DataValidator
 @Inject constructor(private val objectMapper: ObjectMapper,
-                    private val validators: Set<Validator<Any>>) : ApiDataValidator(SpecVersion.V30), JsonMediaSupport {
+                    private val validators: Set<Validator<Any>>) : AbstractApiDataValidator(SpecVersion.V30), JsonMediaSupport {
     override fun validate(input: ByteArray, schema: Schema<*>): ApiValidationResult = try {
         checkSchema(objectMapper.readTree(input), "$", schema)
     } catch (e: IOException) {

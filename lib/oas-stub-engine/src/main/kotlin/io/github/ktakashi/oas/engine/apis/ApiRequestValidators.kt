@@ -45,7 +45,7 @@ class ApiRequestBodyValidator
                         .orElse(success)
             } else {
                 val schema = requestMediaType.get().schema
-                content.map { value -> validators.filter { v -> v.supports(mediaType) && v.supports(schema.specVersion) }
+                content.map { value -> validators.filter { v -> v.supports(mediaType) && v.supports(schema) }
                         .map { v -> v.validate(value, schema) }
                         .fold(success) { a, b -> a.merge(b) } }
                         .orElseGet { failedResult("Empty body") }

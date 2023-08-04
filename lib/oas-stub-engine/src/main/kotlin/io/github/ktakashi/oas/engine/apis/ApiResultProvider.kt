@@ -14,7 +14,9 @@ import org.apache.http.HttpStatus
 
 @Named @Singleton
 class ApiResultProvider
-@Inject constructor(private val contentDecider: ApiContentDecider) {
+@Inject constructor(private val contentDecider: ApiContentDecider,
+                    private val populators: Set<ApiDataPopulator>,
+                    private val anyPopulators: Set<ApiAnyDataPopulator>) {
     fun provideResult(operation: Operation, requestContext: ApiContextAwareRequestContext): ResponseContext = when (val decision = contentDecider.decideContent(requestContext, operation)) {
         is ContentFound -> toResponseContext(requestContext, decision.status, decision.content)
         is ContentNotFound -> decision.responseContext
@@ -28,15 +30,19 @@ class ApiResultProvider
                 .map { mediaType ->
                     content[mediaType]?.schema?.let { schema ->
                         val data = populate(mediaType, schema)
-                        ResponseContext(status, content = Optional.of(data.toByteArray()), contentType = Optional.of(mediaType))
+                        ResponseContext(status, content = Optional.of(data), contentType = Optional.of(mediaType))
                     }
                 }.orElseGet {
                     ResponseContext(HttpStatus.SC_INTERNAL_SERVER_ERROR)
                 }
     }
 
-    private fun populate(mediaType: String, schema: Schema<*>): String {
-        TODO("")
+    private fun populate(mediaType: String, schema: Schema<*>): ByteArray = MediaType.valueOf(mediaType).let { mt ->
+        populators.firstOrNull { p -> p.supports(mt) && p.supports(schema) }
+                ?.populate(schema)
+                ?: anyPopulators.firstOrNull { p -> p.supports(schema) }
+                        ?.populate(schema)
+                ?: byteArrayOf()
     }
 }
 

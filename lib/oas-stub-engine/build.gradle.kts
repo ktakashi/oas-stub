@@ -1,3 +1,11 @@
+plugins {
+    `java-library`
+    `maven-publish`
+    id(libs.plugins.kotlin.jvm.get().pluginId)
+    id(libs.plugins.dokka.get().pluginId)
+    id("io.github.ktakashi.oas.conventions")
+}
+
 group = "$group.engine"
 description = "OAS stub engine"
 

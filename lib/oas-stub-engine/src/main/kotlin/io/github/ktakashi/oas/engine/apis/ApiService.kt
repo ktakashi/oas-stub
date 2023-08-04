@@ -45,7 +45,6 @@ class ApiService
         }
         // TODO failure
 
-
         val responseContext = apiResultProvider.provideResult(operation.get(), requestContext)
         return emitResponse(response, requestContext, responseContext)
     }
