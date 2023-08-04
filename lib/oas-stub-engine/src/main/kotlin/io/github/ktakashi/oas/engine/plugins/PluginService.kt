@@ -1,0 +1,50 @@
+package io.github.ktakashi.oas.engine.plugins
+
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
+import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.plugin.apis.ApiPlugin
+import io.github.ktakashi.oas.plugin.apis.PluginContext
+import io.github.ktakashi.oas.plugin.apis.RequestContext
+import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.plugin.apis.Storage
+import jakarta.inject.Inject
+import jakarta.inject.Named
+import jakarta.inject.Singleton
+import java.time.Duration
+import java.util.Optional
+
+@Named @Singleton
+class PluginService
+@Inject constructor(private val pluginCompilers: Set<PluginCompiler>,
+                    private val storageService: StorageService) {
+
+    private val pluginCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofHours(1))
+            .build(CacheLoader<PluginDefinition, Class<ApiPlugin>> {
+                pluginCompilers.firstOrNull { c -> c.support(it.type) }?.compileScript(it.script)
+            })
+    fun applyPlugin(requestContext: RequestContext, responseContext: ResponseContext): ResponseContext =
+            storageService.getPluginDefinition(requestContext.applicationName, requestContext.apiPath).map { plugin ->
+                try {
+                    val compiled = pluginCache.get(plugin)
+                    val stubData = storageService.getApiData(requestContext.applicationName)
+                    val code = compiled.getConstructor().newInstance()
+                    val context = PluginContextData(requestContext, responseContext,
+                            storageService.sessionStorage,
+                            storageService.persistentStorage,
+                            stubData.orElseGet { mapOf() })
+                    code.customize(context)
+                } catch (e: Exception) {
+                    responseContext
+                }
+            }.orElse(responseContext)
+}
+
+data class PluginContextData(override val requestContext: RequestContext,
+                             override val responseContext: ResponseContext,
+                             override val sessionStorage: Storage,
+                             override val persistentStorage: Storage,
+                             private val apiData: Map<String, ByteArray>) :PluginContext {
+    override fun getApiDate(label: String): Optional<ByteArray> = Optional.ofNullable(apiData[label])
+}

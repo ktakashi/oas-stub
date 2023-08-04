@@ -39,6 +39,7 @@ subprojects {
             dependency("jakarta.validation:jakarta.validation-api:3.0.2")
             dependency("io.swagger.parser.v3:swagger-parser:2.1.16")
             dependency("com.github.ben-manes.caffeine:caffeine:3.1.7")
+            dependency("org.apache.groovy:groovy:4.0.13")
         }
         imports {
             mavenBom("org.jetbrains.kotlin:kotlin-bom:${kotlinVersion}")

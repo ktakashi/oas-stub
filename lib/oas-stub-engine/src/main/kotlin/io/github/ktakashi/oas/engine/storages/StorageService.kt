@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 
 import io.github.ktakashi.oas.engine.apis.ApiPathService
+import io.github.ktakashi.oas.engine.plugins.PluginDefinition
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.parser.OpenAPIV3Parser
@@ -30,7 +31,15 @@ class StorageService
             }
     fun getApiDefinition(name: String): Optional<OpenAPI> = apiDefinitions[name]
 
+    fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = getPluginDefinitions(name)
+            .flatMap { v -> apiPathService.findMatchingPath(path, v) }
+
+    fun getApiData(name: String): Optional<Map<String, ByteArray>> = externalData[name].map { v -> v.apiData }
+    private fun getPluginDefinitions(name: String) = externalData[name].map { v -> v.plugins }
+
 }
 
 
-private data class PersistentData(val api: String)
+private data class PersistentData(val api: String,
+                                  val plugins: Map<String, PluginDefinition>,
+                                  val apiData: Map<String, ByteArray>)

@@ -1,5 +1,7 @@
 package io.github.ktakashi.oas.engine.apis
 
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.models.Operation
 import jakarta.inject.Inject
 import jakarta.inject.Named
@@ -12,6 +14,11 @@ data class ApiValidationResult(val isValid: Boolean,
                                val validationDetails: List<ValidationDetail> = listOf()) {
     fun merge(other: ApiValidationResult) =
             ApiValidationResult(isValid && other.isValid,validationDetails + other.validationDetails)
+    fun toJsonBytes(objectMapper: ObjectMapper): Optional<ByteArray> = try {
+        Optional.of(objectMapper.writeValueAsBytes(this))
+    } catch (e: JsonProcessingException) {
+        Optional.empty()
+    }
 }
 
 internal val success = ApiValidationResult(true)

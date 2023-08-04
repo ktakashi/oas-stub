@@ -13,6 +13,7 @@ dependencies {
     implementation("jakarta.validation:jakarta.validation-api")
     implementation("io.swagger.parser.v3:swagger-parser")
     implementation("com.github.ben-manes.caffeine:caffeine")
+    implementation("org.apache.groovy:groovy")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-engine")

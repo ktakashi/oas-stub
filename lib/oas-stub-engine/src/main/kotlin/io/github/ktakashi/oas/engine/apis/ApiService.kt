@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.engine.apis
 
+import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
@@ -22,40 +23,54 @@ data class ApiContext(val context: String, val method: String, val apiDefinition
 class ApiService
 @Inject constructor(private val storageService: StorageService,
                     private val apiPathService: ApiPathService,
-                    private val apiResultProvider: ApiResultProvider) {
+                    private val apiResultProvider: ApiResultProvider,
+                    private val pluginService: PluginService) {
     fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
             apiPathService.extractApplicationName(request.requestURI).flatMap { name ->
                 storageService.getApiDefinition(name)
                         .map { def -> ApiContext(apiDefinition = def, context = name, method = request.method) }
             }
 
-    fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): HttpServletResponse {
+    fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {
         val appName = apiContext.context
         val path = apiPathService.extractApiPath(appName, request.requestURI)
+        val requestContext = makeRequestContext(apiContext, path, request, response)
         val pathItem = adjustBasePath(path, apiContext.apiDefinition).flatMap { v -> apiPathService.findMatchingPath(v, apiContext.apiDefinition.paths) }
         if (pathItem.isEmpty) {
-            return emitResponse(response, makeErrorResponse(HttpStatus.SC_NOT_FOUND))
+            return emitResponse(response, requestContext, makeErrorResponse(HttpStatus.SC_NOT_FOUND))
         }
         val operation = getOperation(pathItem.get(), apiContext.method)
         if (operation.isEmpty) {
-            return emitResponse(response, makeErrorResponse(HttpStatus.SC_METHOD_NOT_ALLOWED))
+            return emitResponse(response, requestContext, makeErrorResponse(HttpStatus.SC_METHOD_NOT_ALLOWED))
         }
         // TODO failure
 
-        val requestContext = makeRequestContext(apiContext, path, request, response)
+
         val responseContext = apiResultProvider.provideResult(operation.get(), requestContext)
-        return emitResponse(response, responseContext)
+        return emitResponse(response, requestContext, responseContext)
     }
 
-    private fun emitResponse(response: HttpServletResponse, responseContext: ResponseContext): HttpServletResponse {
-        // apply plugin
-        // apply customiser
-        responseContext.content.ifPresent { v -> response.outputStream.write(v) }
-        responseContext.contentType.ifPresent { t -> response.contentType = t }
-        responseContext.headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
-        response.status = responseContext.status
-        return response
+    private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
+            ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path, content = readContent(request),
+                    contentType = Optional.ofNullable(request.contentType), headers = readHeaders(request),
+                    method = request.method, queryParameters = parseQueryParameters(request.queryString),
+                    attributes = populateAttribute(apiContext, path),
+                    rawRequest = request, rawResponse = response)
+
+    private fun emitResponse(response: HttpServletResponse, requestContext: RequestContext, responseContext: ResponseContext): ResponseContext =
+        responseContext.customize(requestContext).apply {
+            // apply customiser
+            content.ifPresent { v -> response.outputStream.write(v) }
+            contentType.ifPresent { t -> response.contentType = t }
+            headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
+            response.status = responseContext.status
+        }
+
+    private fun populateAttribute(apiContext: ApiContext, path: String): Map<String, Any> {
+        return mapOf()
     }
+
+    private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
 }
 
 private fun makeErrorResponse(status: Int) = ResponseContext(status)
@@ -93,11 +108,6 @@ private fun adjustBasePath(path: String, api: OpenAPI): Optional<String> {
     }
     return Optional.of(path)
 }
-private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
-        ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path, content = readContent(request),
-                contentType = Optional.ofNullable(request.contentType), headers = readHeaders(request),
-                method = request.method, queryParameters = parseQueryParameters(request.queryString),
-                rawRequest = request, rawResponse = response)
 
 private val QUERY_PARAM_PATTERN = Regex("([^&=]+)(=?)([^&]+)?");
 private fun parseQueryParameters(s: String?): Map<String, List<String?>> = s?.let {
@@ -135,8 +145,9 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          override val method: String,
                                          override val content: Optional<ByteArray>,
                                          override val contentType: Optional<String>,
-                                         override val queryParameters: Map<String, List<String?>>,
+                                         override val attributes: Map<String, Any>,
                                          override val headers: Map<String, List<String>>,
+                                         override val queryParameters: Map<String, List<String?>>,
                                          override val rawRequest: HttpServletRequest,
                                          override val rawResponse: HttpServletResponse): RequestContext {
     override val applicationName
