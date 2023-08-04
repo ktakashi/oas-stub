@@ -1,4 +1,8 @@
 plugins {
+    `java-library`
+    `maven-publish`
+    id(libs.plugins.kotlin.jvm.get().pluginId)
+    id(libs.plugins.dokka.get().pluginId)
     id("io.spring.dependency-management") version "1.1.2"
 }
 
@@ -17,7 +21,13 @@ allprojects {
     }
 }
 
+val dokkaPlugin = libs.plugins.dokka.get().pluginId
+
 subprojects {
+    apply(plugin = "kotlin")
+    apply(plugin = "java-library")
+    apply(plugin = "maven-publish")
+    apply(plugin = dokkaPlugin)
     apply(plugin = "io.spring.dependency-management")
 
     dependencyManagement {

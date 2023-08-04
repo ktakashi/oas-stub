@@ -35,12 +35,12 @@ internal fun configureJavaConventions(project: Project) {
 }
 
 internal fun configureKotlinConventions(project: Project) {
-    project.plugins.withType(KotlinPlatformJvmPlugin::class.java) { _ ->
+    project.plugins.withId("org.jetbrains.kotlin.jvm") { _ ->
         project.tasks.register("dokkaJavadocJar", Jar::class.java) { jar ->
-            project.tasks.withType(DokkaTask::class.java) { dokkaJavadoc ->
-                jar.dependsOn(dokkaJavadoc)
-                jar.from(dokkaJavadoc.outputDirectory)
-            }
+            jar.archiveClassifier.set("javadoc")
+            val dokkaJavadoc = project.tasks.named("dokkaJavadoc")
+            jar.dependsOn(dokkaJavadoc)
+            jar.from(dokkaJavadoc.flatMap { task -> (task as DokkaTask).outputDirectory })
         }
         project.extensions.getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(17)
     }
@@ -59,7 +59,7 @@ internal fun configureMavenPublishingConventions(project: Project) {
         publishing.publications.withType(MavenPublication::class.java).all { publication ->
             val component = project.components.findByName("java")
             publication.from(component)
-
+            publication.artifact(project.tasks.getByName("dokkaJavadocJar"))
             publication.pom.apply {
                 name.set(project.provider(project::getName))
                 description.set(project.provider(project::getDescription))
@@ -89,7 +89,6 @@ internal fun configureMavenPublishingConventions(project: Project) {
 
             project.plugins.withType(JavaLibraryPlugin::class.java) { _ ->
                 project.extensions.getByType(JavaPluginExtension::class.java).apply {
-                    withJavadocJar()
                     withSourcesJar()
                 }
             }
