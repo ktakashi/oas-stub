@@ -1,8 +1,5 @@
 plugins {
-    `java-library`
-    `maven-publish`
-    signing
-    id("org.jetbrains.kotlin.plugin.spring") version "1.9.0"
+    alias(libs.plugins.kotlin.spring)
 }
 
 group = "$group.storage"

@@ -1,17 +1,5 @@
-plugins {
-    `java-library`
-    `maven-publish`
-    signing
-}
-
 group = "$group.engine"
 description = "OAS stub engine"
-
-dependencyManagement {
-    dependencies {
-
-    }
-}
 
 dependencies {
     implementation(project(":lib:oas-stub-plugin"))

@@ -1,9 +1,3 @@
-plugins {
-    `java-library`
-    `maven-publish`
-    signing
-}
-
 group = "$group.storage"
 description = "OAS stub storage APIs"
 

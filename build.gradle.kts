@@ -1,12 +1,17 @@
 plugins {
-    kotlin("jvm") version "1.9.0"
-    id("org.jetbrains.dokka") version "1.8.20"
+    id(libs.plugins.kotlin.jvm.get().pluginId)
+    id(libs.plugins.dokka.get().pluginId)
     id("io.spring.dependency-management") version "1.1.2"
+    id("io.github.ktakashi.oas.conventions")
+    `java-library`
+    `maven-publish`
 }
 
-val kotlinVersion by extra("1.9.0")
+val kotlinVersion = property("kotlin.version")
 val servletApiVersion by extra("6.0.0")
 val junitVersion by extra("5.9.3")
+
+description = "OAS stub"
 
 allprojects {
     group = group
@@ -20,10 +25,9 @@ allprojects {
 subprojects {
     apply(plugin = "kotlin")
     apply(plugin = "io.spring.dependency-management")
-    apply(plugin = "org.jetbrains.dokka")
-    kotlin {
-        jvmToolchain(17)
-    }
+    apply(plugin = "io.github.ktakashi.oas.conventions")
+    apply(plugin = "java-library")
+    apply(plugin = "maven-publish")
 
     dependencyManagement {
         dependencies {
