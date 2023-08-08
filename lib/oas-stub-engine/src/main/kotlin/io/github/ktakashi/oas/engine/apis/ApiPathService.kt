@@ -1,7 +1,5 @@
 package io.github.ktakashi.oas.engine.apis
 
-import com.github.fge.uritemplate.expression.TemplateExpression
-import com.github.fge.uritemplate.parse.URITemplateParser
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -39,13 +37,68 @@ class ApiPathService
         Optional.ofNullable(paths.entries.firstOrNull { (k, _) -> pathMatches(k, path) }?.value)
     }
 
-    // This is dependency of swatter parser, no spring, so use it
-    private fun pathMatches(template: String, path: String): Boolean = URITemplateParser.parse(template)
-            .zip(URITemplateParser.parse(path))
-            .all { (t, p) ->
-                when (t) {
-                    is TemplateExpression -> true
-                    else -> t.expand(null) == p.expand(null)
-                }
+    private fun pathMatches(template: String, path: String): Boolean {
+        var i = 0
+        var j = 0
+        do {
+            val (result, ni, nj) = matchSegment(template, path, i, j)
+
+            if (!result) {
+                return false
             }
+            i = ni
+            j = nj
+            if (j < 0) {
+                break
+            }
+        } while (i < template.length && j < path.length)
+
+        if (i == template.length && j == path.length) {
+            return true
+        }
+        if ((i + 1 == template.length) || (i + 2 == template.length && template[i + 1] == '/')) {
+            return true
+        }
+        if (j < 0) {
+            return true
+        }
+        return (j + 1 == path.length) || (j + 2 == path.length && path[j + 1] == '/')
+    }
+
+    // checking segment, means inbetween '/'s, e.g. /foo/
+    private fun matchSegment(template: String, path: String, i: Int, j: Int): Triple<Boolean, Int, Int> {
+        var ts = template.indexOf('/', i)
+        var ps = path.indexOf('/', j)
+        if (ts < 0 || ps < 0) {
+            return Triple(false, -1, -1) // unmatched segment number
+        }
+        ts++
+        ps++
+        if (ts == template.length || ps == path.length) {
+            return Triple((ts == template.length && ps == path.length), ts, ps)
+        }
+
+        if (template[ts] == '{') {
+            val k = template.indexOf('}', ts)
+            if (k > 0 && ((k+1 < template.length && template[k+1] == '/') || k < template.length)) {
+                return Triple(true, k+1, path.indexOf('/', ps)-1)
+            }
+        }
+
+        // literal match
+        while (ts < template.length && ps < path.length) {
+            val c0 = template[ts]
+            val c1 = path[ps]
+            if (c0 != c1) {
+                return Triple(false, -1, -1)
+            }
+            if (c0 == '/') {
+                return Triple(true, ts, ps)
+            }
+            ts++
+            ps++
+        }
+        // no trailing '/'
+        return Triple(true, ts, ps)
+    }
 }
