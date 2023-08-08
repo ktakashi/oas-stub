@@ -6,6 +6,7 @@ group = "$group.storage"
 description = "OAS stub in-memory storage"
 
 dependencies {
+    implementation(project(":lib:oas-stub-model"))
     implementation(project(":lib:oas-stub-plugin"))
     implementation(project(":lib:storages:oas-stub-storage-api"))
     implementation("jakarta.inject:jakarta.inject-api")

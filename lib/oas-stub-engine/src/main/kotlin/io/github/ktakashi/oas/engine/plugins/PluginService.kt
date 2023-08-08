@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.plugin.apis.ApiPlugin
 import io.github.ktakashi.oas.plugin.apis.PluginContext
 import io.github.ktakashi.oas.plugin.apis.RequestContext
@@ -34,7 +35,6 @@ class PluginService
                     val code = compiled.getConstructor().newInstance()
                     val context = PluginContextData(requestContext, responseContext,
                             storageService.sessionStorage,
-                            storageService.persistentStorage,
                             stubData.orElseGet { mapOf() },
                             objectMapper)
                     code.customize(context)
@@ -47,7 +47,6 @@ class PluginService
 data class PluginContextData(override val requestContext: RequestContext,
                              override val responseContext: ResponseContext,
                              override val sessionStorage: Storage,
-                             override val persistentStorage: Storage,
                              private val apiData: Map<String, ByteArray>,
                              private val objectMapper: ObjectMapper) :PluginContext {
     override fun getApiData(label: String): Optional<ByteArray> = Optional.ofNullable(apiData[label])

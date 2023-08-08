@@ -2,7 +2,8 @@ package io.github.ktakashi.oas.storages.inmemory.configuration
 
 import io.github.ktakashi.oas.storage.apis.PersistentStorage
 import io.github.ktakashi.oas.storage.apis.SessionStorage
-import io.github.ktakashi.oas.storages.inmemory.InMemoryStorage
+import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
+import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -15,7 +16,7 @@ import org.springframework.context.annotation.Configuration
 class AutoInMemoryPersistentStorageConfiguration {
     @Bean
     @ConditionalOnMissingBean
-    fun persistentStorage(): PersistentStorage = InMemoryStorage()
+    fun persistentStorage(): PersistentStorage = InMemoryPersistentStorage()
 }
 
 @AutoConfiguration
@@ -24,6 +25,6 @@ class AutoInMemoryPersistentStorageConfiguration {
 class AutoInMemorySessionStorageConfiguration {
     @Bean
     @ConditionalOnMissingBean
-    fun sessionStorage(): SessionStorage = InMemoryStorage()
+    fun sessionStorage(): SessionStorage = InMemorySessionStorage()
 }
 

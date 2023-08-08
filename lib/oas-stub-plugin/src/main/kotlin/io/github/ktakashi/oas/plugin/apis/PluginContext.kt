@@ -37,9 +37,4 @@ interface PluginContext {
      * Returns session storage.
      */
     val sessionStorage: Storage
-
-    /**
-     * Returns persistent storage
-     */
-    val persistentStorage: Storage
 }

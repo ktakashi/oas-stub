@@ -2,7 +2,7 @@ package io.github.ktakashi.oas.engine.plugins.groovy
 
 import groovy.lang.GroovyClassLoader
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
-import io.github.ktakashi.oas.engine.plugins.PluginType
+import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.plugin.apis.ApiPlugin
 import jakarta.inject.Named
 import jakarta.inject.Singleton

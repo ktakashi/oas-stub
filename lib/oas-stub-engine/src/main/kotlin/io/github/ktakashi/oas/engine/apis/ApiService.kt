@@ -1,8 +1,8 @@
 package io.github.ktakashi.oas.engine.apis
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
@@ -28,7 +28,7 @@ class ApiService
                     private val pluginService: PluginService) {
     fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
             apiPathService.extractApplicationName(request.requestURI).flatMap { name ->
-                storageService.getApiDefinition(name)
+                storageService.getOpenApi(name)
                         .map { def -> ApiContext(apiDefinition = def, context = name, method = request.method) }
             }
 
@@ -51,7 +51,11 @@ class ApiService
     }
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
-            ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path, content = readContent(request),
+            ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path,
+                    apiOptions = storageService.getApiDefinition(apiContext.context)
+                            .flatMap { d ->  apiPathService.findMatchingPath(path, d.apiOptions) }
+                            .orElseGet { ApiOptions() },
+                    content = readContent(request),
                     contentType = Optional.ofNullable(request.contentType), headers = readHeaders(request),
                     method = request.method, queryParameters = parseQueryParameters(request.queryString),
                     rawRequest = request, rawResponse = response)
@@ -136,6 +140,7 @@ private fun readContent(request: HttpServletRequest): Optional<ByteArray> = when
     }
 }
 data class ApiContextAwareRequestContext(val apiContext: ApiContext,
+                                         val apiOptions: ApiOptions,
                                          override val apiPath: String,
                                          override val method: String,
                                          override val content: Optional<ByteArray>,

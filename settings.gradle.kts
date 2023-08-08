@@ -4,6 +4,7 @@ plugins {
 
 rootProject.name = "oas-stub"
 
+include(":lib:oas-stub-model")
 include(":lib:storages:oas-stub-storage-api")
 include(":lib:storages:inmemory:oas-stub-inmemory-storage")
 include(":lib:storages:inmemory:oas-stub-inmemory-storage-starter")

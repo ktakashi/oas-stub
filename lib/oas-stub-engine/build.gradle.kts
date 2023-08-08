@@ -6,6 +6,7 @@ group = "$group.engine"
 description = "OAS stub engine"
 
 dependencies {
+    implementation(project(":lib:oas-stub-model"))
     implementation(project(":lib:oas-stub-plugin"))
     implementation(project(":lib:storages:oas-stub-storage-api"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib")

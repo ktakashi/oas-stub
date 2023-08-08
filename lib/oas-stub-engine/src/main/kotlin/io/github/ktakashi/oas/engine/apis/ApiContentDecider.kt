@@ -29,7 +29,7 @@ class ApiContentDecider
     }
 
     private fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult {
-        if (requestContext.attributes["no-validation"]?.toString().toBoolean()) {
+        if (!requestContext.apiOptions.shouldValidate) {
             return success
         }
         return validators.map { v -> v.validate(requestContext, operation) }
