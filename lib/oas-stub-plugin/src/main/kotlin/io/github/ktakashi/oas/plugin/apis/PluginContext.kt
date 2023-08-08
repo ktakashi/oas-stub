@@ -19,13 +19,18 @@ interface PluginContext {
     /**
      * Retrieves stub data associated to [label] if exists
      */
-    fun getApiDate(label: String): Optional<ByteArray>
+    fun getApiData(label: String): Optional<ByteArray>
+
+    /**
+     * Retrieves stub data associated to [label] as [clazz] if exists
+     */
+    fun <T> getApiData(label: String, clazz: Class<T>): Optional<T>
 
     /**
      * Retrieves stub data associated to [label] if exists, otherwise returns [defaultValue]
      */
     fun getStubData(label: String, defaultValue: ByteArray): ByteArray {
-        return getApiDate(label).orElse(defaultValue)
+        return getApiData(label).orElse(defaultValue)
     }
 
     /**

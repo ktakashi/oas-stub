@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.engine.plugins
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.ktakashi.oas.engine.storages.StorageService
@@ -17,7 +18,8 @@ import java.util.Optional
 @Named @Singleton
 class PluginService
 @Inject constructor(private val pluginCompilers: Set<PluginCompiler>,
-                    private val storageService: StorageService) {
+                    private val storageService: StorageService,
+                    private val objectMapper: ObjectMapper) {
 
     private val pluginCache = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofHours(1))
@@ -33,7 +35,8 @@ class PluginService
                     val context = PluginContextData(requestContext, responseContext,
                             storageService.sessionStorage,
                             storageService.persistentStorage,
-                            stubData.orElseGet { mapOf() })
+                            stubData.orElseGet { mapOf() },
+                            objectMapper)
                     code.customize(context)
                 } catch (e: Exception) {
                     responseContext
@@ -45,6 +48,9 @@ data class PluginContextData(override val requestContext: RequestContext,
                              override val responseContext: ResponseContext,
                              override val sessionStorage: Storage,
                              override val persistentStorage: Storage,
-                             private val apiData: Map<String, ByteArray>) :PluginContext {
-    override fun getApiDate(label: String): Optional<ByteArray> = Optional.ofNullable(apiData[label])
+                             private val apiData: Map<String, ByteArray>,
+                             private val objectMapper: ObjectMapper) :PluginContext {
+    override fun getApiData(label: String): Optional<ByteArray> = Optional.ofNullable(apiData[label])
+
+    override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T> = getApiData(label).map { v -> objectMapper.readValue(v, clazz)}
 }

@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.engine.apis
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.plugin.apis.RequestContext
@@ -53,7 +54,6 @@ class ApiService
             ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path, content = readContent(request),
                     contentType = Optional.ofNullable(request.contentType), headers = readHeaders(request),
                     method = request.method, queryParameters = parseQueryParameters(request.queryString),
-                    attributes = populateAttribute(apiContext, path),
                     rawRequest = request, rawResponse = response)
 
     private fun emitResponse(response: HttpServletResponse, requestContext: RequestContext, responseContext: ResponseContext): ResponseContext =
@@ -64,10 +64,6 @@ class ApiService
             headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
             response.status = responseContext.status
         }
-
-    private fun populateAttribute(apiContext: ApiContext, path: String): Map<String, Any> {
-        return mapOf()
-    }
 
     private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
 }
@@ -144,7 +140,6 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          override val method: String,
                                          override val content: Optional<ByteArray>,
                                          override val contentType: Optional<String>,
-                                         override val attributes: Map<String, Any>,
                                          override val headers: Map<String, List<String>>,
                                          override val queryParameters: Map<String, List<String?>>,
                                          override val rawRequest: HttpServletRequest,

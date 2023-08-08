@@ -10,7 +10,6 @@ interface RequestContext {
     val method: String
     val content: Optional<ByteArray>
     val contentType: Optional<String>
-    val attributes: Map<String, Any>
     val headers: Map<String, List<String>>
     val queryParameters: Map<String, List<String?>>
     fun getQueryParameters(key: String) = queryParameters.getOrDefault(key, listOf())
