@@ -52,8 +52,11 @@ class ApiService
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
             ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path,
-                    apiOptions = storageService.getApiDefinition(apiContext.context)
-                            .flatMap { d ->  apiPathService.findMatchingPath(path, d.apiOptions) }
+                    apiOptions = storageService.getApiDefinitions(apiContext.context)
+                            .map { d ->  apiPathService.findMatchingPath(path, d.apiConfigurations)
+                                    .map { o -> o.apiOptions }
+                                    .map { o -> o.merge(d.apiOptions) }
+                                    .orElseGet { d.apiOptions }}
                             .orElseGet { ApiOptions() },
                     content = readContent(request),
                     contentType = Optional.ofNullable(request.contentType), headers = readHeaders(request),

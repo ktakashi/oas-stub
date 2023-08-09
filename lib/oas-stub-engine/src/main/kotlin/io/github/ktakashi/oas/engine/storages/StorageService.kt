@@ -3,7 +3,7 @@ package io.github.ktakashi.oas.engine.storages
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import io.github.ktakashi.oas.engine.apis.ApiPathService
-import io.github.ktakashi.oas.model.ApiDefinition
+import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.github.ktakashi.oas.storage.apis.PersistentStorage
@@ -23,21 +23,21 @@ class StorageService
 @Inject constructor(private val apiPathService: ApiPathService,
                     private val persistentStorage: PersistentStorage,
                     val sessionStorage: Storage) {
-    private val apiDefinitions: LoadingCache<String, Optional<ApiDefinition>> = Caffeine.newBuilder()
+    private val apiDefinitions: LoadingCache<String, Optional<ApiDefinitions>> = Caffeine.newBuilder()
             .build { k -> persistentStorage.getApiDefinition(k) }
     private val openApiCache: LoadingCache<String, Optional<OpenAPI>> = Caffeine.newBuilder()
             .build { k -> apiDefinitions[k]
-                    .map(ApiDefinition::api)
+                    .map(ApiDefinitions::api)
                     .map { s -> openApiV3Parser.readContents(s).openAPI }
             }
 
-    fun getApiDefinition(name: String): Optional<ApiDefinition> = apiDefinitions[name]
+    fun getApiDefinitions(name: String): Optional<ApiDefinitions> = apiDefinitions[name]
     fun getOpenApi(name: String): Optional<OpenAPI> = openApiCache[name]
 
-    fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = getPluginDefinitions(name)
-            .flatMap { v -> apiPathService.findMatchingPath(path, v) }
+    fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = apiDefinitions[name]
+            .flatMap { v -> apiPathService.findMatchingPath(path, v.apiConfigurations) }
+            .flatMap { v -> v.plugin }
 
     fun getApiData(name: String): Optional<Map<String, ByteArray>> = apiDefinitions[name].map { v -> v.apiData }
-    private fun getPluginDefinitions(name: String) = apiDefinitions[name].map { v -> v.plugins }
 
 }

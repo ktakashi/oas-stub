@@ -1,6 +1,6 @@
 package io.github.ktakashi.oas.storages.inmemory
 
-import io.github.ktakashi.oas.model.ApiDefinition
+import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.storage.apis.PersistentStorage
 import io.github.ktakashi.oas.storage.apis.SessionStorage
 import java.util.Optional
@@ -24,11 +24,11 @@ class InMemorySessionStorage: SessionStorage {
 }
 
 class InMemoryPersistentStorage: PersistentStorage {
-    private val storage = ConcurrentHashMap<String, ApiDefinition>()
-    override fun getApiDefinition(applicationName: String): Optional<ApiDefinition> = Optional.ofNullable(storage[applicationName])
+    private val storage = ConcurrentHashMap<String, ApiDefinitions>()
+    override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = Optional.ofNullable(storage[applicationName])
 
-    override fun setApiDefinition(applicationName: String, apiDefinition: ApiDefinition) {
-        storage[applicationName] = apiDefinition
+    override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions) {
+        storage[applicationName] = apiDefinitions
     }
 
 }
