@@ -9,6 +9,8 @@ val springBootVersion by extra(property("spring-boot.version") as String)
 dependencyManagement {
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        mavenBom("io.projectreactor:reactor-bom:2022.0.9")
+
     }
 }
 
@@ -20,6 +22,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.projectreactor:reactor-core")
     implementation("jakarta.servlet:jakarta.servlet-api")
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
