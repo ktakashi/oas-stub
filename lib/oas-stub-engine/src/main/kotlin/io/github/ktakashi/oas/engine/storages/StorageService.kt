@@ -31,6 +31,12 @@ class StorageService
                     .map { s -> openApiV3Parser.readContents(s).openAPI }
             }
 
+    fun saveApiDefinitions(name: String, definitions: ApiDefinitions) {
+        persistentStorage.setApiDefinition(name, definitions)
+        apiDefinitions.invalidate(name)
+        openApiCache.invalidate(name)
+    }
+
     fun getApiDefinitions(name: String): Optional<ApiDefinitions> = apiDefinitions[name]
     fun getOpenApi(name: String): Optional<OpenAPI> = openApiCache[name]
 
@@ -38,6 +44,6 @@ class StorageService
             .flatMap { v -> apiPathService.findMatchingPath(path, v.apiConfigurations) }
             .flatMap { v -> v.plugin }
 
-    fun getApiData(name: String): Optional<Map<String, ByteArray>> = apiDefinitions[name].map { v -> v.apiData }
+    fun getApiData(name: String): Optional<Map<String, Any>> = apiDefinitions[name].map { v -> v.apiData }
 
 }

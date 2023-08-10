@@ -8,16 +8,22 @@ import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import org.apache.http.HttpStatus
+import org.slf4j.LoggerFactory
 
 sealed interface ContentDecision
 data class ContentFound(val status: Int, val content: Content): ContentDecision
 data class ContentNotFound(val responseContext: ResponseContext): ContentDecision
+
+private val logger = LoggerFactory.getLogger(ApiContentDecider::class.java)
 @Named @Singleton
 class ApiContentDecider
 @Inject constructor(private val validators: Set<ApiRequestValidator>,
-                    private val objectMapper: ObjectMapper){
+                    private val objectMapper: ObjectMapper) {
     fun decideContent(requestContext: ApiContextAwareRequestContext, operation: Operation): ContentDecision {
         val result = validate(requestContext, operation)
+        if (!result.isValid) {
+            logger.info("Validation failed: {}", result)
+        }
         val baseStatus = if (result.isValid) HttpStatus.SC_OK else HttpStatus.SC_BAD_REQUEST
         return operation.responses.map { (k, _) -> k }
                 .filter { k -> "default" != k && Integer.parseInt(k) >= baseStatus }

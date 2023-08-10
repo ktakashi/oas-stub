@@ -37,7 +37,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Optional
 import java.util.UUID
-import kotlin.math.max
+import kotlin.math.min
 
 @Named @Singleton
 class JsonOpenApi30DataPopulator
@@ -77,7 +77,7 @@ class JsonOpenApi30DataPopulator
 
     private fun populateArray(schema: ArraySchema): JsonNode {
         fun getCount(schema: ArraySchema): Int = schema.minItems
-                ?: schema.maxItems?.let { max(it, 10) }
+                ?: schema.maxItems?.let { min(it, 10) }
                 ?: 1
         val count = getCount(schema)
         return ArrayNode(objectMapper.nodeFactory, count).also { me ->
@@ -103,7 +103,7 @@ class JsonOpenApi30DataPopulator
                 is DateTimeSchema -> TextNode.valueOf(OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
                 is DateSchema -> TextNode.valueOf(LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE))
                 is EmailSchema -> TextNode.valueOf("example@example.com")
-                is StringSchema -> TextNode(if (schema.enum.isNotEmpty()) schema.enum[0] else "string")
+                is StringSchema -> TextNode(if (schema.enum != null && schema.enum.isNotEmpty()) schema.enum[0] else "string")
                 else -> TextNode.valueOf("string")
             } }
 }

@@ -1,20 +1,20 @@
 package io.github.ktakashi.oas.servlets
 
-import io.github.ktakashi.oas.OAS_API_PREFIX
 import io.github.ktakashi.oas.engine.apis.ApiContext
 import io.github.ktakashi.oas.engine.apis.ApiService
 import jakarta.servlet.AsyncContext
 import jakarta.servlet.AsyncEvent
 import jakarta.servlet.AsyncListener
-import jakarta.servlet.annotation.WebServlet
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 
-@WebServlet(urlPatterns = [ "$OAS_API_PREFIX/*" ], asyncSupported = true)
+private val logger = LoggerFactory.getLogger(OasDispatchServlet::class.java)
+
 class OasDispatchServlet(private val apiService: ApiService): HttpServlet() {
 
     override fun service(req: HttpServletRequest, res: HttpServletResponse) {
@@ -32,6 +32,7 @@ class OasDispatchServlet(private val apiService: ApiService): HttpServlet() {
                         CompletableFuture.completedFuture(asyncContext)
                     }
                 }.exceptionally { e ->
+                    logger.error("Execution error: {}", e.message, e)
                     if (!listener.isCompleted) {
                         res.status = HttpStatus.INTERNAL_SERVER_ERROR.value()
                         res.outputStream.write(e.message?.toByteArray() ?: byteArrayOf())

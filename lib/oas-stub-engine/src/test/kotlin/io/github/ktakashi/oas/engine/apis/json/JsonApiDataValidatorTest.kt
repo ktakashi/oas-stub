@@ -1,6 +1,8 @@
 package io.github.ktakashi.oas.engine.apis.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.engine.readBinaryContent
+import io.github.ktakashi.oas.engine.readStringContent
 import io.swagger.v3.core.util.Yaml
 import io.swagger.v3.parser.OpenAPIV3Parser
 import io.swagger.v3.parser.converter.SwaggerConverter
@@ -15,16 +17,6 @@ import org.junit.jupiter.params.aggregator.ArgumentsAggregationException
 import org.junit.jupiter.params.aggregator.ArgumentsAggregator
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.platform.commons.util.Preconditions
-
-
-private class Dummy
-private fun readStringContent(path: String) = Dummy::class.java.getResourceAsStream(path)?.bufferedReader().use {
-    it?.readText()
-} ?: throw IllegalArgumentException("$path doesn't exist")
-
-private fun readBinaryContent(path: String) = Dummy::class.java.getResourceAsStream(path)?.use {
-    it.readAllBytes()
-} ?: throw IllegalArgumentException("$path doesn't exist")
 
 class JsonApiDataValidatorTest {
     val jsonApiDataValidator = JsonOpenApi30DataValidator(ObjectMapper(), setOf())

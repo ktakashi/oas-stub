@@ -41,10 +41,14 @@ subprojects {
             dependency("io.swagger.parser.v3:swagger-parser:2.1.16")
             dependency("com.github.ben-manes.caffeine:caffeine:3.1.7")
             dependency("org.apache.groovy:groovy:4.0.13")
+            dependency("io.rest-assured:rest-assured:5.3.1")
+            dependency("org.slf4j:slf4j-api:2.0.7")
         }
         imports {
             mavenBom("org.jetbrains.kotlin:kotlin-bom:${kotlinVersion}")
             mavenBom("org.junit:junit-bom:${junitVersion}")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.15.2")
+            mavenBom("io.cucumber:cucumber-bom:7.13.0")
         }
     }
 }

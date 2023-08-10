@@ -30,7 +30,7 @@ class PluginService
     fun applyPlugin(requestContext: RequestContext, responseContext: ResponseContext): ResponseContext =
             storageService.getPluginDefinition(requestContext.applicationName, requestContext.apiPath).map { plugin ->
                 try {
-                    val compiled = pluginCache.get(plugin)
+                    val compiled = pluginCache[plugin]
                     val stubData = storageService.getApiData(requestContext.applicationName)
                     val code = compiled.getConstructor().newInstance()
                     val context = PluginContextData(requestContext, responseContext,
@@ -47,9 +47,16 @@ class PluginService
 data class PluginContextData(override val requestContext: RequestContext,
                              override val responseContext: ResponseContext,
                              override val sessionStorage: Storage,
-                             private val apiData: Map<String, ByteArray>,
+                             private val apiData: Map<String, Any>,
                              private val objectMapper: ObjectMapper) :PluginContext {
-    override fun getApiData(label: String): Optional<ByteArray> = Optional.ofNullable(apiData[label])
-
-    override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T> = getApiData(label).map { v -> objectMapper.readValue(v, clazz)}
+    override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T & Any> =
+            clazz.cast(apiData[label])?.let { v ->
+                when (v) {
+                    is String -> if (String::class.java.isAssignableFrom(clazz)) Optional.of(v) else null
+                    is Number -> if (Number::class.java.isAssignableFrom(clazz)) Optional.of(v) else null
+                    is ByteArray -> if (ByteArray::class.java.isAssignableFrom(clazz)) Optional.of(v) else null
+                    is Map<*, *> -> Optional.ofNullable(objectMapper.convertValue(v, clazz))
+                    else -> null // unknown type for now
+                }
+            }?: Optional.empty()
 }
