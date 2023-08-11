@@ -120,4 +120,4 @@ private fun handleRange(schema: Schema<*>): JsonNode = schema.minimum?.let { v -
             // what?
             else -> IntNode(1)
         } }
-        ?: IntNode(1) // no minimum nor no maximum
+        ?: IntNode(0) // no minimum nor no maximum

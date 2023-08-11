@@ -38,7 +38,8 @@ class ApiContentDecider
                     operation.responses[status]
                             ?.let { ContentFound(status.toInt(), Optional.ofNullable(it.content)) }
                             ?: ContentNotFound(ResponseContext(status.toInt(), result.toJsonProblemDetails(status.toInt(), objectMapper), contentType))
-                } ?: ContentNotFound(ResponseContext(HttpStatus.SC_BAD_REQUEST, result.toJsonProblemDetails(baseStatus, objectMapper), contentType))
+                } ?: operation.responses["default"]?.let { ContentFound(baseStatus, Optional.ofNullable(it.content)) }
+        ?: ContentNotFound(ResponseContext(HttpStatus.SC_BAD_REQUEST, result.toJsonProblemDetails(baseStatus, objectMapper), contentType))
     }
 
     private fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult {
