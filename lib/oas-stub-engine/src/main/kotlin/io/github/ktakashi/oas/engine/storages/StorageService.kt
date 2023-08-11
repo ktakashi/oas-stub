@@ -39,7 +39,7 @@ class StorageService
     fun getOpenApi(name: String): Optional<OpenAPI> = openApiCache[name]
 
     fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = apiDefinitions[name]
-            .flatMap { v -> apiPathService.findMatchingPath(path, v.apiConfigurations) }
+            .flatMap { v -> apiPathService.findMatchingPathValue(path, v.apiConfigurations) }
             .flatMap { v -> v.plugin }
 
     fun getApiData(name: String): Optional<Map<String, Any>> = apiDefinitions[name].map { v -> v.apiData }

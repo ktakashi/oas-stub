@@ -31,11 +31,15 @@ class ApiPathService
         return uri.substring(index + contextPath.length)
     }
 
-    fun <T : Any> findMatchingPath(path: String, paths: Map<String, T>): Optional<T> = if (paths.containsKey(path)) {
-        Optional.ofNullable(paths[path])
+
+    fun <T : Any> findMatchingPath(path: String, paths: Map<String, T>): Optional<String> = if (paths.containsKey(path)) {
+        Optional.ofNullable(path)
     } else {
-        Optional.ofNullable(paths.entries.firstOrNull { (k, _) -> pathMatches(k, path) }?.value)
+        Optional.ofNullable(paths.entries.firstOrNull { (k, _) -> pathMatches(k, path) }?.key)
     }
+
+    fun <T : Any> findMatchingPathValue(path: String, paths: Map<String, T>): Optional<T> = findMatchingPath(path, paths)
+            .map { p -> paths[p] }
 
     private fun pathMatches(template: String, path: String): Boolean {
         var i = 0

@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.engine.apis
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiOptions
@@ -18,6 +19,7 @@ import java.net.HttpCookie
 import java.net.URI
 import java.util.Optional
 import org.apache.http.HttpStatus
+import org.glassfish.jersey.uri.UriTemplate
 
 data class ApiContext(val context: String, val method: String, val apiDefinition: OpenAPI)
 
@@ -25,6 +27,7 @@ data class ApiContext(val context: String, val method: String, val apiDefinition
 class ApiService
 @Inject constructor(private val storageService: StorageService,
                     private val apiPathService: ApiPathService,
+                    private val apiRequestPathVariableValidator: ApiRequestPathVariableValidator,
                     private val apiResultProvider: ApiResultProvider,
                     private val pluginService: PluginService) {
     fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
@@ -37,7 +40,8 @@ class ApiService
         val appName = apiContext.context
         val path = apiPathService.extractApiPath(appName, request.requestURI)
         val requestContext = makeRequestContext(apiContext, path, request, response)
-        val pathItem = adjustBasePath(path, apiContext.apiDefinition).flatMap { v -> apiPathService.findMatchingPath(v, apiContext.apiDefinition.paths) }
+        val adjustedPath = adjustBasePath(path, apiContext.apiDefinition)
+        val pathItem = adjustedPath.flatMap { v -> apiPathService.findMatchingPathValue(v, apiContext.apiDefinition.paths) }
         if (pathItem.isEmpty) {
             return emitResponse(response, requestContext, makeErrorResponse(HttpStatus.SC_NOT_FOUND))
         }
@@ -47,14 +51,17 @@ class ApiService
         }
         // TODO failure
 
-        val responseContext = apiResultProvider.provideResult(operation.get(), requestContext)
+        val responseContext = adjustedPath.flatMap { v ->
+            apiPathService.findMatchingPath(v, apiContext.apiDefinition.paths)
+                    .flatMap { p -> apiRequestPathVariableValidator.validate(v, p, operation.get()) }
+        }.orElseGet { apiResultProvider.provideResult(operation.get(), requestContext) }
         return emitResponse(response, requestContext, responseContext)
     }
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
             ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path,
                     apiOptions = storageService.getApiDefinitions(apiContext.context)
-                            .map { d ->  apiPathService.findMatchingPath(path, d.apiConfigurations)
+                            .map { d ->  apiPathService.findMatchingPathValue(path, d.apiConfigurations)
                                     .map { o -> o.apiOptions }
                                     .map { o -> o.merge(d.apiOptions) }
                                     .orElseGet { d.apiOptions }}
@@ -76,6 +83,33 @@ class ApiService
         }
 
     private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
+}
+
+@Named @Singleton
+class ApiRequestPathVariableValidator
+@Inject constructor(private val requestParameterValidator: ApiRequestParameterValidator,
+                    private val objectMapper: ObjectMapper) {
+    fun validate(path: String, template: String, operation: Operation): Optional<ResponseContext> {
+        val uriTemplate = UriTemplate(template)
+        val matcher = uriTemplate.pattern.match(path)
+        val result = uriTemplate.templateVariables.mapIndexed { i, name ->
+            operation.parameters.map { parameter ->
+                when (parameter.`in`) {
+                    "path" ->
+                        if (parameter.name == name) {
+                            val value = matcher.group(i + 1)
+                            requestParameterValidator.validateParameterList(parameter, listOf(value))
+                        } else success
+                    else -> success
+                }
+            }.fold(success) { a, b -> a.merge(b) }
+        }.fold(success) { a, b -> a.merge(b) }
+        if (result.isValid) {
+            return Optional.empty()
+        }
+        val body = result.toJsonProblemDetails(HttpStatus.SC_BAD_REQUEST, objectMapper)
+        return Optional.of(ResponseContext(HttpStatus.SC_BAD_REQUEST, body, Optional.of(APPLICATION_PROBLEM_JSON)))
+    }
 }
 
 private fun makeErrorResponse(status: Int) = ResponseContext(status)

@@ -7,7 +7,6 @@ import io.swagger.v3.oas.models.media.Content
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
-import jakarta.ws.rs.core.MediaType
 import java.util.Optional
 import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
@@ -18,7 +17,7 @@ data class ContentFound(val status: Int, val content: Optional<Content>): Conten
 data class ContentNotFound(val responseContext: ResponseContext): ContentDecision
 
 private val logger = LoggerFactory.getLogger(ApiContentDecider::class.java)
-private val contentType = Optional.of("application/problem+json")
+private val contentType = Optional.of(APPLICATION_PROBLEM_JSON)
 
 @Named @Singleton
 class ApiContentDecider

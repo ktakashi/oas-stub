@@ -25,6 +25,10 @@ enum class ApiValidationResultType {
 
     fun merge(other: ApiValidationResultType) = when (this) {
         SECURITY -> this
+        VALIDATION_ERROR -> when (other) {
+            SECURITY -> other
+            else -> this
+        }
         else -> other
     }
 }
@@ -97,12 +101,9 @@ class ApiRequestParameterValidator
     private fun validate(requestContext: ApiContextAwareRequestContext, parameter: Parameter) = when (parameter.`in`) {
         "header" -> validateHeader(requestContext, parameter)
         "query" -> validateQuery(requestContext, parameter)
-        "path" -> validatePath(requestContext, parameter)
+        // "path" is done in ApiService
         else -> success
     }
-
-    // TODO somehow we want to do this as well
-    private fun validatePath(requestContext: ApiContextAwareRequestContext, parameter: Parameter): ApiValidationResult = success
 
     private fun validateQuery(requestContext: ApiContextAwareRequestContext, parameter: Parameter): ApiValidationResult =
             validateParameterList(parameter, requestContext.queryParameters.getOrDefault(parameter.name, listOf()), "Query parameter '${parameter.name}' is required")
@@ -114,13 +115,16 @@ class ApiRequestParameterValidator
             when {
                 values.isEmpty() && !parameter.required -> success
                 values.isEmpty() && parameter.required -> failedResult(s, parameter.name)
-                else -> values.map { v -> convertToJsonNode(v, parameter.schema) }
-                        .flatMap { v ->
-                            validators.filter { validator -> validator.supports(parameter.schema) }
-                                    .map { validator -> validator.checkSchema(v, parameter.name, parameter.schema) }
-                        }
-                        .fold(success) { a, b -> a.merge(b) }
+                else -> validateParameterList(parameter, values)
             }
+
+    fun validateParameterList(parameter: Parameter, values: List<String?>): ApiValidationResult =
+            values.map { v -> convertToJsonNode(v, parameter.schema) }
+                    .flatMap { v ->
+                        validators.filter { validator -> validator.supports(parameter.schema) }
+                                .map { validator -> validator.checkSchema(v, parameter.name, parameter.schema) }
+                    }
+                    .fold(success) { a, b -> a.merge(b) }
 }
 
 private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
