@@ -90,25 +90,27 @@ private fun getOperation(item: PathItem, method: String): Optional<Operation> = 
     else -> Optional.empty()
 }
 
-private fun adjustBasePath(path: String, api: OpenAPI): Optional<String> {
-    // Note: V2 (a.k.a Swagger) has basePath and this is merged into servers array in V3
-    // So on V2, it has only one server max ;)
-    val servers = api.servers
-    if (servers.isNotEmpty()) {
-        // Okay we get the first one and believe that the base paths are the same
-        // Otherwise we need to think nice way to resolve.
-        val serverUri = URI.create(servers[0].url)
+internal fun adjustBasePath(path: String, api: OpenAPI): Optional<String> {
+    // servers may contain multiple URLs, so check all
+    val maybePath = api.servers.map { server ->
+        val serverUri = URI.create(server.url)
         val basePath = serverUri.path
-        // resolve will add servers of '/' path
-        if (basePath.isNotEmpty() && "/" != basePath) {
-            // now the base path must always be subtracted
-            val index: Int = path.indexOf(basePath)
-            return if (index < 0) {
-                Optional.empty()
-            } else Optional.of(path.substring(basePath.length))
+        when {
+            basePath.isNullOrEmpty() -> null
+            // resolve will add servers of '/' path
+            basePath.isNotEmpty() && basePath != "/" -> {
+                // now the base path must always be subtracted
+                val index: Int = path.indexOf(basePath)
+                if (index < 0) {
+                    null
+                } else path.substring(basePath.length)
+            }
+            // '/' case, it must be there then
+            api.paths[path] != null -> path
+            else -> null
         }
-    }
-    return Optional.of(path)
+    }.firstOrNull { v -> v != null }
+    return Optional.ofNullable(maybePath)
 }
 
 private val QUERY_PARAM_PATTERN = Regex("([^&=]+)(=?)([^&]+)?");

@@ -2,6 +2,9 @@ openapi: 3.0.3
 info:
   title: Validation test 3.0.x
   version: 0.0.1
+servers:
+  - url: http://localhost/
+  - url: http://localhost/v1
 paths:
   /object:
     post:
