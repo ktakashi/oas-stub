@@ -42,27 +42,17 @@ class ApiPathService
         var j = 0
         do {
             val (result, ni, nj) = matchSegment(template, path, i, j)
-
             if (!result) {
                 return false
             }
             i = ni
             j = nj
-            if (j < 0) {
+            if (i < 0 || j < 0) {
                 break
             }
         } while (i < template.length && j < path.length)
 
-        if (i == template.length && j == path.length) {
-            return true
-        }
-        if ((i + 1 == template.length) || (i + 2 == template.length && template[i + 1] == '/')) {
-            return true
-        }
-        if (j < 0) {
-            return true
-        }
-        return (j + 1 == path.length) || (j + 2 == path.length && path[j + 1] == '/')
+        return (i < 0 && j < 0 && i == j) || i == template.length && j == path.length
     }
 
     // checking segment, means inbetween '/'s, e.g. /foo/
@@ -81,7 +71,7 @@ class ApiPathService
         if (template[ts] == '{') {
             val k = template.indexOf('}', ts)
             if (k > 0 && ((k+1 < template.length && template[k+1] == '/') || k < template.length)) {
-                return Triple(true, k+1, path.indexOf('/', ps)-1)
+                return Triple(true, template.indexOf('/', ts) - 1, path.indexOf('/', ps) - 1)
             }
         }
 

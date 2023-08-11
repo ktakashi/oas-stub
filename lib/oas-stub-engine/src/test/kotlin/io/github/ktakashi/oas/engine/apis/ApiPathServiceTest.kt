@@ -19,9 +19,9 @@ class ApiPathServiceTest {
 
         assertEquals(Optional.of(true), testSubject.findMatchingPath("/path", data))
         assertEquals(Optional.of(true), testSubject.findMatchingPath("/path/1", data))
-        assertEquals(Optional.of(true), testSubject.findMatchingPath("/path/1/", data))
+        assertEquals(Optional.empty<Boolean>(), testSubject.findMatchingPath("/path/1/", data))
         assertEquals(Optional.empty<Boolean>(), testSubject.findMatchingPath("/path/1/val", data))
         assertEquals(Optional.of(true), testSubject.findMatchingPath("/path2/2/", data))
-        assertEquals(Optional.of(true), testSubject.findMatchingPath("/path2/2", data))
+        assertEquals(Optional.empty<Boolean>(), testSubject.findMatchingPath("/path2/2", data))
     }
 }
