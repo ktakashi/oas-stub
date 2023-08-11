@@ -91,6 +91,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @Then("I get response JSON satisfies this {string}")
     fun `I get response JSON satisfies this {string}`(condition: String) {
+        println(testContext.response?.body?.asString())
         if ("<null>" == condition) {
             val body = testContext.response?.body() ?: throw IllegalStateException("no response")
             val r = body.asByteArray()

@@ -14,6 +14,7 @@ import jakarta.inject.Singleton
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.io.IOException
+import java.net.HttpCookie
 import java.net.URI
 import java.util.Optional
 import org.apache.http.HttpStatus
@@ -59,7 +60,9 @@ class ApiService
                                     .orElseGet { d.apiOptions }}
                             .orElseGet { ApiOptions() },
                     content = readContent(request),
-                    contentType = Optional.ofNullable(request.contentType), headers = readHeaders(request),
+                    contentType = Optional.ofNullable(request.contentType),
+                    headers = readHeaders(request),
+                    cookies = request.cookies?.associate { c -> c.name to HttpCookie(c.name, c.value) } ?: mapOf(),
                     method = request.method, queryParameters = parseQueryParameters(request.queryString),
                     rawRequest = request, rawResponse = response)
 
@@ -151,6 +154,7 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          override val content: Optional<ByteArray>,
                                          override val contentType: Optional<String>,
                                          override val headers: Map<String, List<String>>,
+                                         override val cookies: Map<String, HttpCookie>,
                                          override val queryParameters: Map<String, List<String?>>,
                                          override val rawRequest: HttpServletRequest,
                                          override val rawResponse: HttpServletResponse): RequestContext {

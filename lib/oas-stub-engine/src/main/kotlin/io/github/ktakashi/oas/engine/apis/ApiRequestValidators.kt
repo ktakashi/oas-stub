@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.engine.apis
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -9,6 +8,7 @@ import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.security.SecurityScheme
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -18,10 +18,22 @@ import java.math.BigInteger
 import java.util.Optional
 
 data class ValidationDetail(val message: String, val property: Optional<String> = Optional.empty())
-data class ApiValidationResult(val isValid: Boolean,
+enum class ApiValidationResultType {
+    SUCCESS,
+    VALIDATION_ERROR,
+    SECURITY;
+
+    fun merge(other: ApiValidationResultType) = when (this) {
+        SECURITY -> this
+        else -> other
+    }
+}
+data class ApiValidationResult(val resultType: ApiValidationResultType,
                                val validationDetails: List<ValidationDetail> = listOf()) {
+    val isValid: Boolean
+        get() = resultType == ApiValidationResultType.SUCCESS
     fun merge(other: ApiValidationResult) =
-            ApiValidationResult(isValid && other.isValid,validationDetails + other.validationDetails)
+            ApiValidationResult(resultType.merge(other.resultType),validationDetails + other.validationDetails)
     fun toJsonProblemDetails(status: Int, objectMapper: ObjectMapper): Optional<ByteArray> = try {
         if (isValid) {
             Optional.empty()
@@ -40,9 +52,10 @@ private data class JsonProblemDetails(val type: String,
                                       val status: Int,
                                       val errors: List<InvalidParams>)
 
-internal val success = ApiValidationResult(true)
+internal val success = ApiValidationResult(ApiValidationResultType.SUCCESS)
 
-internal fun failedResult(message: String, property: String? = null) = ApiValidationResult(false, listOf(ValidationDetail(message, Optional.ofNullable(property))))
+internal fun failedResult(message: String, property: String? = null, type: ApiValidationResultType = ApiValidationResultType.VALIDATION_ERROR) =
+        ApiValidationResult(type, listOf(ValidationDetail(message, Optional.ofNullable(property))))
 
 interface ApiRequestValidator {
     fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult
@@ -130,3 +143,34 @@ private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
     }
 } ?: JsonNodeFactory.instance.nullNode()
 
+@Named @Singleton
+class ApiRequestSecurityValidator
+@Inject constructor(): ApiRequestValidator {
+    override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult =
+            operation.security?.map { requirement ->
+                requirement.keys.mapNotNull { key -> requestContext.apiContext.apiDefinition.components.securitySchemes?.get(key) }
+                        .map { securitySchema -> validate(requestContext, securitySchema) }
+                        .fold(success) { a, b -> a.merge(b) }
+            } ?.fold(success) { a, b -> a.merge(b) } ?: success
+
+    private fun validate(requestContext: ApiContextAwareRequestContext, securityScheme: SecurityScheme): ApiValidationResult =
+            when (securityScheme.type) {
+                SecurityScheme.Type.APIKEY -> validateApiKey(requestContext, securityScheme)
+                // TODO support them
+                SecurityScheme.Type.HTTP, SecurityScheme.Type.OAUTH2, SecurityScheme.Type.OPENIDCONNECT -> success
+                // Hmmmm, this is a bit problematic
+                SecurityScheme.Type.MUTUALTLS -> success
+                else -> success // in case of null
+            }
+
+    private fun validateApiKey(requestContext: ApiContextAwareRequestContext, securityScheme: SecurityScheme): ApiValidationResult =
+            when (securityScheme.`in`) {
+                SecurityScheme.In.HEADER -> check(requestContext.headers, securityScheme.name, "Header")
+                SecurityScheme.In.QUERY -> check(requestContext.queryParameters, securityScheme.name, "Query parameter")
+                SecurityScheme.In.COOKIE -> check(requestContext.cookies, securityScheme.name, "Cookie")
+                else -> success
+            }
+
+    private fun <T> check(map: Map<String, T>, key: String, name: String) =
+            if (map.containsKey(key)) success else failedResult("$name '$key' must exist", key, ApiValidationResultType.SECURITY)
+}

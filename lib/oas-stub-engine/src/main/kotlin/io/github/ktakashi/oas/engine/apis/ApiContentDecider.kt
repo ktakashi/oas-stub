@@ -29,7 +29,11 @@ class ApiContentDecider
         if (!result.isValid) {
             logger.info("Validation failed: {}", result)
         }
-        val baseStatus = if (result.isValid) HttpStatus.SC_OK else HttpStatus.SC_BAD_REQUEST
+        val baseStatus = when (result.resultType) {
+            ApiValidationResultType.SUCCESS -> HttpStatus.SC_OK
+            ApiValidationResultType.VALIDATION_ERROR -> HttpStatus.SC_BAD_REQUEST
+            ApiValidationResultType.SECURITY -> HttpStatus.SC_UNAUTHORIZED
+        }
 
         return operation.responses.map { (k, _) -> k }
                 .filter { k -> "default" != k && Integer.parseInt(k) >= baseStatus }
