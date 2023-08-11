@@ -35,32 +35,32 @@ private fun toPrettyString(schema: List<Schema<*>>): String = Yaml.pretty(schema
 @Named @Singleton
 class JsonOpenApi30DataValidator
 @Inject constructor(private val objectMapper: ObjectMapper,
-                    private val validators: Set<Validator<Any>>) : AbstractApiDataValidator(SpecVersion.V30), JsonMediaSupport {
+                    private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V30), JsonMediaSupport {
     override fun validate(input: ByteArray, schema: Schema<*>): ApiValidationResult = try {
         checkSchema(objectMapper.readTree(input), "$", schema)
     } catch (e: IOException) {
         failedResult(e.message as String)
     }
 
-    private fun checkSchema(value: JsonNode, property: String, schema: Schema<*>): ApiValidationResult = when(schema) {
+    override fun checkSchema(value: JsonNode, rootProperty: String, schema: Schema<*>): ApiValidationResult = when(schema) {
         is ComposedSchema -> when {
-            schema.anyOf != null -> schema.anyOf.firstOrNull { s -> checkSchema(value, property, s).isValid }
+            schema.anyOf != null -> schema.anyOf.firstOrNull { s -> checkSchema(value, rootProperty, s).isValid }
                     ?.let { success }
-                    ?: failedResult("$value must satisfy at least one of ${toPrettyString(schema.anyOf)}", property)
-            schema.oneOf != null -> schema.anyOf.filter { s -> checkSchema(value, property, s).isValid }
+                    ?: failedResult("$value must satisfy at least one of ${toPrettyString(schema.anyOf)}", rootProperty)
+            schema.oneOf != null -> schema.anyOf.filter { s -> checkSchema(value, rootProperty, s).isValid }
                     .let { v ->
                         if (v.size == 1) {
                             success
                         } else {
-                            failedResult("$value must satisfy only one of ${toPrettyString(schema.oneOf)}, but satisfied ${v.size}", property)
+                            failedResult("$value must satisfy only one of ${toPrettyString(schema.oneOf)}, but satisfied ${v.size}", rootProperty)
                         }
                     }
-            schema.allOf != null -> if (schema.allOf.all { s -> checkSchema(value, property, s).isValid }) {
+            schema.allOf != null -> if (schema.allOf.all { s -> checkSchema(value, rootProperty, s).isValid }) {
                 success
-            } else failedResult("$value must satisfy all of ${toPrettyString(schema.allOf)}", property)
-            else -> failedResult("[API specification error] Invalid composed schema", property)
+            } else failedResult("$value must satisfy all of ${toPrettyString(schema.allOf)}", rootProperty)
+            else -> failedResult("[API specification error] Invalid composed schema", rootProperty)
         }
-        else -> checkSingleSchema(schema, value, property)
+        else -> checkSingleSchema(schema, value, rootProperty)
     }
 
     private fun checkSingleSchema(schema: Schema<*>, value: JsonNode, property: String) = when (schema.type) {

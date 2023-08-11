@@ -13,6 +13,7 @@ import io.github.ktakashi.oas.models.CreateApiRequest
 import io.github.ktakashi.oas.readContent
 import io.restassured.RestAssured.given
 import io.restassured.http.ContentType
+import java.net.URI
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Value
@@ -52,10 +53,12 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @And("I {string} to {string} with {string} as {string}")
     fun `I {string} to {string} with {string} as {string}`(method: String, path: String, content: String, contentType: String) {
+        val p = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(oasApplicationServletProperties.prefix)
                 .pathSegment(testContext.apiName)
-                .path(path)
+                .path(p.path)
+                .query(p.query)
                 .build()
                 .toUri()
         val spec = given().also {

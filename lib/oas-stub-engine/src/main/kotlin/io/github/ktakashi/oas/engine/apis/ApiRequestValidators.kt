@@ -1,12 +1,20 @@
 package io.github.ktakashi.oas.engine.apis
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.SpecVersion
+import io.swagger.v3.oas.models.media.Schema
+import io.swagger.v3.oas.models.parameters.Parameter
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import jakarta.ws.rs.core.MediaType
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.util.Optional
 
 data class ValidationDetail(val message: String, val property: Optional<String> = Optional.empty())
@@ -14,12 +22,23 @@ data class ApiValidationResult(val isValid: Boolean,
                                val validationDetails: List<ValidationDetail> = listOf()) {
     fun merge(other: ApiValidationResult) =
             ApiValidationResult(isValid && other.isValid,validationDetails + other.validationDetails)
-    fun toJsonBytes(objectMapper: ObjectMapper): Optional<ByteArray> = try {
-        Optional.of(objectMapper.writeValueAsBytes(this))
+    fun toJsonProblemDetails(status: Int, objectMapper: ObjectMapper): Optional<ByteArray> = try {
+        if (isValid) {
+            Optional.empty()
+        } else {
+            val invalidParams = validationDetails.map { v -> InvalidParams(v.property.orElse("N/A"), v.message) }
+            val details = JsonProblemDetails("validation-error", "Validation error", status, invalidParams)
+            Optional.of(objectMapper.writeValueAsBytes(details))
+        }
     } catch (e: JsonProcessingException) {
         Optional.empty()
     }
 }
+private data class InvalidParams(val name: String, val reason: String)
+private data class JsonProblemDetails(val type: String,
+                                      val title: String,
+                                      val status: Int,
+                                      val errors: List<InvalidParams>)
 
 internal val success = ApiValidationResult(true)
 
@@ -31,7 +50,7 @@ interface ApiRequestValidator {
 
 @Named @Singleton
 class ApiRequestBodyValidator
-@Inject constructor(private val validators: Set<ApiDataValidator>): ApiRequestValidator {
+@Inject constructor(private val validators: Set<ApiDataValidator<*>>): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult = when (requestContext.method) {
         "GET", "HEAD", "OPTIONS", "DELETE" -> success // nobody
         else -> {
@@ -53,3 +72,61 @@ class ApiRequestBodyValidator
         }
     }
 }
+
+@Named @Singleton
+class ApiRequestParameterValidator
+@Inject constructor(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
+    override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult =
+            operation.parameters
+                    ?.map { p -> validate(requestContext, p) }
+                    ?.fold(success) { a, b -> a.merge(b) }
+                    ?: success
+    private fun validate(requestContext: ApiContextAwareRequestContext, parameter: Parameter) = when (parameter.`in`) {
+        "header" -> validateHeader(requestContext, parameter)
+        "query" -> validateQuery(requestContext, parameter)
+        "path" -> validatePath(requestContext, parameter)
+        else -> success
+    }
+
+    // TODO somehow we want to do this as well
+    private fun validatePath(requestContext: ApiContextAwareRequestContext, parameter: Parameter): ApiValidationResult = success
+
+    private fun validateQuery(requestContext: ApiContextAwareRequestContext, parameter: Parameter): ApiValidationResult =
+            validateParameterList(parameter, requestContext.queryParameters.getOrDefault(parameter.name, listOf()), "Query parameter '${parameter.name}' is required")
+
+    private fun validateHeader(requestContext: ApiContextAwareRequestContext, parameter: Parameter): ApiValidationResult =
+            validateParameterList(parameter, requestContext.headers.getOrDefault(parameter.name, listOf()), "Header '${parameter.name}' is required")
+
+    private fun validateParameterList(parameter: Parameter, values: List<String?>, s: String): ApiValidationResult =
+            when {
+                values.isEmpty() && !parameter.required -> success
+                values.isEmpty() && parameter.required -> failedResult(s, parameter.name)
+                else -> values.map { v -> convertToJsonNode(v, parameter.schema) }
+                        .flatMap { v ->
+                            validators.filter { validator -> validator.supports(parameter.schema) }
+                                    .map { validator -> validator.checkSchema(v, parameter.name, parameter.schema) }
+                        }
+                        .fold(success) { a, b -> a.merge(b) }
+            }
+}
+
+private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
+    when (schema.specVersion) {
+        SpecVersion.V30 -> when (schema.type) {
+            "integer" -> try {
+                JsonNodeFactory.instance.numberNode(BigInteger(s))
+            } catch (e: Exception) {
+                JsonNodeFactory.instance.textNode(s)
+            }
+            "number" -> try {
+                JsonNodeFactory.instance.numberNode(BigDecimal(s))
+            } catch (e: Exception) {
+                JsonNodeFactory.instance.textNode(s)
+            }
+            else -> JsonNodeFactory.instance.textNode(s)
+        }
+        // TODO OAS 3.1.x
+        else -> JsonNodeFactory.instance.textNode(s)
+    }
+} ?: JsonNodeFactory.instance.nullNode()
+

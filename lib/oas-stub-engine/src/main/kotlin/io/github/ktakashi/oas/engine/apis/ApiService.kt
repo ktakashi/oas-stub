@@ -116,9 +116,9 @@ internal fun adjustBasePath(path: String, api: OpenAPI): Optional<String> {
 private val QUERY_PARAM_PATTERN = Regex("([^&=]+)(=?)([^&]+)?");
 private fun parseQueryParameters(s: String?): Map<String, List<String?>> = s?.let {
     QUERY_PARAM_PATTERN.findAll(it).map { m ->
-        val n = m.groupValues[0]
-        val eq = m.groups[1]?.value
-        n to (m.groups[2]?.value ?: if (!eq.isNullOrEmpty()) "" else null)
+        val n = m.groupValues[1]
+        val eq = m.groups[2]?.value
+        n to (m.groups[3]?.value ?: if (!eq.isNullOrEmpty()) "" else null)
     }
 }?.groupBy({ p -> p.first }, { p -> p.second }) ?: mapOf()
 private fun readHeaders(request: HttpServletRequest): Map<String, List<String>> = request.headerNames.asSequence().map { n ->
