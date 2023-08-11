@@ -13,8 +13,8 @@ import io.github.ktakashi.oas.models.CreateApiRequest
 import io.github.ktakashi.oas.readContent
 import io.restassured.RestAssured.given
 import io.restassured.http.ContentType
-import java.lang.IllegalStateException
 import org.hamcrest.Matchers.equalTo
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -58,7 +58,11 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 .path(path)
                 .build()
                 .toUri()
-        val spec = given().contentType(contentType)
+        val spec = given().also {
+            if (contentType.isNotBlank()) {
+                it.contentType(contentType)
+            }
+        }
         val body = maybeContent(content)
         testContext.response = when (method.uppercase()) {
             "GET" -> spec.get(uri)
@@ -76,9 +80,21 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         testContext.response?.then()?.statusCode(status) ?: throw IllegalStateException("No response")
     }
 
+    @Then("I get response header of {string} with {string}")
+    fun `I get response header of {string} with {string}`(name: String, value: String) {
+        val matcher = if ("<null>" != value) equalTo(value) else equalTo(null)
+        testContext.response?.then()?.header(name, matcher) ?: throw IllegalStateException("no response")
+    }
+
     @Then("I get response JSON satisfies this {string}")
-    fun `I get this {string}`(condition: String) {
-        val (path, value) = condition.lastIndexOf('=').let { if (it < 0) condition to "" else condition.substring(0, it) to condition.substring(it + 1) }
-        testContext.response?.then()?.body(path, equalTo(value)) ?: throw IllegalStateException("No response")
+    fun `I get response JSON satisfies this {string}`(condition: String) {
+        if ("<null>" == condition) {
+            val body = testContext.response?.body() ?: throw IllegalStateException("no response")
+            val r = body.asByteArray()
+            assertEquals(0, r.size)
+        } else {
+            val (path, value) = condition.lastIndexOf('=').let { if (it < 0) condition to "" else condition.substring(0, it) to condition.substring(it + 1) }
+            testContext.response?.then()?.body(path, equalTo(value)) ?: throw IllegalStateException("No response")
+        }
     }
 }

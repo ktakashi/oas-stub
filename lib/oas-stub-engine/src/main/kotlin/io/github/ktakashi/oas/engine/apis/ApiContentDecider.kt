@@ -7,11 +7,13 @@ import io.swagger.v3.oas.models.media.Content
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
+import java.util.Optional
 import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
 
 sealed interface ContentDecision
-data class ContentFound(val status: Int, val content: Content): ContentDecision
+// 201 can be defined without any content, so content can be optional
+data class ContentFound(val status: Int, val content: Optional<Content>): ContentDecision
 data class ContentNotFound(val responseContext: ResponseContext): ContentDecision
 
 private val logger = LoggerFactory.getLogger(ApiContentDecider::class.java)
@@ -29,7 +31,8 @@ class ApiContentDecider
                 .filter { k -> "default" != k && Integer.parseInt(k) >= baseStatus }
                 .minWithOrNull { k0, k1 -> k0.compareTo(k1) }
                 ?.let { status ->
-                    operation.responses[status]?.let { ContentFound(status.toInt(), it.content) }
+                    operation.responses[status]
+                            ?.let { ContentFound(status.toInt(), Optional.ofNullable(it.content)) }
                             ?: ContentNotFound(ResponseContext(status.toInt(), result.toJsonBytes(objectMapper)))
                 } ?: ContentNotFound(ResponseContext(HttpStatus.SC_BAD_REQUEST, result.toJsonBytes(objectMapper)))
     }

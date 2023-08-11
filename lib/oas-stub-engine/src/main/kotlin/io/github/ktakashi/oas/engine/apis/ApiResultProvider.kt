@@ -18,7 +18,8 @@ class ApiResultProvider
                     private val populators: Set<ApiDataPopulator>,
                     private val anyPopulators: Set<ApiAnyDataPopulator>) {
     fun provideResult(operation: Operation, requestContext: ApiContextAwareRequestContext): ResponseContext = when (val decision = contentDecider.decideContent(requestContext, operation)) {
-        is ContentFound -> toResponseContext(requestContext, decision.status, decision.content)
+        is ContentFound -> decision.content.map { content -> toResponseContext(requestContext, decision.status, content) }
+                .orElseGet { ResponseContext(decision.status) }
         is ContentNotFound -> decision.responseContext
     }
 
