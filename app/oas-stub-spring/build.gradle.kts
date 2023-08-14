@@ -7,6 +7,9 @@ description = "OAS stub Spring Boot application"
 val springBootVersion by extra(property("spring-boot.version") as String)
 
 dependencyManagement {
+    dependencies {
+        dependency("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+    }
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
         mavenBom("io.projectreactor:reactor-bom:2022.0.9")
@@ -25,6 +28,8 @@ dependencies {
     implementation("io.projectreactor:reactor-core")
     implementation("jakarta.servlet:jakarta.servlet-api")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("io.swagger.core.v3:swagger-annotations")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")

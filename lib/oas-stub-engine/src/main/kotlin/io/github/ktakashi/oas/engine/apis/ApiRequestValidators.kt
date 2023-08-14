@@ -113,8 +113,8 @@ class ApiRequestParameterValidator
 
     private fun validateParameterList(parameter: Parameter, values: List<String?>, s: String): ApiValidationResult =
             when {
-                values.isEmpty() && !parameter.required -> success
-                values.isEmpty() && parameter.required -> failedResult(s, parameter.name)
+                values.isEmpty() && parameter.required == false -> success
+                values.isEmpty() && parameter.required == true -> failedResult(s, parameter.name)
                 else -> validateParameterList(parameter, values)
             }
 

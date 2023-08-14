@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
-class ApiServiceTest {
+class ApiServicesTest {
     private val parsingService = ParsingService()
     private val openApi = parsingService.parse(readStringContent("/schema/validation_3.0.3.yaml")).orElseThrow()
     @ParameterizedTest

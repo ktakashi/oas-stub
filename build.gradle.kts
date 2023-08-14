@@ -8,6 +8,7 @@ plugins {
 
 val kotlinVersion = property("kotlin.version")
 val servletApiVersion by extra("6.0.0")
+val swaggerCoreVersion by extra("2.2.15")
 val junitVersion by extra("5.9.3")
 
 description = "OAS stub"
@@ -39,6 +40,10 @@ subprojects {
             dependency("jakarta.xml.bind:jakarta.xml.bind-api:4.0.0")
             dependency("jakarta.validation:jakarta.validation-api:3.0.2")
             dependency("io.swagger.parser.v3:swagger-parser:2.1.16")
+            dependency("io.swagger.core.v3:swagger-core-jakarta:${swaggerCoreVersion}")
+            dependency("io.swagger.core.v3:swagger-annotations:${swaggerCoreVersion}")
+            dependency("io.swagger.core.v3:swagger-annotations-jakarta:${swaggerCoreVersion}")
+
             dependency("com.github.ben-manes.caffeine:caffeine:3.1.7")
             dependency("org.apache.groovy:groovy:4.0.13")
             dependency("io.rest-assured:rest-assured:5.3.1")

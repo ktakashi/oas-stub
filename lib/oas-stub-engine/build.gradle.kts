@@ -15,9 +15,12 @@ dependencies {
     implementation("jakarta.ws.rs:jakarta.ws.rs-api")
     implementation("org.glassfish.jersey.core:jersey-client:3.1.3")
     implementation("jakarta.mail:jakarta.mail-api")
-    implementation("jakarta.xml.bind:jakarta.xml.bind-api")
     implementation("jakarta.validation:jakarta.validation-api")
-    implementation("io.swagger.parser.v3:swagger-parser")
+    implementation("io.swagger.core.v3:swagger-annotations-jakarta")
+    implementation("io.swagger.parser.v3:swagger-parser") {
+        exclude(group = "io.swagger.core.v3", module = "swagger-core")
+    }
+    implementation("io.swagger.core.v3:swagger-core-jakarta")
     implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("org.apache.groovy:groovy")
     implementation("org.slf4j:slf4j-api")

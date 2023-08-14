@@ -25,23 +25,24 @@ class StorageService
             .build { k -> persistentStorage.getApiDefinition(k) }
     private val openApiCache: LoadingCache<String, Optional<OpenAPI>> = Caffeine.newBuilder()
             .build { k -> apiDefinitions[k]
-                    .map(ApiDefinitions::api)
+                    .map(ApiDefinitions::specification)
                     .flatMap(parsingService::parse)
             }
 
-    fun saveApiDefinitions(name: String, definitions: ApiDefinitions) {
+    fun saveApiDefinitions(name: String, definitions: ApiDefinitions): Boolean {
         persistentStorage.setApiDefinition(name, definitions)
         apiDefinitions.invalidate(name)
         openApiCache.invalidate(name)
+        return true
     }
 
     fun getApiDefinitions(name: String): Optional<ApiDefinitions> = apiDefinitions[name]
     fun getOpenApi(name: String): Optional<OpenAPI> = openApiCache[name]
 
     fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = apiDefinitions[name]
-            .flatMap { v -> apiPathService.findMatchingPathValue(path, v.apiConfigurations) }
-            .flatMap { v -> v.plugin }
+            .flatMap { v -> apiPathService.findMatchingPathValue(path, v.configurations) }
+            .map { v -> v.plugin }
 
-    fun getApiData(name: String): Optional<Map<String, Any>> = apiDefinitions[name].map { v -> v.apiData }
+    fun getApiData(name: String): Optional<Map<String, Any>> = apiDefinitions[name].map { v -> v.data }
 
 }

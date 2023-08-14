@@ -9,6 +9,7 @@ import io.swagger.v3.parser.core.models.ParseOptions
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import java.util.Optional
+import org.slf4j.LoggerFactory
 
 private val parseOption = ParseOptions().apply {
     isResolve = true
@@ -20,12 +21,21 @@ private enum class OasVersions(val provider: () -> SwaggerParserExtension) {
     V2({ SwaggerConverter() })
 }
 
+private val logger = LoggerFactory.getLogger(ParsingService::class.java)
+
 @Named @Singleton
 class ParsingService {
     fun parse(content: String): Optional<OpenAPI> =
         Optional.ofNullable(OasVersions.entries
                 .asSequence()
-                .map { v -> v.provider().readContents(content, null, parseOption)?.openAPI }
+                .map { v ->
+                    try {
+                        v.provider().readContents(content, null, parseOption)?.openAPI
+                    } catch (e: Throwable) {
+                        logger.error("Failed to parse", e)
+                        null
+                    }
+                }
                 .firstOrNull { v -> v != null })
 
     fun sanitize(content: String): Optional<String> = parse(content).map(Yaml::pretty)

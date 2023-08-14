@@ -1,7 +1,7 @@
 package io.github.ktakashi.oas.servlets
 
 import io.github.ktakashi.oas.engine.apis.ApiContext
-import io.github.ktakashi.oas.engine.apis.ApiService
+import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import jakarta.servlet.AsyncContext
 import jakarta.servlet.AsyncEvent
 import jakarta.servlet.AsyncListener
@@ -15,13 +15,13 @@ import org.springframework.http.HttpStatus
 
 private val logger = LoggerFactory.getLogger(OasDispatchServlet::class.java)
 
-class OasDispatchServlet(private val apiService: ApiService): HttpServlet() {
+class OasDispatchServlet(private val apiExecutionService: ApiExecutionService): HttpServlet() {
 
     override fun service(req: HttpServletRequest, res: HttpServletResponse) {
         val asyncContext = req.startAsync()
         val listener = OasDispatchServletAsyncListener()
         asyncContext.addListener(listener)
-        CompletableFuture.supplyAsync { apiService.getApiContext(req) }
+        CompletableFuture.supplyAsync { apiExecutionService.getApiContext(req) }
                 .thenComposeAsync { apiContext ->
                     if (listener.isCompleted) {
                         CompletableFuture.completedFuture(asyncContext)
@@ -43,7 +43,7 @@ class OasDispatchServlet(private val apiService: ApiService): HttpServlet() {
 
     private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletableFuture<AsyncContext> {
         val response = asyncContext.response as HttpServletResponse
-        return CompletableFuture.supplyAsync { apiService.executeApi(apiContext, req, response) }
+        return CompletableFuture.supplyAsync { apiExecutionService.executeApi(apiContext, req, response) }
                 .thenApply { _ -> asyncContext }
     }
 }

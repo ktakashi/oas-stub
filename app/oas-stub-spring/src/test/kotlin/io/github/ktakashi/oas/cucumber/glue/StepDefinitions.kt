@@ -43,12 +43,23 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(oasApplicationServletProperties.adminPrefix).pathSegment(context).build().toUri()
         val response = given().contentType(ContentType.JSON)
-                .body(CreateApiRequest(api = readContent(testContext.apiDefinitionPath)))
+                .body(CreateApiRequest(specification = readContent(testContext.apiDefinitionPath)))
                 .post(uri)
         testContext.apiName = context
         testContext.response = response
         response.then().statusCode(201)
                 .and().header("Location", "/${context}")
+    }
+
+    @Then("I update API definition with {string} via {string}")
+    fun `I update {string} API definition with {string} via {string}`(value: String, path: String) {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+                .path(oasApplicationServletProperties.adminPrefix).path(path).build().toUri()
+        val response = given().contentType(ContentType.JSON)
+                .body(value)
+                .put(uri)
+        testContext.response = response
+        response.then().statusCode(200)
     }
 
     @And("I {string} to {string} with {string} as {string}")

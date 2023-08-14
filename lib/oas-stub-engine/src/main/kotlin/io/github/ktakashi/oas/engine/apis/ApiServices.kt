@@ -1,8 +1,10 @@
 package io.github.ktakashi.oas.engine.apis
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
@@ -23,20 +25,87 @@ import org.glassfish.jersey.uri.UriTemplate
 
 data class ApiContext(val context: String, val method: String, val apiDefinition: OpenAPI)
 
+interface ApiContextService {
+    /**
+     * Retrieves [ApiContext] from the [request]
+     *
+     * If context is not found, then the result would be empty
+     */
+    fun getApiContext(request: HttpServletRequest): Optional<ApiContext>
+}
+
+/**
+ * The API execution service.
+ *
+ * The service is targeted to use in an HTTP servlet, the below describes how to
+ * execute an API.
+ *
+ * ```java
+ * public class MyServlet extends HttpServlet {
+ *     // The service is meant to be used via DI, if you want to
+ *     // instantiate manually, use DefaultApiService
+ *     private ApiExecutionService apiExecutionService = // initiation
+ *
+ *     @Override
+ *     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+ *         try {
+ *             apiExecutionService.getApiContext(req)
+ *               .ifPresentOrElse(context -> apiExecutionService.executeApi(context, req, resp),
+ *                   () -> resp.setStatus(404));
+ *         } catch (Exception e) {
+ *             resp.setStatus(500);
+ *         }
+ *     }
+ * }
+ * ```
+ */
+interface ApiExecutionService: ApiContextService {
+    /**
+     * Executes the given [apiContext]
+     *
+     * The returning [ResponseContext] is only for debugging purpose. The result
+     * is emitted to the [response] after the method call.
+     */
+    fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext
+}
+
+/**
+ * The API registration interface
+ *
+ * This interface should be used to implement admin APIs, e.g. REST controllers.
+ */
+interface ApiRegistrationService: ApiContextService {
+    /**
+     * Retrieves the [ApiDefinitions] associated to the [name]
+     */
+    fun getApiDefinitions(name: String): Optional<ApiDefinitions>
+
+    /**
+     * Saves the [apiDefinitions] with association to the [name]
+     */
+    fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean
+}
+
 @Named @Singleton
-class ApiService
+class DefaultApiService
 @Inject constructor(private val storageService: StorageService,
+                    private val parsingService: ParsingService,
                     private val apiPathService: ApiPathService,
                     private val apiRequestPathVariableValidator: ApiRequestPathVariableValidator,
                     private val apiResultProvider: ApiResultProvider,
-                    private val pluginService: PluginService) {
-    fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
+                    private val pluginService: PluginService): ApiExecutionService, ApiRegistrationService {
+    override fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
             apiPathService.extractApplicationName(request.requestURI).flatMap { name ->
                 storageService.getOpenApi(name)
                         .map { def -> ApiContext(apiDefinition = def, context = name, method = request.method) }
             }
 
-    fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {
+    override fun getApiDefinitions(name: String): Optional<ApiDefinitions> = storageService.getApiDefinitions(name)
+    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = parsingService.sanitize(apiDefinitions.specification)
+            .map { v -> storageService.saveApiDefinitions(name, apiDefinitions.updateApi(v)) }
+            .orElse(false)
+
+    override fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {
         val appName = apiContext.context
         val path = apiPathService.extractApiPath(appName, request.requestURI)
         val requestContext = makeRequestContext(apiContext, path, request, response)
@@ -51,20 +120,24 @@ class ApiService
         }
         // TODO failure
 
-        val responseContext = adjustedPath.flatMap { v ->
-            apiPathService.findMatchingPath(v, apiContext.apiDefinition.paths)
-                    .flatMap { p -> apiRequestPathVariableValidator.validate(v, p, operation.get()) }
-        }.orElseGet { apiResultProvider.provideResult(operation.get(), requestContext) }
+        val responseContext = if (requestContext.skipValidation) {
+            apiResultProvider.provideResult(operation.get(), requestContext)
+        } else {
+            adjustedPath.flatMap { v ->
+                apiPathService.findMatchingPath(v, apiContext.apiDefinition.paths)
+                        .flatMap { p -> apiRequestPathVariableValidator.validate(v, p, operation.get()) }
+            }.orElseGet { apiResultProvider.provideResult(operation.get(), requestContext) }
+        }
         return emitResponse(response, requestContext, responseContext)
     }
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
             ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path,
                     apiOptions = storageService.getApiDefinitions(apiContext.context)
-                            .map { d ->  apiPathService.findMatchingPathValue(path, d.apiConfigurations)
-                                    .map { o -> o.apiOptions }
-                                    .map { o -> o.merge(d.apiOptions) }
-                                    .orElseGet { d.apiOptions }}
+                            .map { d ->  apiPathService.findMatchingPathValue(path, d.configurations)
+                                    .map { o -> o.options }
+                                    .map { o -> o.merge(d.options) }
+                                    .orElseGet { d.options }}
                             .orElseGet { ApiOptions() },
                     content = readContent(request),
                     contentType = Optional.ofNullable(request.contentType),
@@ -92,7 +165,7 @@ class ApiRequestPathVariableValidator
     fun validate(path: String, template: String, operation: Operation): Optional<ResponseContext> {
         val uriTemplate = UriTemplate(template)
         val matcher = uriTemplate.pattern.match(path)
-        val result = uriTemplate.templateVariables.mapIndexed { i, name ->
+        val result = uriTemplate.templateVariables.flatMapIndexed { i, name ->
             operation.parameters.map { parameter ->
                 when (parameter.`in`) {
                     "path" ->
@@ -102,7 +175,7 @@ class ApiRequestPathVariableValidator
                         } else success
                     else -> success
                 }
-            }.fold(success) { a, b -> a.merge(b) }
+            }
         }.fold(success) { a, b -> a.merge(b) }
         if (result.isValid) {
             return Optional.empty()
@@ -194,4 +267,7 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          override val rawResponse: HttpServletResponse): RequestContext {
     override val applicationName
         get() = apiContext.context
+
+    val skipValidation
+        get() = apiOptions.shouldValidate == false
 }
