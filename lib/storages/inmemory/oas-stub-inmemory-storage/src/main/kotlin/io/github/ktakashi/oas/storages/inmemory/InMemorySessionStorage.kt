@@ -27,8 +27,14 @@ class InMemoryPersistentStorage: PersistentStorage {
     private val storage = ConcurrentHashMap<String, ApiDefinitions>()
     override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = Optional.ofNullable(storage[applicationName])
 
-    override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions) {
+    override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean {
         storage[applicationName] = apiDefinitions
+        return true
+    }
+
+    override fun deleteApiDefinition(name: String): Boolean {
+        storage.remove(name)
+        return true
     }
 
 }

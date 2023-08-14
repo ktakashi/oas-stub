@@ -36,3 +36,15 @@ Feature: Create APIs from OAS file
       | /schema/v2/uber.yaml | GET    | /v1/products?latitude=1.0&longitude=1.5&server_token=token |         |             | 200    | application/json    | [0].product_id=string |
       | /schema/v2/uber.yaml | GET    | /v1/products?latitude=1.0&longitude=1.5                    |         |             | 401    | application/json    | message=string        |
       | /schema/v2/uber.yaml | GET    | /v1/me                                                     |         |             | 200    | application/json    | first_name=string     |
+
+  @deletion
+  Scenario Outline: Delete Stub APIs
+    Given this API definition '<schema>'
+    When I create 'petstore' API definition
+    Then I delete the API definition
+    And I '<method>' to '<path>' with '' as ''
+    Then I get this 404
+    @v3 @petstore
+    Examples:
+      | schema                   | method | path             |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets         |

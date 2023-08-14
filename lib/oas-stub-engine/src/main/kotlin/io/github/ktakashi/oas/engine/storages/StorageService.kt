@@ -29,11 +29,14 @@ class StorageService
                     .flatMap(parsingService::parse)
             }
 
-    fun saveApiDefinitions(name: String, definitions: ApiDefinitions): Boolean {
-        persistentStorage.setApiDefinition(name, definitions)
+    fun saveApiDefinitions(name: String, definitions: ApiDefinitions): Boolean = persistentStorage.setApiDefinition(name, definitions).also {
         apiDefinitions.invalidate(name)
         openApiCache.invalidate(name)
-        return true
+    }
+
+    fun deleteApiDefinitions(name: String): Boolean = persistentStorage.deleteApiDefinition(name).also {
+        apiDefinitions.invalidate(name)
+        openApiCache.invalidate(name)
     }
 
     fun getApiDefinitions(name: String): Optional<ApiDefinitions> = apiDefinitions[name]

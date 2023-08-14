@@ -84,6 +84,11 @@ interface ApiRegistrationService: ApiContextService {
      * Saves the [apiDefinitions] with association to the [name]
      */
     fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean
+
+    /**
+     * Deletes API definition from the [name]
+     */
+    fun deleteApiDefinitions(name: String): Boolean
 }
 
 @Named @Singleton
@@ -109,6 +114,8 @@ class DefaultApiService
             .map { openApi -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi)) }
             .map { def -> storageService.saveApiDefinitions(name, def) }
             .orElse(false)
+
+    override fun deleteApiDefinitions(name: String): Boolean = storageService.deleteApiDefinitions(name)
 
     override fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {
         val appName = apiContext.context

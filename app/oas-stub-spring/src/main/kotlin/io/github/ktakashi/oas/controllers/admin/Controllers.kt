@@ -18,6 +18,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -43,11 +44,21 @@ class ContextController(private val apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "201", description = "The API is created")
     @ApiResponse(responseCode = "422", description = "The uploaded OAS specification is not parsable", content = [Content(schema = Schema())])
     @PostMapping(path = [ "/{context}"], consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun createApi(@PathVariable("context") context: String, @RequestBody request: CreateApiRequest) =
+    fun postApi(@PathVariable("context") context: String, @RequestBody request: CreateApiRequest) =
             Mono.defer { Mono.just(apiRegistrationService.saveApiDefinitions(context, request)) }
                     .filter { it }
                     .map { ResponseEntity.created(URI.create("/$context")).body(request) }
                     .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.unprocessableEntity().build()) })
+
+    @Operation(summary = "Delete API definition", description = "Deletes an API definition of the {context}")
+    @ApiResponse(responseCode = "204", description = "The API is deleted", content = [Content(schema = Schema())])
+    @ApiResponse(responseCode = "04", description = "The {context} does not exist", content = [Content(schema = Schema())])
+    @DeleteMapping(path = [ "/{context}"])
+    fun deleteApi(@PathVariable("context") context: String) =
+            Mono.defer { Mono.just(apiRegistrationService.deleteApiDefinitions(context)) }
+                    .filter { it }
+                    .map { ResponseEntity.noContent().build<Unit>() }
+                    .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 
     @Operation(summary = "Update API options", description = "Updates an API options of the {context}")
     @ApiResponse(responseCode = "200", description = "The API is updated")
@@ -67,8 +78,12 @@ class ContextController(private val apiRegistrationService: ApiRegistrationServi
 
 @Admin
 @RestController
+@Tag(name = "Single API", description = "Single API CRUD")
 class ConfigurationsController(private val apiRegistrationService: ApiRegistrationService) {
 
+    @Operation(summary = "Update API plugin configuration", description = "Update plugin of the API")
+    @ApiResponse(responseCode = "200", description = "The API is updated")
+    @ApiResponse(responseCode = "404", description = "Specified context or API is not found", content = [Content(schema = Schema())])
     @PutMapping(path = [ "/{context}/configurations/plugins/groovy"], consumes = [MediaType.APPLICATION_OCTET_STREAM_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun putPlugin(@PathVariable("context") context: String,
                   @RequestParam(name = "api") api: URI,
@@ -82,5 +97,19 @@ class ConfigurationsController(private val apiRegistrationService: ApiRegistrati
                     }
                     .flatMap { v -> Mono.justOrEmpty(if (apiRegistrationService.saveApiDefinitions(context, v)) v else null) }
                     .map { ResponseEntity.ok().body(it) }
+                    .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
+
+    @Operation(summary = "Delete API plugin configuration", description = "Deletes the plugin of the API if exists")
+    @ApiResponse(responseCode = "204", description = "The API plugin is deleted", content = [Content(schema = Schema())])
+    @ApiResponse(responseCode = "404", description = "Specified context or API (plugin) is not found", content = [Content(schema = Schema())])
+    @DeleteMapping(path = [ "/{context}/configurations/plugins/groovy"])
+    fun deletePlugin(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) =
+            Mono.defer { Mono.justOrEmpty(apiRegistrationService.getApiDefinitions(context)) }
+                    .flatMap { v ->
+                        val decodedApi = URLDecoder.decode(api.toString(), StandardCharsets.UTF_8)
+                        Mono.justOrEmpty(v.configurations[decodedApi]?.updatePlugin(null)?.let { v.updateApiConfiguration(decodedApi, it) })
+                    }
+                    .flatMap { v -> Mono.justOrEmpty(if (apiRegistrationService.saveApiDefinitions(context, v)) v else null) }
+                    .map { ResponseEntity.noContent().build<Unit>() }
                     .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 }

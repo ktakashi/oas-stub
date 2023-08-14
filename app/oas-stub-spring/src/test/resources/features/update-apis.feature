@@ -5,8 +5,9 @@ Feature: Update APIs
     Given this API definition '<schema>'
     When I create '<context>' API definition
     And I update API definition with '{"shouldValidate": false}' via '/<context>/options' of content type 'application/json'
+    Then I get this 200
     Then I '<method>' to '<path>' with '<content>' as '<contentType>'
-    Then I get this <status>
+    And I get this <status>
     @v2 @uber
     Examples:
       | schema               | context | method | path                                                       | content | contentType | status |

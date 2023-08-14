@@ -17,8 +17,6 @@ import io.restassured.filter.log.RequestLoggingFilter
 import io.restassured.filter.log.ResponseLoggingFilter
 import io.restassured.http.ContentType
 import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Value
@@ -52,7 +50,8 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @When("I create {string} API definition")
     fun `I create {string} API definition`(context: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix).pathSegment(context).build().toUri()
+                .path(oasApplicationServletProperties.adminPrefix).pathSegment(context)
+                .build().toUri()
         val response = given().contentType(ContentType.JSON)
                 .body(CreateApiRequest(specification = readContent(testContext.apiDefinitionPath)))
                 .post(uri)
@@ -62,15 +61,21 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 .and().header("Location", "/${context}")
     }
 
+    @When("I delete the API definition")
+    fun `I delete {string} API definition`() {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+                .path(oasApplicationServletProperties.adminPrefix).pathSegment(testContext.apiName)
+                .build().toUri()
+        testContext.response = given().delete(uri)
+    }
+
     @And("I update API definition with {string} via {string} of content type {string}")
     fun `I update {string} API definition with {string} via {string}`(value: String, path: String, contentType: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(oasApplicationServletProperties.adminPrefix).path(path).build().toUri()
-        val response = given().contentType(contentType)
+        testContext.response = given().contentType(contentType)
                 .body(maybeContent(value))
                 .put(uri)
-        testContext.response = response
-        response.then().statusCode(200)
     }
 
     @And("I update API {string} with {string} via {string} of content type {string}")
@@ -81,10 +86,20 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 .path(path)
                 .queryParam("api", api)
                 .build().toUri()
-        val response = given().contentType(contentType)
+        testContext.response = given().contentType(contentType)
                 .body(maybeContent(value))
                 .put(uri)
-        testContext.response = response
+    }
+
+    @And("I delete API {string} via {string}")
+    fun `I delete API {string} via {string}`(api: String, path: String) {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+                .path(oasApplicationServletProperties.adminPrefix)
+                .pathSegment(testContext.apiName, "configurations")
+                .path(path)
+                .queryParam("api", api)
+                .build().toUri()
+        testContext.response = given().delete(uri)
     }
 
     @And("I {string} to {string} with {string} as {string}")
