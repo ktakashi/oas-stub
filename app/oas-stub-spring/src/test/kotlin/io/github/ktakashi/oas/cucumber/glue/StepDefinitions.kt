@@ -52,8 +52,8 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(oasApplicationServletProperties.adminPrefix).pathSegment(context)
                 .build().toUri()
-        val response = given().contentType(ContentType.JSON)
-                .body(CreateApiRequest(specification = readContent(testContext.apiDefinitionPath)))
+        val response = given().contentType(ContentType.TEXT)
+                .body(readContent(testContext.apiDefinitionPath))
                 .post(uri)
         testContext.apiName = context
         testContext.response = response
