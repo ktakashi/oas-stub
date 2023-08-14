@@ -9,15 +9,25 @@ import org.junit.jupiter.params.provider.CsvSource
 
 class ApiServicesTest {
     private val parsingService = ParsingService()
-    private val openApi = parsingService.parse(readStringContent("/schema/validation_3.0.3.yaml")).orElseThrow()
+
     @ParameterizedTest
     @CsvSource(value = [
-        "/object,/object",
-        "/v1/object,/object"
+        "/schema/validation_3.0.3.yaml,/object,/object",
+        "/schema/validation_3.0.3.yaml,/v1/object,/object",
+        "/schema/validation_3.0.3.yaml,/v1/objects,/objects",
+        "/schema/validation_3.0.3.yaml,/v1/object/1,/object/1",
+        "/schema/servers_test0_3.0.3.yaml,/object,/object",
+        "/schema/servers_test0_3.0.3.yaml,/v2/beta/object,/object",
+        "/schema/servers_test0_3.0.3.yaml,/v3/object,/v3/object",
     ])
-    fun adjustBasePathTest(path: String, expected: String) {
+    fun adjustBasePathTest(schema: String, path: String, expected: String) {
+        val openApi = parsingService.parse(readStringContent(schema)).orElseThrow()
         val r = adjustBasePath(path, openApi)
-        assertTrue(r.isPresent)
-        assertEquals(expected, r.get())
+        if ("<null>" == expected) {
+            assertTrue(r.isEmpty)
+        } else {
+            assertTrue(r.isPresent)
+            assertEquals(expected, r.get())
+        }
     }
 }

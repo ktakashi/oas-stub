@@ -3,8 +3,9 @@ info:
   title: Validation test 3.0.x
   version: 0.0.1
 servers:
-  - url: http://localhost/
+  - url: http://localhost
   - url: http://localhost/v1
+  - url: http://localhost/v2/beta
 paths:
   /object:
     post:
@@ -13,15 +14,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/Object"
-      responses:
-        '200':
-          description: object response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Object"
-  /object/{id}:
-    get:
       responses:
         '200':
           description: object response

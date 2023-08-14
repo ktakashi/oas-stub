@@ -102,8 +102,10 @@ class DefaultApiService
 
     override fun getApiDefinitions(name: String): Optional<ApiDefinitions> = storageService.getApiDefinitions(name)
     override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = parsingService.parse(apiDefinitions.specification)
-            // TODO check valid path
-            // .filter { openApi -> apiDefinitions.configurations.keys.all { path -> apiPathService.findMatchingPath(path, openApi.paths).isPresent } }
+            .filter { openApi -> apiDefinitions.configurations.keys.all { path ->
+                adjustBasePath(path, openApi).map { p -> apiPathService.findMatchingPath(p, openApi.paths).isPresent }
+                        .orElse(false)
+            }}
             .map { openApi -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi)) }
             .map { def -> storageService.saveApiDefinitions(name, def) }
             .orElse(false)
@@ -205,24 +207,23 @@ private fun getOperation(item: PathItem, method: String): Optional<Operation> = 
 
 internal fun adjustBasePath(path: String, api: OpenAPI): Optional<String> {
     // servers may contain multiple URLs, so check all
-    val maybePath = api.servers.map { server ->
-        val serverUri = URI.create(server.url)
-        val basePath = serverUri.path
-        when {
-            basePath.isNullOrEmpty() -> null
-            // resolve will add servers of '/' path
-            basePath.isNotEmpty() && basePath != "/" -> {
-                // now the base path must always be subtracted
-                val index: Int = path.indexOf(basePath)
-                if (index < 0) {
-                    null
-                } else path.substring(basePath.length)
-            }
-            // '/' case, it must be there then
-            api.paths[path] != null -> path
-            else -> null
-        }
-    }.firstOrNull { v -> v != null }
+    val maybePath = api.servers.map { server -> URI.create(server.url).path }
+            .sortedDescending()
+            .map { basePath ->
+                when {
+                    basePath.isNullOrEmpty() -> path
+                    // resolve will add servers of '/' path
+                    basePath.isNotEmpty() && basePath != "/" -> {
+                        // now the base path must always be subtracted
+                        val index: Int = path.indexOf(basePath)
+                        if (index < 0) {
+                            null
+                        } else path.substring(basePath.length)
+                    }
+                    // '/' case, it must be there then
+                    else -> path
+                }
+            }.firstOrNull { v -> v != null }
     return Optional.ofNullable(maybePath)
 }
 

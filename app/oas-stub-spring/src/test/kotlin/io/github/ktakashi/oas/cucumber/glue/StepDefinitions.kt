@@ -85,7 +85,6 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 .body(maybeContent(value))
                 .put(uri)
         testContext.response = response
-        response.then().statusCode(200)
     }
 
     @And("I {string} to {string} with {string} as {string}")
