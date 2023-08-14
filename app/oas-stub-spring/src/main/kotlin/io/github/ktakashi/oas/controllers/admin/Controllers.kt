@@ -4,15 +4,18 @@ import io.github.ktakashi.oas.annotations.Admin
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
+import io.github.ktakashi.oas.model.PluginDefinition
+import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.models.CreateApiRequest
 import io.github.ktakashi.oas.models.PutApiOptionsRequest
-import io.github.ktakashi.oas.models.PutPluginRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.net.URI
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
 
@@ -63,17 +67,20 @@ class ContextController(private val apiRegistrationService: ApiRegistrationServi
 
 @Admin
 @RestController
-class PluginController(private val apiRegistrationService: ApiRegistrationService) {
+class ConfigurationsController(private val apiRegistrationService: ApiRegistrationService) {
 
-    @PutMapping(path = [ "/{context}/{path}/plugins"], consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping(path = [ "/{context}/configurations/plugins/groovy"], consumes = [MediaType.APPLICATION_OCTET_STREAM_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun putPlugin(@PathVariable("context") context: String,
-                  @PathVariable("path") path: URI,
-                  @RequestBody request: PutPluginRequest) =
+                  @RequestParam(name = "api") api: URI,
+                  @RequestBody request: String) =
             Mono.defer { Mono.justOrEmpty(apiRegistrationService.getApiDefinitions(context)) }
-                    .map { v -> v.updateApiConfiguration(path.toString(), v.configurations[path.toString()]
-                            ?.updatePlugin(request)
-                            ?: ApiConfiguration(plugin = request)) }
-                    .doOnNext { v -> apiRegistrationService.saveApiDefinitions(context, v) }
-                    .map { ResponseEntity.ok().build<Unit>() }
+                    .map { v -> PluginDefinition(type = PluginType.GROOVY, script = request).let {
+                        val decodedApi = URLDecoder.decode(api.toString(), StandardCharsets.UTF_8)
+                        v.updateApiConfiguration(decodedApi, v.configurations[decodedApi]
+                                ?.updatePlugin(it)
+                                ?: ApiConfiguration(plugin = it)) }
+                    }
+                    .flatMap { v -> Mono.justOrEmpty(if (apiRegistrationService.saveApiDefinitions(context, v)) v else null) }
+                    .map { ResponseEntity.ok().body(it) }
                     .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 }

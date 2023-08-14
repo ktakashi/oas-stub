@@ -11,9 +11,14 @@ import io.github.ktakashi.oas.cucumber.context.TestContext
 import io.github.ktakashi.oas.maybeContent
 import io.github.ktakashi.oas.models.CreateApiRequest
 import io.github.ktakashi.oas.readContent
+import io.restassured.RestAssured
 import io.restassured.RestAssured.given
+import io.restassured.filter.log.RequestLoggingFilter
+import io.restassured.filter.log.ResponseLoggingFilter
 import io.restassured.http.ContentType
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Value
@@ -27,6 +32,12 @@ import org.springframework.web.util.UriComponentsBuilder
 class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int,
                       private val oasApplicationServletProperties: OasApplicationServletProperties) {
     private lateinit var testContext: TestContext
+
+    companion object {
+        init {
+            RestAssured.filters(RequestLoggingFilter(), ResponseLoggingFilter())
+        }
+    }
 
     @Before
     fun setup() {
@@ -51,12 +62,27 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 .and().header("Location", "/${context}")
     }
 
-    @Then("I update API definition with {string} via {string}")
-    fun `I update {string} API definition with {string} via {string}`(value: String, path: String) {
+    @And("I update API definition with {string} via {string} of content type {string}")
+    fun `I update {string} API definition with {string} via {string}`(value: String, path: String, contentType: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(oasApplicationServletProperties.adminPrefix).path(path).build().toUri()
-        val response = given().contentType(ContentType.JSON)
-                .body(value)
+        val response = given().contentType(contentType)
+                .body(maybeContent(value))
+                .put(uri)
+        testContext.response = response
+        response.then().statusCode(200)
+    }
+
+    @And("I update API {string} with {string} via {string} of content type {string}")
+    fun `I update API {string} with {string} via {string}`(api: String, value: String, path: String, contentType: String) {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+                .path(oasApplicationServletProperties.adminPrefix)
+                .pathSegment(testContext.apiName, "configurations")
+                .path(path)
+                .queryParam("api", api)
+                .build().toUri()
+        val response = given().contentType(contentType)
+                .body(maybeContent(value))
                 .put(uri)
         testContext.response = response
         response.then().statusCode(200)
@@ -102,7 +128,6 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @Then("I get response JSON satisfies this {string}")
     fun `I get response JSON satisfies this {string}`(condition: String) {
-        println(testContext.response?.body?.asString())
         if ("<null>" == condition) {
             val body = testContext.response?.body() ?: throw IllegalStateException("no response")
             val r = body.asByteArray()

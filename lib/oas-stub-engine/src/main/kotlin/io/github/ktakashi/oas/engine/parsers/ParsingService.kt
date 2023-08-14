@@ -39,4 +39,6 @@ class ParsingService {
                 .firstOrNull { v -> v != null })
 
     fun sanitize(content: String): Optional<String> = parse(content).map(Yaml::pretty)
+
+    fun toYaml(openAPI: OpenAPI) = Yaml.pretty(openAPI)
 }

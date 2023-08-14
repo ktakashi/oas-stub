@@ -101,8 +101,11 @@ class DefaultApiService
             }
 
     override fun getApiDefinitions(name: String): Optional<ApiDefinitions> = storageService.getApiDefinitions(name)
-    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = parsingService.sanitize(apiDefinitions.specification)
-            .map { v -> storageService.saveApiDefinitions(name, apiDefinitions.updateApi(v)) }
+    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = parsingService.parse(apiDefinitions.specification)
+            // TODO check valid path
+            // .filter { openApi -> apiDefinitions.configurations.keys.all { path -> apiPathService.findMatchingPath(path, openApi.paths).isPresent } }
+            .map { openApi -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi)) }
+            .map { def -> storageService.saveApiDefinitions(name, def) }
             .orElse(false)
 
     override fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {

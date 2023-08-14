@@ -27,7 +27,7 @@ data class ApiDefinitions(val specification: String,
                           val options: ApiOptions = ApiOptions(),
                           val data: Map<String, Any> = mapOf()) {
 
-    fun updateApi(specification: String) =
+    fun updateSpecification(specification: String) =
             ApiDefinitions(specification, configurations, headers, options, data)
     fun updateApiConfiguration(path: String, configuration: ApiConfiguration) =
             ApiDefinitions(specification, configurations + mapOf(path to configuration),

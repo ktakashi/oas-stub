@@ -1,4 +1,4 @@
-Feature: Create API from OAS file
+Feature: Create APIs from OAS file
 
   @creation
   Scenario Outline: Create Stub APIs

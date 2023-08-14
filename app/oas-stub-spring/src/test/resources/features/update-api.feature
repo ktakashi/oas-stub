@@ -1,20 +1,18 @@
-Feature: Update APIs
+Feature: Update single API
 
-  @update @options
-  Scenario Outline: Update API options
+  @update @plugin @single
+  Scenario Outline: Update API plugin
     Given this API definition '<schema>'
     When I create '<context>' API definition
-    Then I update API definition with '{"shouldValidate": false}' via '/<context>/options'
-    Then I '<method>' to '<path>' with '<content>' as '<contentType>'
+    And I update API '<api>' with '<plugin>' via '/plugins/groovy' of content type 'application/octet-stream'
+    And I '<method>' to '<path>' with '<content>' as '<contentType>'
     Then I get this <status>
-    @v2 @uber
+    And I get response header of 'content-type' with '<responseContentType>'
+    And I get response JSON satisfies this '<response>'
+    @v3 @petstore
     Examples:
-      | schema               | context | method | path                                                       | content | contentType | status |
-      | /schema/v2/uber.yaml | uber    | GET    | /v1/products?latitude=1.0&longitude=1.5&server_token=token |         |             | 200    |
-      | /schema/v2/uber.yaml | uber    | GET    | /v1/products?latitude=a&longitude=1.5&server_token=token   |         |             | 200    |
-      | /schema/v2/uber.yaml | uber    | GET    | /v1/products?latitude=1.0&longitude=1.5                    |         |             | 200    |
-    @v3 @petstore-extended
-    Examples:
-      | schema                            | context  | method | path          | content        | contentType      | status |
-      | /schema/v3/petstore-extended.yaml | petstore | POST   | /v2/pets      | {"tag": "Cat"} | application/json | 200    |
-      | /schema/v3/petstore-extended.yaml | petstore | DELETE | /v2/pets/tama |                |                  | 204    |
+      | schema                   | context  | api              | plugin                                          | method | path       | content | contentType | status | responseContentType | response              |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets         | classpath:/plugins/PetStoreGetPetsPlugin.groovy | GET    | /v1/pets   |         |             | 200    | application/json    | $.size().toString()=1 |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/1 |         |             | 200    | application/json    | id.toString()=1       |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id.toString()=0       |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/{petId} | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id.toString()=1       |
