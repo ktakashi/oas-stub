@@ -44,7 +44,10 @@ class OasDispatchServlet(private val apiExecutionService: ApiExecutionService): 
     private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletableFuture<AsyncContext> {
         val response = asyncContext.response as HttpServletResponse
         return CompletableFuture.supplyAsync { apiExecutionService.executeApi(apiContext, req, response) }
-                .thenApply { _ -> asyncContext }
+                .thenApply { responseContext ->
+                    responseContext.emitResponse(response)
+                    asyncContext
+                }
     }
 }
 

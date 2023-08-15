@@ -1,22 +1,22 @@
 package io.github.ktakashi.oas.plugin.apis
 
+import jakarta.servlet.http.HttpServletResponse
 import java.util.Optional
 
-data class ResponseContext(val status: Int,
-                           val content: Optional<ByteArray> = Optional.empty(),
-                           val contentType: Optional<String> = Optional.empty(),
-                           val headers: Map<String, List<String>> = mapOf()) {
-    fun from() = ResponseContextBuilder(status, content, contentType, headers)
+interface ResponseContext {
+    val status: Int
+    val content: Optional<ByteArray>
+    val contentType: Optional<String>
+    val headers: Map<String, List<String>>
+    fun from(): ResponseContextBuilder
+    fun emitResponse(response: HttpServletResponse)
 
-    data class ResponseContextBuilder(val status: Int,
-                                      val content: Optional<ByteArray>,
-                                      val contentType: Optional<String>,
-                                      val headers: Map<String, List<String>>) {
-        fun status(status: Int) = ResponseContextBuilder(status, content, contentType, headers)
-        fun content(content: ByteArray?) = ResponseContextBuilder(status, Optional.ofNullable(content), contentType, headers)
-        fun contentType(contentType: String?) = ResponseContextBuilder(status, content, Optional.ofNullable(contentType), headers)
-        fun headers(headers: Map<String, List<String>>) = ResponseContextBuilder(status, content, contentType, headers)
+    interface ResponseContextBuilder {
+        fun status(status: Int): ResponseContextBuilder
+        fun content(content: ByteArray?): ResponseContextBuilder
+        fun contentType(contentType: String?): ResponseContextBuilder
+        fun headers(headers: Map<String, List<String>>): ResponseContextBuilder
 
-        fun build() = ResponseContext(status, content, contentType, headers)
+        fun build(): ResponseContext
     }
 }

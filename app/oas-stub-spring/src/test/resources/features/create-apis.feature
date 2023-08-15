@@ -5,7 +5,7 @@ Feature: Create APIs from OAS file
     Given this API definition '<schema>'
     When I create 'petstore' API definition
     And I '<method>' to '<path>' with '<content>' as '<contentType>'
-    Then I get this <status>
+    Then I get http status <status>
     And I get response header of 'content-type' with '<responseContentType>'
     And I get response JSON satisfies this '<response>'
     @v3 @petstore
@@ -43,7 +43,7 @@ Feature: Create APIs from OAS file
     When I create 'petstore' API definition
     Then I delete the API definition
     And I '<method>' to '<path>' with '' as ''
-    Then I get this 404
+    Then I get http status 404
     @v3 @petstore
     Examples:
       | schema                   | method | path             |

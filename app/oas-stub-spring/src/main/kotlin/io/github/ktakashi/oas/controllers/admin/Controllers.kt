@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.controllers.admin
 import io.github.ktakashi.oas.annotations.Admin
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiConfiguration
+import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.ApiOptions
@@ -161,7 +162,7 @@ class ContextController(private val apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "200", description = "The API data are updated")
     @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
     @PutMapping(path = [ "/{context}/data"], consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun putData(@PathVariable("context") context: String, @RequestBody request: Map<String, Any>) = updateApiDefinitionsProperty(context) {
+    fun putData(@PathVariable("context") context: String, @RequestBody request: ApiData) = updateApiDefinitionsProperty(context) {
         def -> def.updateApiData(request)
     }
 
@@ -170,7 +171,7 @@ class ContextController(private val apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
     @DeleteMapping(path = [ "/{context}/data"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteData(@PathVariable("context") context: String) = updateApiDefinitionsProperty(context) {
-        def -> def.updateApiData(mapOf())
+        def -> def.updateApiData(ApiData())
     }
 
     private fun getApiDefinitions(context: String): Mono<ApiDefinitions> =

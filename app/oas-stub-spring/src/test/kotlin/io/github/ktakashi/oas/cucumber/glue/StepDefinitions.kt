@@ -76,6 +76,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         testContext.response = given().contentType(contentType)
                 .body(maybeContent(value))
                 .put(uri)
+        println(testContext.response?.body?.asString())
     }
 
     @And("I update API {string} with {string} via {string} of content type {string}")
@@ -129,7 +130,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         }
     }
 
-    @Then("I get this {int}")
+    @Then("I get http status {int}")
     fun `I get this {int}`(status: Int) {
         testContext.response?.then()?.statusCode(status) ?: throw IllegalStateException("No response")
     }

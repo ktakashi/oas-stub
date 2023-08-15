@@ -1,0 +1,8 @@
+{
+  "request": {
+    "Request-ID": ["cca43b93-a4ff-46cf-8564-d8e4f3899657"]
+  },
+  "response": {
+    "X-Trace-ID": ["trace-id"]
+  }
+}

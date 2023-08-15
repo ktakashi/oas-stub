@@ -30,9 +30,13 @@ class ParsingService {
                 .asSequence()
                 .map { v ->
                     try {
-                        v.provider().readContents(content, null, parseOption)?.openAPI
+                        val result = v.provider().readContents(content, null, parseOption)
+                        if (result.messages != null && result.messages.isNotEmpty()) {
+                            logger.warn("Parsing message(s): {}", result.messages)
+                        }
+                        result.openAPI
                     } catch (e: Throwable) {
-                        logger.error("Failed to parse", e)
+                        logger.error("Failed to parse: {}", e.message, e)
                         null
                     }
                 }

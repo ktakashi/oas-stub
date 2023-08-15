@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiOptions
+import io.github.ktakashi.oas.model.MergeableApiConfig
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
@@ -23,7 +25,7 @@ import java.util.Optional
 import org.apache.http.HttpStatus
 import org.glassfish.jersey.uri.UriTemplate
 
-data class ApiContext(val context: String, val method: String, val apiDefinition: OpenAPI)
+data class ApiContext(val context: String, val method: String, val openApi: OpenAPI, val apiDefinitions: ApiDefinitions)
 
 interface ApiContextService {
     /**
@@ -63,8 +65,7 @@ interface ApiExecutionService: ApiContextService {
     /**
      * Executes the given [apiContext]
      *
-     * The returning [ResponseContext] is only for debugging purpose. The result
-     * is emitted to the [response] after the method call.
+     * The response is intact after the call, so users must call [ResponseContext.emitResponse]
      */
     fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext
 }
@@ -101,8 +102,10 @@ class DefaultApiService
                     private val pluginService: PluginService): ApiExecutionService, ApiRegistrationService {
     override fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
             apiPathService.extractApplicationName(request.requestURI).flatMap { name ->
-                storageService.getOpenApi(name)
-                        .map { def -> ApiContext(apiDefinition = def, context = name, method = request.method) }
+                storageService.getApiDefinitions(name).flatMap { apiDefinitions ->
+                    storageService.getOpenApi(name)
+                            .map { def -> ApiContext(openApi = def, context = name, method = request.method, apiDefinitions = apiDefinitions) }
+                }
             }
 
     override fun getApiDefinitions(name: String): Optional<ApiDefinitions> = storageService.getApiDefinitions(name)
@@ -121,14 +124,14 @@ class DefaultApiService
         val appName = apiContext.context
         val path = apiPathService.extractApiPath(appName, request.requestURI)
         val requestContext = makeRequestContext(apiContext, path, request, response)
-        val adjustedPath = adjustBasePath(path, apiContext.apiDefinition)
-        val pathItem = adjustedPath.flatMap { v -> apiPathService.findMatchingPathValue(v, apiContext.apiDefinition.paths) }
+        val adjustedPath = adjustBasePath(path, apiContext.openApi)
+        val pathItem = adjustedPath.flatMap { v -> apiPathService.findMatchingPathValue(v, apiContext.openApi.paths) }
         if (pathItem.isEmpty) {
-            return emitResponse(response, requestContext, makeErrorResponse(HttpStatus.SC_NOT_FOUND))
+            return emitResponse(requestContext, makeErrorResponse(HttpStatus.SC_NOT_FOUND))
         }
         val operation = getOperation(pathItem.get(), apiContext.method)
         if (operation.isEmpty) {
-            return emitResponse(response, requestContext, makeErrorResponse(HttpStatus.SC_METHOD_NOT_ALLOWED))
+            return emitResponse(requestContext, makeErrorResponse(HttpStatus.SC_METHOD_NOT_ALLOWED))
         }
         // TODO failure
 
@@ -136,45 +139,52 @@ class DefaultApiService
             apiResultProvider.provideResult(operation.get(), requestContext)
         } else {
             adjustedPath.flatMap { v ->
-                apiPathService.findMatchingPath(v, apiContext.apiDefinition.paths)
+                apiPathService.findMatchingPath(v, apiContext.openApi.paths)
                         .flatMap { p -> apiRequestPathVariableValidator.validate(v, p, operation.get()) }
+                        .map<ResponseContext> { p ->
+                            DefaultResponseContext(status = p.first, content = p.second, contentType = Optional.of(APPLICATION_PROBLEM_JSON))
+                        }
             }.orElseGet { apiResultProvider.provideResult(operation.get(), requestContext) }
         }
-        return emitResponse(response, requestContext, responseContext)
+        return emitResponse(requestContext, responseContext)
     }
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
-            ApiContextAwareRequestContext(apiContext = apiContext, apiPath = path,
-                    apiOptions = storageService.getApiDefinitions(apiContext.context)
-                            .map { d ->  apiPathService.findMatchingPathValue(path, d.configurations)
-                                    .map { o -> o.options }
-                                    .map { o -> o.merge(d.options) }
-                                    .orElseGet { d.options }}
-                            .orElseGet { ApiOptions() },
-                    content = readContent(request),
-                    contentType = Optional.ofNullable(request.contentType),
-                    headers = readHeaders(request),
-                    cookies = request.cookies?.associate { c -> c.name to HttpCookie(c.name, c.value) } ?: mapOf(),
-                    method = request.method, queryParameters = parseQueryParameters(request.queryString),
-                    rawRequest = request, rawResponse = response)
+            apiContext.apiDefinitions.let { apiDefinitions ->
+                ApiContextAwareRequestContext(
+                        apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
+                        apiOptions = mergeProperty(path, apiDefinitions, ApiCommonConfigurations::options),
+                        content = readContent(request),
+                        contentType = Optional.ofNullable(request.contentType),
+                        headers = mergeProperty(path, apiDefinitions, ApiCommonConfigurations::headers).request + readHeaders(request),
+                        cookies = request.cookies?.associate { c -> c.name to HttpCookie(c.name, c.value) } ?: mapOf(),
+                        method = request.method, queryParameters = parseQueryParameters(request.queryString),
+                        rawRequest = request, rawResponse = response)
+            }
 
-    private fun emitResponse(response: HttpServletResponse, requestContext: RequestContext, responseContext: ResponseContext): ResponseContext =
-        responseContext.customize(requestContext).apply {
-            // apply customiser
-            content.ifPresent { v -> response.outputStream.write(v) }
-            contentType.ifPresent { t -> response.contentType = t }
-            headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
-            response.status = responseContext.status
-        }
+    private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext): ResponseContext =
+        responseContext.let { context ->
+            val responseHeaders = requestContext.apiDefinitions.headers.response
+            if (responseHeaders.isEmpty()) {
+                context
+            } else {
+                context.from().headers(responseHeaders + context.headers).build()
+            }
+        }.customize(requestContext)
 
     private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
+
+    private fun <T: MergeableApiConfig<T>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations) -> T) = apiPathService.findMatchingPathValue(path, d.configurations)
+            .map(propertyRetriever)
+            .map { o -> o.merge(propertyRetriever(d)) }
+            .orElseGet { propertyRetriever(d) }
 }
 
 @Named @Singleton
 class ApiRequestPathVariableValidator
 @Inject constructor(private val requestParameterValidator: ApiRequestParameterValidator,
                     private val objectMapper: ObjectMapper) {
-    fun validate(path: String, template: String, operation: Operation): Optional<ResponseContext> {
+    fun validate(path: String, template: String, operation: Operation): Optional<Pair<Int, Optional<ByteArray>>> {
         val uriTemplate = UriTemplate(template)
         val matcher = uriTemplate.pattern.match(path)
         val result = uriTemplate.templateVariables.flatMapIndexed { i, name ->
@@ -193,11 +203,11 @@ class ApiRequestPathVariableValidator
             return Optional.empty()
         }
         val body = result.toJsonProblemDetails(HttpStatus.SC_BAD_REQUEST, objectMapper)
-        return Optional.of(ResponseContext(HttpStatus.SC_BAD_REQUEST, body, Optional.of(APPLICATION_PROBLEM_JSON)))
+        return Optional.of(HttpStatus.SC_BAD_REQUEST to body)
     }
 }
 
-private fun makeErrorResponse(status: Int) = ResponseContext(status)
+private fun makeErrorResponse(status: Int): ResponseContext = DefaultResponseContext(status = status)
 
 
 private fun getOperation(item: PathItem, method: String): Optional<Operation> = when (method) {
@@ -266,6 +276,7 @@ private fun readContent(request: HttpServletRequest): Optional<ByteArray> = when
     }
 }
 data class ApiContextAwareRequestContext(val apiContext: ApiContext,
+                                         val apiDefinitions: ApiDefinitions,
                                          val apiOptions: ApiOptions,
                                          override val apiPath: String,
                                          override val method: String,
@@ -281,4 +292,30 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
 
     val skipValidation
         get() = apiOptions.shouldValidate == false
+}
+
+internal data class DefaultResponseContext(override val status: Int,
+                                           override val content: Optional<ByteArray> = Optional.empty(),
+                                           override val contentType: Optional<String> = Optional.empty(),
+                                           override val headers: Map<String, List<String>> = mapOf()): ResponseContext {
+    override fun emitResponse(response: HttpServletResponse) {
+        content.ifPresent { v -> response.outputStream.write(v) }
+        contentType.ifPresent { t -> response.contentType = t }
+        headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
+        response.status = this.status
+    }
+
+    override fun from() = DefaultResponseContextBuilder(status, content, contentType, headers)
+
+    internal data class DefaultResponseContextBuilder(private val status: Int,
+                                                      private val content: Optional<ByteArray>,
+                                                      private val contentType: Optional<String>,
+                                                      private val headers: Map<String, List<String>>): ResponseContext.ResponseContextBuilder {
+        override fun status(status: Int) = DefaultResponseContextBuilder(status, content, contentType, headers)
+        override fun content(content: ByteArray?) = DefaultResponseContextBuilder(status, Optional.ofNullable(content), contentType, headers)
+        override fun contentType(contentType: String?) = DefaultResponseContextBuilder(status, content, Optional.ofNullable(contentType), headers)
+        override fun headers(headers: Map<String, List<String>>) = DefaultResponseContextBuilder(status, content, contentType, headers)
+
+        override fun build() = DefaultResponseContext(status, content, contentType, headers)
+    }
 }

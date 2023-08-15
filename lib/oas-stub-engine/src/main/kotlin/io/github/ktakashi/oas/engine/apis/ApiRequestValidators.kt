@@ -152,7 +152,7 @@ class ApiRequestSecurityValidator
 @Inject constructor(): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult =
             operation.security?.map { requirement ->
-                requirement.keys.mapNotNull { key -> requestContext.apiContext.apiDefinition.components.securitySchemes?.get(key) }
+                requirement.keys.mapNotNull { key -> requestContext.apiContext.openApi.components.securitySchemes?.get(key) }
                         .map { securitySchema -> validate(requestContext, securitySchema) }
                         .fold(success) { a, b -> a.merge(b) }
             } ?.fold(success) { a, b -> a.merge(b) } ?: success

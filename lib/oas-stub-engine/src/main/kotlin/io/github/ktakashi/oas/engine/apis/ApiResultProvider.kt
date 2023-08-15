@@ -19,22 +19,22 @@ class ApiResultProvider
                     private val anyPopulators: Set<ApiAnyDataPopulator>) {
     fun provideResult(operation: Operation, requestContext: ApiContextAwareRequestContext): ResponseContext = when (val decision = contentDecider.decideContent(requestContext, operation)) {
         is ContentFound -> decision.content.map { content -> toResponseContext(requestContext, decision.status, content) }
-                .orElseGet { ResponseContext(decision.status) }
+                .orElseGet { DefaultResponseContext(status = decision.status) }
         is ContentNotFound -> decision.responseContext
     }
 
     private fun toResponseContext(requestContext: ApiContextAwareRequestContext, status: Int, content: Content): ResponseContext {
         if (content.isEmpty()) {
-            return ResponseContext(status)
+            return DefaultResponseContext(status = status)
         }
         return getMostExpectedMedia(content, requestContext)
                 .map { mediaType ->
                     content[mediaType]?.schema?.let { schema ->
                         val data = populate(mediaType, schema)
-                        ResponseContext(status, content = Optional.of(data), contentType = Optional.of(mediaType))
+                        DefaultResponseContext(status = status, content = Optional.of(data), contentType = Optional.of(mediaType))
                     }
                 }.orElseGet {
-                    ResponseContext(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                    DefaultResponseContext(status = HttpStatus.SC_INTERNAL_SERVER_ERROR)
                 }
     }
 
