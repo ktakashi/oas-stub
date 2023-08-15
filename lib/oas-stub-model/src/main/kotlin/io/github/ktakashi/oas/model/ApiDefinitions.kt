@@ -50,7 +50,7 @@ data class ApiConfiguration
 
 data class ApiDefinitions
 @JvmOverloads constructor(val specification: String,
-                          val configurations: Map<String, ApiConfiguration> = mapOf(),
+                          val configurations: Map<String, ApiConfiguration>? = null,
                           // global data, these are applied to all APIs of this context
                           override val headers: ApiHeaders? = null,
                           override val options: ApiOptions? = null,
@@ -59,9 +59,9 @@ data class ApiDefinitions
     fun updateSpecification(specification: String) =
             ApiDefinitions(specification, configurations, headers, options, data)
     fun updateConfiguration(path: String, configuration: ApiConfiguration) =
-            ApiDefinitions(specification, configurations + mapOf(path to configuration), headers, options, data)
+            ApiDefinitions(specification, mapOf(path to configuration).let { configurations?.plus(it) ?: it } , headers, options, data)
 
-    fun updateConfigurations(configurations: Map<String, ApiConfiguration>) = ApiDefinitions(specification, configurations, headers, options, data)
+    fun updateConfigurations(configurations: Map<String, ApiConfiguration>?) = ApiDefinitions(specification, configurations, headers, options, data)
 
     override fun updateOptions(options: ApiOptions?) = ApiDefinitions(specification, configurations, headers, options, data)
 

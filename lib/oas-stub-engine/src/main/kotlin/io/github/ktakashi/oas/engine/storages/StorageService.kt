@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import io.github.ktakashi.oas.engine.apis.ApiPathService
 import io.github.ktakashi.oas.engine.parsers.ParsingService
+import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.plugin.apis.Storage
@@ -43,7 +44,8 @@ class StorageService
     fun getOpenApi(name: String): Optional<OpenAPI> = openApiCache[name]
 
     fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = apiDefinitions[name]
-            .flatMap { v -> apiPathService.findMatchingPathValue(path, v.configurations) }
+            .map { v -> v.configurations }
+            .flatMap { v -> apiPathService.findMatchingPathValue(path, v as Map<String, ApiConfiguration>) }
             .map { v -> v.plugin }
 
     fun getApiData(name: String): Optional<Map<String, Any>> = apiDefinitions[name].map { v -> v.data }

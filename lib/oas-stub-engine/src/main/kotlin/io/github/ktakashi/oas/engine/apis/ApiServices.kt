@@ -28,7 +28,7 @@ import org.glassfish.jersey.uri.UriTemplate
 
 data class ApiContext(val context: String, val method: String, val openApi: OpenAPI, val apiDefinitions: ApiDefinitions)
 
-interface ApiContextService {
+fun interface ApiContextService {
     /**
      * Retrieves [ApiContext] from the [request]
      *
@@ -111,10 +111,12 @@ class DefaultApiService
 
     override fun getApiDefinitions(name: String): Optional<ApiDefinitions> = storageService.getApiDefinitions(name)
     override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = parsingService.parse(apiDefinitions.specification)
-            .filter { openApi -> apiDefinitions.configurations.keys.all { path ->
-                adjustBasePath(path, openApi).map { p -> apiPathService.findMatchingPath(p, openApi.paths).isPresent }
-                        .orElse(false)
-            }}
+            .filter { openApi -> apiDefinitions.configurations?.let {
+                it.keys.all { path ->
+                    adjustBasePath(path, openApi).map { p -> apiPathService.findMatchingPath(p, openApi.paths).isPresent }
+                            .orElse(false)
+                }
+            } ?: true}
             .map { openApi -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi)) }
             .map { def -> storageService.saveApiDefinitions(name, def) }
             .orElse(false)
@@ -178,10 +180,13 @@ class DefaultApiService
 
     private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
 
-    private fun <R: MergeableApiConfig<R>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations<*>) -> R?) = apiPathService.findMatchingPathValue(path, d.configurations)
-            .map { def -> propertyRetriever(def) }
-            .map { o -> propertyRetriever(d)?.let { o?.merge(it) } ?: o }
-            .orElseGet { propertyRetriever(d) }
+    private fun <R: MergeableApiConfig<R>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations<*>) -> R?) =
+            d.configurations?.let {
+                apiPathService.findMatchingPathValue(path, it)
+                        .map { def -> propertyRetriever(def) }
+                        .map { o -> propertyRetriever(d)?.let { o?.merge(it) } ?: o }
+                        .orElseGet { propertyRetriever(d) }
+            } ?: propertyRetriever(d)
 }
 
 @Named @Singleton
