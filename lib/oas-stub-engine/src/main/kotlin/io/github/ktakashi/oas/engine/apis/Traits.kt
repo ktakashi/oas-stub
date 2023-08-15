@@ -4,7 +4,7 @@ import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.Schema
 import jakarta.ws.rs.core.MediaType
 
-interface MediaSupport {
+fun interface MediaSupport {
     fun supports(mediaType: MediaType): Boolean
 }
 

@@ -5,6 +5,6 @@ package io.github.ktakashi.oas.plugin.apis
  *
  * Plugins must implement this interface
  */
-interface ApiPlugin {
+fun interface ApiPlugin {
     fun customize(pluginContext: PluginContext): ResponseContext
 }
