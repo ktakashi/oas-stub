@@ -154,11 +154,11 @@ class DefaultApiService
             apiContext.apiDefinitions.let { apiDefinitions ->
                 ApiContextAwareRequestContext(
                         apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
-                        apiOptions = mergeProperty(path, apiDefinitions, ApiCommonConfigurations::options),
+                        apiOptions = mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::options),
                         content = readContent(request),
                         contentType = Optional.ofNullable(request.contentType),
                         headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
-                            putAll(mergeProperty(path, apiDefinitions, ApiCommonConfigurations::headers).request)
+                            mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
                             putAll(readHeaders(request))
                         },
                         cookies = request.cookies?.associate { c -> c.name to HttpCookie(c.name, c.value) } ?: mapOf(),
@@ -168,7 +168,7 @@ class DefaultApiService
 
     private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext): ResponseContext =
         responseContext.let { context ->
-            val responseHeaders = requestContext.apiDefinitions.headers.response
+            val responseHeaders = requestContext.apiDefinitions.headers?.response ?: mapOf()
             if (responseHeaders.isEmpty()) {
                 context
             } else {
@@ -178,9 +178,9 @@ class DefaultApiService
 
     private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
 
-    private fun <T: MergeableApiConfig<T>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations) -> T) = apiPathService.findMatchingPathValue(path, d.configurations)
-            .map(propertyRetriever)
-            .map { o -> o.merge(propertyRetriever(d)) }
+    private fun <R: MergeableApiConfig<R>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations<*>) -> R?) = apiPathService.findMatchingPathValue(path, d.configurations)
+            .map { def -> propertyRetriever(def) }
+            .map { o -> propertyRetriever(d)?.let { o?.merge(it) } ?: o }
             .orElseGet { propertyRetriever(d) }
 }
 
@@ -281,7 +281,7 @@ private fun readContent(request: HttpServletRequest): Optional<ByteArray> = when
 }
 data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          val apiDefinitions: ApiDefinitions,
-                                         val apiOptions: ApiOptions,
+                                         val apiOptions: ApiOptions?,
                                          override val apiPath: String,
                                          override val method: String,
                                          override val content: Optional<ByteArray>,
@@ -295,7 +295,7 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
         get() = apiContext.context
 
     val skipValidation
-        get() = apiOptions.shouldValidate == false
+        get() = apiOptions?.shouldValidate == false
 }
 
 internal data class DefaultResponseContext(override val status: Int,

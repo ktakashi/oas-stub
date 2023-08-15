@@ -61,7 +61,7 @@ internal val success = ApiValidationResult(ApiValidationResultType.SUCCESS)
 internal fun failedResult(message: String, property: String? = null, type: ApiValidationResultType = ApiValidationResultType.VALIDATION_ERROR) =
         ApiValidationResult(type, listOf(ValidationDetail(message, Optional.ofNullable(property))))
 
-interface ApiRequestValidator {
+fun interface ApiRequestValidator {
     fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult
 }
 

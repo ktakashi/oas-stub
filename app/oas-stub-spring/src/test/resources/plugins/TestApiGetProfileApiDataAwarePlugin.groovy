@@ -12,6 +12,7 @@ class TestApiGetProfileApiDataAwarePlugin implements ApiPlugin {
     ResponseContext customize(PluginContext pluginContext) {
         def response = pluginContext.responseContext
         return pluginContext.getApiData("profile", Profile.class)
+                .or { pluginContext.getApiData("profile2", Map.class) }
                 .map { profile -> response.from().content(objectMapper.writeValueAsBytes(profile)).build() }
                 .orElse(response)
     }

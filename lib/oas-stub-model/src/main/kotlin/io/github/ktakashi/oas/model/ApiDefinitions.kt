@@ -5,7 +5,7 @@ enum class PluginType {
 }
 data class PluginDefinition(val type: PluginType, val script: String)
 
-interface MergeableApiConfig<T: MergeableApiConfig<T>> {
+fun interface MergeableApiConfig<T: MergeableApiConfig<T>> {
     /**
      * Merge the [other]. The [other]'s value will be overridden if there's the same value
      */
@@ -23,42 +23,48 @@ data class ApiHeaders
     override fun merge(other: ApiHeaders): ApiHeaders = ApiHeaders(other.request + request, other.response + response)
 }
 
-class ApiData(private val delegate: Map<String, Any> = mapOf()): Map<String, Any> by delegate, MergeableApiConfig<ApiData> {
+class ApiData
+@JvmOverloads constructor(private val delegate: Map<String, Any> = mapOf()): Map<String, Any> by delegate, MergeableApiConfig<ApiData> {
     override fun merge(other: ApiData): ApiData = ApiData(other + this)
 }
 
-interface ApiCommonConfigurations {
-    val headers: ApiHeaders
-    val options: ApiOptions
-    val data: ApiData
+interface ApiCommonConfigurations<T: ApiCommonConfigurations<T>> {
+    val headers: ApiHeaders?
+    val options: ApiOptions?
+    val data: ApiData?
+    fun updateHeaders(headers: ApiHeaders?): T
+    fun updateOptions(options: ApiOptions?): T
+    fun updateData(data: ApiData?): T
 }
 
 data class ApiConfiguration
-@JvmOverloads constructor(override val headers: ApiHeaders = ApiHeaders(),
-                          override val options: ApiOptions = ApiOptions(),
-                          override val data: ApiData = ApiData(),
-                          val plugin: PluginDefinition? = null): ApiCommonConfigurations {
+@JvmOverloads constructor(override val headers: ApiHeaders? = null,
+                          override val options: ApiOptions? = null,
+                          override val data: ApiData? = null,
+                          val plugin: PluginDefinition? = null): ApiCommonConfigurations<ApiConfiguration> {
     fun updatePlugin(plugin: PluginDefinition?) = ApiConfiguration(headers, options, data, plugin)
-    fun updateHeaders(headers: ApiHeaders): ApiConfiguration = ApiConfiguration(headers, options, data, plugin)
+    override fun updateHeaders(headers: ApiHeaders?): ApiConfiguration = ApiConfiguration(headers, options, data, plugin)
+    override fun updateOptions(options: ApiOptions?): ApiConfiguration = ApiConfiguration(headers, options, data, plugin)
+    override fun updateData(data: ApiData?): ApiConfiguration = ApiConfiguration(headers, options, data, plugin)
 }
 
 data class ApiDefinitions
 @JvmOverloads constructor(val specification: String,
                           val configurations: Map<String, ApiConfiguration> = mapOf(),
                           // global data, these are applied to all APIs of this context
-                          override val headers: ApiHeaders = ApiHeaders(),
-                          override val options: ApiOptions = ApiOptions(),
-                          override val data: ApiData = ApiData()): ApiCommonConfigurations {
+                          override val headers: ApiHeaders? = null,
+                          override val options: ApiOptions? = null,
+                          override val data: ApiData? = null): ApiCommonConfigurations<ApiDefinitions> {
 
     fun updateSpecification(specification: String) =
             ApiDefinitions(specification, configurations, headers, options, data)
-    fun updateApiConfiguration(path: String, configuration: ApiConfiguration) =
+    fun updateConfiguration(path: String, configuration: ApiConfiguration) =
             ApiDefinitions(specification, configurations + mapOf(path to configuration), headers, options, data)
 
-    fun updateApiConfigurations(configurations: Map<String, ApiConfiguration>) = ApiDefinitions(specification, configurations, headers, options, data)
+    fun updateConfigurations(configurations: Map<String, ApiConfiguration>) = ApiDefinitions(specification, configurations, headers, options, data)
 
-    fun updateApiOptions(options: ApiOptions) = ApiDefinitions(specification, configurations, headers, options, data)
+    override fun updateOptions(options: ApiOptions?) = ApiDefinitions(specification, configurations, headers, options, data)
 
-    fun updateApiHeaders(headers: ApiHeaders) = ApiDefinitions(specification, configurations, headers, options, data)
-    fun updateApiData(data: ApiData) = ApiDefinitions(specification, configurations, headers, options, data)
+    override fun updateHeaders(headers: ApiHeaders?) = ApiDefinitions(specification, configurations, headers, options, data)
+    override fun updateData(data: ApiData?) = ApiDefinitions(specification, configurations, headers, options, data)
 }

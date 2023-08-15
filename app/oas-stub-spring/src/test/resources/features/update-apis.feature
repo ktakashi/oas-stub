@@ -49,5 +49,6 @@ Feature: Update APIs
     Then I get http status 200
     And I get response JSON satisfies this '<response>'
     Examples:
-      | schema                | context  | path       | config                                    | response          | plugin                                                        |
-      | /schema/test-api.yaml | test-api | /profile/1 | classpath:/json/test-api-data-config.json | name=OAS API stub | classpath:/plugins/TestApiGetProfileApiDataAwarePlugin.groovy |
+      | schema                | context  | path       | config                                   | response            | plugin                                                        |
+      | /schema/test-api.yaml | test-api | /profile/1 | {"profile": {"name": "OAS API stub"}}    | name=OAS API stub   | classpath:/plugins/TestApiGetProfileApiDataAwarePlugin.groovy |
+      | /schema/test-api.yaml | test-api | /profile/1 | {"profile2": {"then": "OAS API stub 2"}} | then=OAS API stub 2 | classpath:/plugins/TestApiGetProfileApiDataAwarePlugin.groovy |
