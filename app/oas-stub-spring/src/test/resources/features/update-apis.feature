@@ -32,5 +32,22 @@ Feature: Update APIs
     Then I get http status 200
     And I get response header of 'X-Trace-ID' with 'trace-id'
     Examples:
-      | schema                | context  | path      | config                             |
+      | schema                | context  | path      | config                                       |
       | /schema/test-api.yaml | test-api | /profiles | classpath:/json/test-api-headers-config.json |
+
+  @update @data
+  Scenario Outline: Update API data
+    Given this API definition '<schema>'
+    Given these HTTP headers
+      | name       | value                                |
+      | Request-ID | cca43b93-a4ff-46cf-8564-d8e4f3899657 |
+    When I create '<context>' API definition
+    And I update API definition with '<config>' via '/<context>/data' of content type 'application/json'
+    And I update API '<path>' with '<plugin>' via '/plugins/groovy' of content type 'application/octet-stream'
+    Then I get http status 200
+    Then I 'GET' to '<path>' with '' as ''
+    Then I get http status 200
+    And I get response JSON satisfies this '<response>'
+    Examples:
+      | schema                | context  | path       | config                                    | response          | plugin                                                        |
+      | /schema/test-api.yaml | test-api | /profile/1 | classpath:/json/test-api-data-config.json | name=OAS API stub | classpath:/plugins/TestApiGetProfileApiDataAwarePlugin.groovy |

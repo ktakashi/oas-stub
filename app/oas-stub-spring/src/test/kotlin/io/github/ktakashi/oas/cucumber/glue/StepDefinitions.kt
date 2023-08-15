@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.cucumber.glue
 
+import io.cucumber.datatable.DataTable
 import io.cucumber.java.Before
 import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
@@ -16,6 +17,8 @@ import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
 import io.restassured.filter.log.ResponseLoggingFilter
 import io.restassured.http.ContentType
+import io.restassured.http.Header
+import io.restassured.http.Headers
 import java.net.URI
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -45,6 +48,13 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @Given("this API definition {string}")
     fun `this API definition {string}`(path: String) {
         testContext.apiDefinitionPath = path
+    }
+
+    @Given("these HTTP headers")
+    fun `these HTTP headers`(table: DataTable) {
+        table.asMaps(String::class.java, String::class.java).forEach { m ->
+            testContext.headers.add(Header(m["name"] as String, m["value"] as String))
+        }
     }
 
     @When("I create {string} API definition")
@@ -117,7 +127,8 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
             if (contentType.isNotBlank()) {
                 it.contentType(contentType)
             }
-        }
+        }.headers(Headers(testContext.headers))
+        
         val body = maybeContent(content)
         testContext.response = when (method.uppercase()) {
             "GET" -> spec.get(uri)

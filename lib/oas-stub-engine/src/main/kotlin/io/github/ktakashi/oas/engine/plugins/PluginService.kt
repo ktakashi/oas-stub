@@ -15,6 +15,9 @@ import jakarta.inject.Named
 import jakarta.inject.Singleton
 import java.time.Duration
 import java.util.Optional
+import org.slf4j.LoggerFactory
+
+private val logger = LoggerFactory.getLogger(PluginService::class.java)
 
 @Named @Singleton
 class PluginService
@@ -39,6 +42,7 @@ class PluginService
                             objectMapper)
                     code.customize(context)
                 } catch (e: Exception) {
+                    logger.info("Failed execute plugin: {}", e.message, e)
                     responseContext
                 }
             }.orElse(responseContext)
@@ -50,13 +54,13 @@ data class PluginContextData(override val requestContext: RequestContext,
                              private val apiData: Map<String, Any>,
                              private val objectMapper: ObjectMapper) :PluginContext {
     override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T & Any> =
-            clazz.cast(apiData[label])?.let { v ->
-                when (v) {
-                    is String -> if (String::class.java.isAssignableFrom(clazz)) Optional.of(v) else null
-                    is Number -> if (Number::class.java.isAssignableFrom(clazz)) Optional.of(v) else null
-                    is ByteArray -> if (ByteArray::class.java.isAssignableFrom(clazz)) Optional.of(v) else null
-                    is Map<*, *> -> Optional.ofNullable(objectMapper.convertValue(v, clazz))
+            Optional.ofNullable(apiData[label]?.let { v ->
+                clazz.cast(when (v) {
+                    is String -> if (String::class.java.isAssignableFrom(clazz)) v else null
+                    is Number -> if (Number::class.java.isAssignableFrom(clazz)) v else null
+                    is ByteArray -> if (ByteArray::class.java.isAssignableFrom(clazz)) v else null
+                    is Map<*, *> -> objectMapper.convertValue(v, clazz)
                     else -> null // unknown type for now
-                }
-            }?: Optional.empty()
+                })
+            })
 }

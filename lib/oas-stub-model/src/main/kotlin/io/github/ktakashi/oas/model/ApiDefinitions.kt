@@ -18,8 +18,8 @@ data class ApiOptions
 }
 
 data class ApiHeaders
-@JvmOverloads constructor(val request: Map<String, List<String>> = mapOf(),
-                          val response: Map<String, List<String>> = mapOf()): MergeableApiConfig<ApiHeaders> {
+@JvmOverloads constructor(val request: Map<String, List<String>> = sortedMapOf(String.CASE_INSENSITIVE_ORDER),
+                          val response: Map<String, List<String>> = sortedMapOf(String.CASE_INSENSITIVE_ORDER)): MergeableApiConfig<ApiHeaders> {
     override fun merge(other: ApiHeaders): ApiHeaders = ApiHeaders(other.request + request, other.response + response)
 }
 

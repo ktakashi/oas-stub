@@ -30,6 +30,25 @@ paths:
           description: Created
         400:
           $ref: "#/components/responses/400ErrorResponse"
+  /profile/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Request-ID"
+      - name: id
+        required: true
+        in: path
+        schema:
+          type: number
+          format: int32
+    get:
+      responses:
+        200:
+          description: Get profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        400:
+          $ref: "#/components/responses/400ErrorResponse"
 
 components:
   parameters:

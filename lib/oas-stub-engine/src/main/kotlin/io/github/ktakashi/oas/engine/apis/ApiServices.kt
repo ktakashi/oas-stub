@@ -22,6 +22,7 @@ import java.io.IOException
 import java.net.HttpCookie
 import java.net.URI
 import java.util.Optional
+import java.util.TreeMap
 import org.apache.http.HttpStatus
 import org.glassfish.jersey.uri.UriTemplate
 
@@ -156,7 +157,10 @@ class DefaultApiService
                         apiOptions = mergeProperty(path, apiDefinitions, ApiCommonConfigurations::options),
                         content = readContent(request),
                         contentType = Optional.ofNullable(request.contentType),
-                        headers = mergeProperty(path, apiDefinitions, ApiCommonConfigurations::headers).request + readHeaders(request),
+                        headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
+                            putAll(mergeProperty(path, apiDefinitions, ApiCommonConfigurations::headers).request)
+                            putAll(readHeaders(request))
+                        },
                         cookies = request.cookies?.associate { c -> c.name to HttpCookie(c.name, c.value) } ?: mapOf(),
                         method = request.method, queryParameters = parseQueryParameters(request.queryString),
                         rawRequest = request, rawResponse = response)
