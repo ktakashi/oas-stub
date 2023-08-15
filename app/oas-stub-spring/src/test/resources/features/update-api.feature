@@ -39,7 +39,7 @@ Feature: Update single API
     When I create '<context>' API definition
     And I update API '<api>' with '<plugin>' via '/plugins/groovy' of content type 'application/octet-stream'
     Then I get http status 200
-    And I delete API '<api>' via '/plugins/groovy'
+    And I delete API '<api>' via '/plugins'
     Then I get http status 204
     And I '<method>' to '<path>' with '<content>' as '<contentType>'
     Then I get http status <status>
