@@ -81,8 +81,13 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @And("I update API definition with {string} via {string} of content type {string}")
     fun `I update {string} API definition with {string} via {string}`(value: String, path: String, contentType: String) {
+        val adminApi = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix).path(path).build().toUri()
+                .path(oasApplicationServletProperties.adminPrefix)
+                .pathSegment(testContext.apiName)
+                .path(adminApi.path)
+                .query(adminApi.query)
+                .build().toUri()
         testContext.response = given().contentType(contentType)
                 .body(maybeContent(value))
                 .put(uri)

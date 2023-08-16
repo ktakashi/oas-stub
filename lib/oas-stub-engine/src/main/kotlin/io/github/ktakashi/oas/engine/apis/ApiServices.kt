@@ -1,7 +1,10 @@
 package io.github.ktakashi.oas.engine.apis
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.engine.parsers.ParsingService
+import io.github.ktakashi.oas.engine.paths.findMatchingPath
+import io.github.ktakashi.oas.engine.paths.findMatchingPathValue
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
@@ -113,7 +116,7 @@ class DefaultApiService
     override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = parsingService.parse(apiDefinitions.specification)
             .filter { openApi -> apiDefinitions.configurations?.let {
                 it.keys.all { path ->
-                    adjustBasePath(path, openApi).map { p -> apiPathService.findMatchingPath(p, openApi.paths).isPresent }
+                    adjustBasePath(path, openApi).map { p -> findMatchingPath(p, openApi.paths.keys).isPresent }
                             .orElse(false)
                 }
             } ?: true}
@@ -128,7 +131,7 @@ class DefaultApiService
         val path = apiPathService.extractApiPath(appName, request.requestURI)
         val requestContext = makeRequestContext(apiContext, path, request, response)
         val adjustedPath = adjustBasePath(path, apiContext.openApi)
-        val pathItem = adjustedPath.flatMap { v -> apiPathService.findMatchingPathValue(v, apiContext.openApi.paths) }
+        val pathItem = adjustedPath.flatMap { v -> findMatchingPathValue(v, apiContext.openApi.paths) }
         if (pathItem.isEmpty) {
             return emitResponse(requestContext, makeErrorResponse(HttpStatus.SC_NOT_FOUND))
         }
@@ -142,7 +145,7 @@ class DefaultApiService
             apiResultProvider.provideResult(operation.get(), requestContext)
         } else {
             adjustedPath.flatMap { v ->
-                apiPathService.findMatchingPath(v, apiContext.openApi.paths)
+                findMatchingPath(v, apiContext.openApi.paths.keys)
                         .flatMap { p -> apiRequestPathVariableValidator.validate(v, p, operation.get()) }
                         .map<ResponseContext> { p ->
                             DefaultResponseContext(status = p.first, content = p.second, contentType = Optional.of(APPLICATION_PROBLEM_JSON))
@@ -156,11 +159,11 @@ class DefaultApiService
             apiContext.apiDefinitions.let { apiDefinitions ->
                 ApiContextAwareRequestContext(
                         apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
-                        apiOptions = mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::options),
+                        apiOptions = ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::options),
                         content = readContent(request),
                         contentType = Optional.ofNullable(request.contentType),
                         headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
-                            mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
+                            ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
                             putAll(readHeaders(request))
                         },
                         cookies = request.cookies?.associate { c -> c.name to HttpCookie(c.name, c.value) } ?: mapOf(),
@@ -170,23 +173,17 @@ class DefaultApiService
 
     private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext): ResponseContext =
         responseContext.let { context ->
-            val responseHeaders = requestContext.apiDefinitions.headers?.response ?: mapOf()
-            if (responseHeaders.isEmpty()) {
-                context
-            } else {
-                context.from().headers(responseHeaders + context.headers).build()
-            }
+            ModelPropertyUtils.mergeProperty(requestContext.apiPath, requestContext.apiDefinitions, ApiCommonConfigurations<*>::headers)?.response?.let { responseHeaders ->
+                val newHeaders = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
+                    putAll(responseHeaders)
+                    putAll(context.headers)
+                }
+                context.from().headers(newHeaders).build()
+            } ?: context
         }.customize(requestContext)
 
     private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
 
-    private fun <R: MergeableApiConfig<R>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations<*>) -> R?) =
-            d.configurations?.let {
-                apiPathService.findMatchingPathValue(path, it)
-                        .map { def -> propertyRetriever(def) }
-                        .map { o -> propertyRetriever(d)?.let { o?.merge(it) } ?: o }
-                        .orElseGet { propertyRetriever(d) }
-            } ?: propertyRetriever(d)
 }
 
 @Named @Singleton

@@ -2,8 +2,8 @@ package io.github.ktakashi.oas.engine.storages
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
-import io.github.ktakashi.oas.engine.apis.ApiPathService
 import io.github.ktakashi.oas.engine.parsers.ParsingService
+import io.github.ktakashi.oas.engine.paths.findMatchingPathValue
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
@@ -18,8 +18,7 @@ import java.util.Optional
 
 @Named @Singleton
 class StorageService
-@Inject constructor(private val apiPathService: ApiPathService,
-                    private val parsingService: ParsingService,
+@Inject constructor(private val parsingService: ParsingService,
                     private val persistentStorage: PersistentStorage,
                     val sessionStorage: Storage) {
     private val apiDefinitions: LoadingCache<String, Optional<ApiDefinitions>> = Caffeine.newBuilder()
@@ -45,9 +44,6 @@ class StorageService
 
     fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = apiDefinitions[name]
             .map { v -> v.configurations }
-            .flatMap { v -> apiPathService.findMatchingPathValue(path, v as Map<String, ApiConfiguration>) }
+            .flatMap { v -> findMatchingPathValue(path, v as Map<String, ApiConfiguration>) }
             .map { v -> v.plugin }
-
-    fun getApiData(name: String): Optional<Map<String, Any>> = apiDefinitions[name].map { v -> v.data }
-
 }

@@ -30,7 +30,7 @@ paths:
           description: Created
         400:
           $ref: "#/components/responses/400ErrorResponse"
-  /profile/{id}:
+  /profiles/{id}:
     parameters:
       - $ref: "#/components/parameters/Request-ID"
       - name: id

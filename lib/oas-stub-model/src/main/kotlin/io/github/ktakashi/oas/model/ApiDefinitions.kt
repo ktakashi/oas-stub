@@ -26,6 +26,8 @@ data class ApiHeaders
 class ApiData
 @JvmOverloads constructor(private val delegate: Map<String, Any> = mapOf()): Map<String, Any> by delegate, MergeableApiConfig<ApiData> {
     override fun merge(other: ApiData): ApiData = ApiData(other + this)
+
+    fun asMap(): Map<String, Any> = this
 }
 
 interface ApiCommonConfigurations<T: ApiCommonConfigurations<T>> {

@@ -3,7 +3,9 @@ package io.github.ktakashi.oas.engine.plugins
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
+import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.plugin.apis.ApiPlugin
 import io.github.ktakashi.oas.plugin.apis.PluginContext
@@ -34,11 +36,14 @@ class PluginService
             storageService.getPluginDefinition(requestContext.applicationName, requestContext.apiPath).map { plugin ->
                 try {
                     val compiled = pluginCache[plugin]
-                    val stubData = storageService.getApiData(requestContext.applicationName)
+                    val apiData: Optional<Map<String, Any>> = storageService.getApiDefinitions(requestContext.applicationName)
+                            .map { v -> ModelPropertyUtils.mergeProperty(requestContext.apiPath, v, ApiCommonConfigurations<*>::data) }
+                            // The null-safe operator must be redundant, but as of Kotlin 1.9.0 doesn't detect it...
+                            .map { it?.asMap()}
                     val code = compiled.getConstructor().newInstance()
                     val context = PluginContextData(requestContext, responseContext,
                             storageService.sessionStorage,
-                            stubData.orElseGet { mapOf() },
+                            apiData.orElseGet { mapOf() },
                             objectMapper)
                     code.customize(context)
                 } catch (e: Exception) {
