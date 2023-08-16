@@ -10,7 +10,6 @@ import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiOptions
-import io.github.ktakashi.oas.model.MergeableApiConfig
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
@@ -178,7 +177,7 @@ class DefaultApiService
                     putAll(responseHeaders)
                     putAll(context.headers)
                 }
-                context.from().headers(newHeaders).build()
+                context.mutate().headers(newHeaders).build()
             } ?: context
         }.customize(requestContext)
 
@@ -311,7 +310,7 @@ internal data class DefaultResponseContext(override val status: Int,
         response.status = this.status
     }
 
-    override fun from() = DefaultResponseContextBuilder(status, content, contentType, headers)
+    override fun mutate() = DefaultResponseContextBuilder(status, content, contentType, headers)
 
     internal data class DefaultResponseContextBuilder(private val status: Int,
                                                       private val content: Optional<ByteArray>,

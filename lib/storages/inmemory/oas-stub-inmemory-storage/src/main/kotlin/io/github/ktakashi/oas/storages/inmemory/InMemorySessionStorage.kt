@@ -3,12 +3,13 @@ package io.github.ktakashi.oas.storages.inmemory
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.storage.apis.PersistentStorage
 import io.github.ktakashi.oas.storage.apis.SessionStorage
+import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
 class InMemorySessionStorage: SessionStorage {
     private val storage = ConcurrentHashMap<String, Any>()
-    override fun <T> put(key: String, value: T) {
+    override fun <T> put(key: String, value: T, ttl: Duration) {
         storage[key] = value as Any
     }
 

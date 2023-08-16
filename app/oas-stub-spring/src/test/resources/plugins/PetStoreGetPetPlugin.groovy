@@ -18,7 +18,7 @@ class PetStoreGetPetPlugin implements ApiPlugin {
                 def object = node as ObjectNode
                 object.replace("id", objectMapper.nodeFactory.numberNode(1))
                 def content = objectMapper.writeValueAsBytes(object)
-                return context.from().content(content).build()
+                return context.mutate().content(content).build()
             }
         }
         return context

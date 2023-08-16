@@ -20,7 +20,7 @@ class PetStoreGetPetsPlugin implements ApiPlugin {
                 array.removeAll()
                 array.add(pet)
                 def content = objectMapper.writeValueAsBytes(array)
-                return context.from().content(content).build()
+                return context.mutate().content(content).build()
             }
         }
         return context
