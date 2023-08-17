@@ -5,6 +5,7 @@ import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiDefinitions
+import io.github.ktakashi.oas.model.ApiDelay
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.PluginDefinition
@@ -108,7 +109,7 @@ class ContextOptionsController(apiRegistrationService: ApiRegistrationService): 
     @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
     @DeleteMapping
     fun deleteOptions(@PathVariable("context") context: String) = deleteApiDefinitionsProperty(context) { def ->
-        def.updateOptions(ApiOptions())
+        def.updateOptions(null)
     }
 }
 
@@ -140,7 +141,7 @@ class ContextConfigurationsController(apiRegistrationService: ApiRegistrationSer
     @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
     @DeleteMapping
     fun deleteConfigurations(@PathVariable("context") context: String) = deleteApiDefinitionsProperty(context) { def ->
-        def.updateConfigurations(mapOf())
+        def.updateConfigurations(null)
     }
 }
 
@@ -168,7 +169,7 @@ class ContextHeadersController(apiRegistrationService: ApiRegistrationService): 
     @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
     @DeleteMapping
     fun deleteHeaders(@PathVariable("context") context: String) = deleteApiDefinitionsProperty(context) { def ->
-        def.updateHeaders(ApiHeaders())
+        def.updateHeaders(null)
     }
 }
 
@@ -196,7 +197,35 @@ class ContextDataController(apiRegistrationService: ApiRegistrationService): Abs
     @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
     @DeleteMapping
     fun deleteData(@PathVariable("context") context: String) = deleteApiDefinitionsProperty(context) {
-        def -> def.updateData(ApiData())
+        def -> def.updateData(null)
+    }
+}
+
+@Admin
+@RestController
+@RequestMapping(path = ["/{context}/delay"])
+@Tag(name = "API Context data", description = "API context delay CRUD")
+class ContextDelayController(apiRegistrationService: ApiRegistrationService): AbstractContextController(apiRegistrationService) {
+    @Operation(summary = "Get API delay", description = "Get API delay of the {context}")
+    @ApiResponse(responseCode = "200", description = "Get the API delay")
+    @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getDelay(@PathVariable("context") context: String) = getApiDefinitionsProperty(context, ApiDefinitions::delay)
+
+    @Operation(summary = "Update API delay", description = "Updates API delay of the {context}")
+    @ApiResponse(responseCode = "200", description = "The API delay are updated")
+    @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
+    @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun putDelay(@PathVariable("context") context: String, @RequestBody request: ApiDelay) = putApiDefinitionsProperty(context) {
+        def -> def.updateDelay(request)
+    }
+
+    @Operation(summary = "Delete API delay", description = "Deletes API delay of the {context}")
+    @ApiResponse(responseCode = "200", description = "The API delay are deleted", content = [Content(schema = Schema())])
+    @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
+    @DeleteMapping
+    fun deleteData(@PathVariable("context") context: String) = deleteApiDefinitionsProperty(context) {
+        def -> def.updateDelay(null)
     }
 }
 
@@ -329,6 +358,38 @@ class DataConfigurationsController(apiRegistrationService: ApiRegistrationServic
         v?.updateData(null)
     }
 }
+
+@Admin
+@RestController
+@RequestMapping(path = ["/{context}/configurations/delay"])
+@Tag(name = "API Data", description = "Single API delay CRUD")
+class DelayConfigurationsController(apiRegistrationService: ApiRegistrationService): AbstractSingleApiController(apiRegistrationService) {
+
+    @Operation(summary = "Get API delay configuration", description = "Get the delay of the API if exists")
+    @ApiResponse(responseCode = "200", description = "The API data is retrieved", content = [Content(schema = Schema())])
+    @ApiResponse(responseCode = "404", description = "Specified context or API (delay) is not found", content = [Content(schema = Schema())])
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = getConfigurationProperty(context, api) { v ->
+        v?.delay
+    }
+
+    @Operation(summary = "Update API delay configuration", description = "Updates an API delay of the {context}")
+    @ApiResponse(responseCode = "200", description = "The API delay is updated")
+    @ApiResponse(responseCode = "404", description = "Specified context or API is not found", content = [Content(schema = Schema())])
+    @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun putData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI, @RequestBody request: ApiDelay) = putConfigurationProperty(context, api) { apiConfiguration ->
+        apiConfiguration?.updateDelay(request) ?: ApiConfiguration(delay = request)
+    }
+
+    @Operation(summary = "Delete API delay configuration", description = "Deletes the delay of the API if exists")
+    @ApiResponse(responseCode = "204", description = "The API delay is deleted", content = [Content(schema = Schema())])
+    @ApiResponse(responseCode = "404", description = "Specified context or API (delay) is not found", content = [Content(schema = Schema())])
+    @DeleteMapping
+    fun deleteData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = deleteConfigurationProperty(context, api) { v ->
+        v?.updateDelay(null)
+    }
+}
+
 
 abstract class AbstractContextController(protected val apiRegistrationService: ApiRegistrationService) {
     protected fun getApiDefinitions(context: String): Mono<ApiDefinitions> =

@@ -11,7 +11,7 @@ object ModelPropertyUtils {
             d.configurations?.let {
                 findMatchingPathValue(path, it)
                         .map { def -> propertyRetriever(def) }
-                        .map { o -> propertyRetriever(d)?.let { o?.merge(it) } ?: o }
+                        .map { o -> propertyRetriever(d)?.let { other -> o?.merge(other) } ?: o }
                         .orElseGet { propertyRetriever(d) }
             } ?: propertyRetriever(d)
 }

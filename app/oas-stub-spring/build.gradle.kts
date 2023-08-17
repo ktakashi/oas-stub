@@ -37,6 +37,7 @@ dependencies {
     testImplementation("io.cucumber:cucumber-junit-platform-engine")
     testImplementation("io.cucumber:cucumber-spring")
     testImplementation("io.rest-assured:rest-assured")
+    testImplementation("org.awaitility:awaitility:4.2.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

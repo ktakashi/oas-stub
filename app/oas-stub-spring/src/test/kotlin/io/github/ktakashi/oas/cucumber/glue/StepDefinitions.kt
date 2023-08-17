@@ -10,7 +10,6 @@ import io.cucumber.spring.CucumberContextConfiguration
 import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
 import io.github.ktakashi.oas.cucumber.context.TestContext
 import io.github.ktakashi.oas.maybeContent
-import io.github.ktakashi.oas.models.CreateApiRequest
 import io.github.ktakashi.oas.readContent
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
@@ -20,7 +19,11 @@ import io.restassured.http.ContentType
 import io.restassured.http.Header
 import io.restassured.http.Headers
 import java.net.URI
+import kotlin.time.DurationUnit
+import kotlin.time.toTimeUnit
 import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.lessThan
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -167,5 +170,17 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
             val (path, value) = condition.lastIndexOf('=').let { if (it < 0) condition to "" else condition.substring(0, it) to condition.substring(it + 1) }
             testContext.response?.then()?.body(path, equalTo(value)) ?: throw IllegalStateException("No response")
         }
+    }
+
+    @Then("I waited at least {long} {string}")
+    fun `I waited at least {int} {string}`(duration: Long, unit: String) {
+        val durationUnit = DurationUnit.valueOf(unit.uppercase())
+        testContext.response?.then()?.time(greaterThan(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
+    }
+
+    @Then("I waited at most {long} {string}")
+    fun `I waited at most {int} {string}`(duration: Long, unit: String) {
+        val durationUnit = DurationUnit.valueOf(unit.uppercase())
+        testContext.response?.then()?.time(lessThan(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
     }
 }

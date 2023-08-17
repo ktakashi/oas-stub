@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.servlets
 
 import io.github.ktakashi.oas.engine.apis.ApiContext
+import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import jakarta.servlet.AsyncContext
 import jakarta.servlet.AsyncEvent
@@ -9,13 +10,15 @@ import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 
 private val logger = LoggerFactory.getLogger(OasDispatchServlet::class.java)
 
-class OasDispatchServlet(private val apiExecutionService: ApiExecutionService): HttpServlet() {
+class OasDispatchServlet(private val apiExecutionService: ApiExecutionService,
+                         private val apiDelayService: ApiDelayService): HttpServlet() {
 
     override fun service(req: HttpServletRequest, res: HttpServletResponse) {
         val asyncContext = req.startAsync()
@@ -41,9 +44,9 @@ class OasDispatchServlet(private val apiExecutionService: ApiExecutionService): 
                 }.thenAccept(AsyncContext::complete)
     }
 
-    private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletableFuture<AsyncContext> {
+    private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletionStage<AsyncContext> {
         val response = asyncContext.response as HttpServletResponse
-        return CompletableFuture.supplyAsync { apiExecutionService.executeApi(apiContext, req, response) }
+        return apiDelayService.delayFuture(apiContext, CompletableFuture.supplyAsync { apiExecutionService.executeApi(apiContext, req, response) })
                 .thenApply { responseContext ->
                     responseContext.emitResponse(response)
                     asyncContext

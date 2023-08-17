@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.configuration
 
 import io.github.ktakashi.oas.annotations.Admin
 import io.github.ktakashi.oas.engine.apis.API_PATH_NAME_QUALIFIER
+import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.servlets.OasDispatchServlet
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -27,9 +28,10 @@ class OasApplicationConfiguration(private val oasApplicationServletProperties: O
 
 @Configuration
 class OasServletConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties,
-                              private val apiExecutionService: ApiExecutionService) {
+                              private val apiExecutionService: ApiExecutionService,
+                              private val apiDelayService: ApiDelayService) {
     @Bean
-    fun servletBean() = ServletRegistrationBean(OasDispatchServlet(apiExecutionService), "${oasApplicationServletProperties.prefix}/*")
+    fun servletBean() = ServletRegistrationBean(OasDispatchServlet(apiExecutionService, apiDelayService), "${oasApplicationServletProperties.prefix}/*")
             .also { registration ->
                 registration.setLoadOnStartup(1)
                 registration.setAsyncSupported(true)

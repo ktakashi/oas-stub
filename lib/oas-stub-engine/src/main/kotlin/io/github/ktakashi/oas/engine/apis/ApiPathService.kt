@@ -10,7 +10,7 @@ const val API_PATH_NAME_QUALIFIER = "ApiPathNameQualifier"
 @Named @Singleton
 class ApiPathService
 @Inject constructor(@Named(API_PATH_NAME_QUALIFIER) private val prefix: String) {
-    fun extractApplicationName(uri: String?): Optional<String> = uri?.let {
+    fun extractApiNameAndPath(uri: String?): Optional<Pair<String, String>> = uri?.let {
         val index = it.indexOf(prefix)
         if (index < 0) {
             Optional.empty()
@@ -20,12 +20,13 @@ class ApiPathService
             if (lastSlash < 0) {
                 Optional.empty()
             } else {
-                Optional.of(it.substring(firstSlash, lastSlash))
+                val context = it.substring(firstSlash, lastSlash)
+                Optional.of(context to extractApiPath(context, uri))
             }
         }
     } ?: Optional.empty()
 
-    fun extractApiPath(context: String, uri: String): String {
+    private fun extractApiPath(context: String, uri: String): String {
         val contextPath = "$prefix/$context"
         val index = uri.indexOf(contextPath)
         return uri.substring(index + contextPath.length)

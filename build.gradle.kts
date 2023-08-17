@@ -48,6 +48,7 @@ subprojects {
             dependency("org.apache.groovy:groovy:4.0.13")
             dependency("io.rest-assured:rest-assured:5.3.1")
             dependency("org.slf4j:slf4j-api:2.0.7")
+            dependency("org.awaitility:awaitility:4.2.0")
         }
         imports {
             mavenBom("org.jetbrains.kotlin:kotlin-bom:${kotlinVersion}")

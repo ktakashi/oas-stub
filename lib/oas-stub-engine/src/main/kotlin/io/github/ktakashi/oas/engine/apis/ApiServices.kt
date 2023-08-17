@@ -28,7 +28,7 @@ import java.util.TreeMap
 import org.apache.http.HttpStatus
 import org.glassfish.jersey.uri.UriTemplate
 
-data class ApiContext(val context: String, val method: String, val openApi: OpenAPI, val apiDefinitions: ApiDefinitions)
+data class ApiContext(val context: String, val apiPath: String, val method: String, val openApi: OpenAPI, val apiDefinitions: ApiDefinitions)
 
 fun interface ApiContextService {
     /**
@@ -104,10 +104,14 @@ class DefaultApiService
                     private val apiResultProvider: ApiResultProvider,
                     private val pluginService: PluginService): ApiExecutionService, ApiRegistrationService {
     override fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
-            apiPathService.extractApplicationName(request.requestURI).flatMap { name ->
-                storageService.getApiDefinitions(name).flatMap { apiDefinitions ->
-                    storageService.getOpenApi(name)
-                            .map { def -> ApiContext(openApi = def, context = name, method = request.method, apiDefinitions = apiDefinitions) }
+            apiPathService.extractApiNameAndPath(request.requestURI).flatMap { (context, api) ->
+                storageService.getApiDefinitions(context).flatMap { apiDefinitions ->
+                    storageService.getOpenApi(context)
+                            .map { def -> ApiContext(openApi = def,
+                                    context = context,
+                                    apiPath = api,
+                                    method = request.method,
+                                    apiDefinitions = apiDefinitions) }
                 }
             }
 
@@ -126,8 +130,7 @@ class DefaultApiService
     override fun deleteApiDefinitions(name: String): Boolean = storageService.deleteApiDefinitions(name)
 
     override fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {
-        val appName = apiContext.context
-        val path = apiPathService.extractApiPath(appName, request.requestURI)
+        val path = apiContext.apiPath
         val requestContext = makeRequestContext(apiContext, path, request, response)
         val adjustedPath = adjustBasePath(path, apiContext.openApi)
         val pathItem = adjustedPath.flatMap { v -> findMatchingPathValue(v, apiContext.openApi.paths) }
