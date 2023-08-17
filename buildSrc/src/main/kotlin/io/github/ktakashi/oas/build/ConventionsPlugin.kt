@@ -14,6 +14,7 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 class ConventionsPlugin: Plugin<Project> {
@@ -40,6 +41,11 @@ internal fun configureKotlinConventions(project: Project) {
             val dokkaJavadoc = project.tasks.named("dokkaJavadoc")
             jar.dependsOn(dokkaJavadoc)
             jar.from(dokkaJavadoc.flatMap { task -> (task as DokkaTask).outputDirectory })
+        }
+        project.tasks.withType(KotlinCompile::class.java) { task ->
+            task.kotlinOptions.apply {
+                freeCompilerArgs = listOf("-Xjvm-default=all")
+            }
         }
         project.extensions.getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(17)
     }

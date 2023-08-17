@@ -6,6 +6,7 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.MergeableApiConfig
 
 object ModelPropertyUtils {
+    @JvmStatic
     fun <R : MergeableApiConfig<R>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations<*>) -> R?) =
             d.configurations?.let {
                 findMatchingPathValue(path, it)
