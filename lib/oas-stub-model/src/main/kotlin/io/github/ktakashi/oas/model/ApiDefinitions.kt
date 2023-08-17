@@ -92,7 +92,7 @@ data class ApiConfiguration
 }
 
 data class ApiDefinitions
-@JvmOverloads constructor(val specification: String,
+@JvmOverloads constructor(val specification: String? = null,
                           val configurations: Map<String, ApiConfiguration>? = null,
                           // global data, these are applied to all APIs of this context
                           override val headers: ApiHeaders? = null,

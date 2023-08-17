@@ -10,7 +10,6 @@ import io.cucumber.spring.CucumberContextConfiguration
 import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
 import io.github.ktakashi.oas.cucumber.context.TestContext
 import io.github.ktakashi.oas.maybeContent
-import io.github.ktakashi.oas.readContent
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
@@ -45,7 +44,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @Before
     fun setup() {
-        testContext = TestContext("http://localhost:$localPort")
+        testContext = TestContext("http://localhost:$localPort", oasApplicationServletProperties.prefix)
     }
 
     @Given("this API definition {string}")
@@ -60,13 +59,27 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         }
     }
 
+    @Given("This is custom controller tests")
+    fun `This is custom controller tests`() {
+        testContext.prefix = ""
+    }
+
     @When("I create {string} API definition")
     fun `I create {string} API definition`(context: String) {
+        createAPI(context, "classpath:${testContext.apiDefinitionPath}", ContentType.TEXT)
+    }
+
+    @When("I create {string} API definition with {string}")
+    fun iCreateApiDefinitionWithContent(context: String, configurations: String) {
+        createAPI(context, configurations, ContentType.JSON)
+    }
+
+    private fun createAPI(context: String, configurations: String, contentType: ContentType) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(oasApplicationServletProperties.adminPrefix).pathSegment(context)
                 .build().toUri()
-        val response = given().contentType(ContentType.TEXT)
-                .body(readContent(testContext.apiDefinitionPath))
+        val response = given().contentType(contentType)
+                .body(maybeContent(configurations))
                 .post(uri)
         testContext.apiName = context
         testContext.response = response
@@ -125,7 +138,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     fun `I {string} to {string} with {string} as {string}`(method: String, path: String, content: String, contentType: String) {
         val p = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.prefix)
+                .path(testContext.prefix)
                 .pathSegment(testContext.apiName)
                 .path(p.path)
                 .query(p.query)

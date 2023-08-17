@@ -116,17 +116,20 @@ class DefaultApiService
             }
 
     override fun getApiDefinitions(name: String): Optional<ApiDefinitions> = storageService.getApiDefinitions(name)
-    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = parsingService.parse(apiDefinitions.specification)
-            .filter { openApi -> apiDefinitions.configurations?.let {
-                it.keys.all { path ->
-                    adjustBasePath(path, openApi).map { p -> findMatchingPath(p, openApi.paths.keys).isPresent }
-                            .orElse(false)
+    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = apiDefinitions.specification?.let { spec ->
+        parsingService.parse(spec)
+                .filter { openApi ->
+                    apiDefinitions.configurations?.let {
+                        it.keys.all { path ->
+                            adjustBasePath(path, openApi).map { p -> findMatchingPath(p, openApi.paths.keys).isPresent }
+                                    .orElse(false)
+                        }
+                    } ?: true
                 }
-            } ?: true}
-            .map { openApi -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi)) }
-            .map { def -> storageService.saveApiDefinitions(name, def) }
-            .orElse(false)
-
+                .map { openApi -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi)) }
+                .map { def -> storageService.saveApiDefinitions(name, def) }
+                .orElse(false)
+    } ?: storageService.saveApiDefinitions(name, apiDefinitions)
     override fun deleteApiDefinitions(name: String): Boolean = storageService.deleteApiDefinitions(name)
 
     override fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {

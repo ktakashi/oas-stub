@@ -25,7 +25,7 @@ class StorageService
             .build { k -> persistentStorage.getApiDefinition(k) }
     private val openApiCache: LoadingCache<String, Optional<OpenAPI>> = Caffeine.newBuilder()
             .build { k -> apiDefinitions[k]
-                    .map(ApiDefinitions::specification)
+                    .map<String>(ApiDefinitions::specification)
                     .flatMap(parsingService::parse)
             }
 
