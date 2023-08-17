@@ -32,6 +32,8 @@ dependencies {
     implementation("io.swagger.core.v3:swagger-annotations")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
 
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation("io.cucumber:cucumber-java")

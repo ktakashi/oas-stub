@@ -10,19 +10,21 @@ import jakarta.inject.Named
 import jakarta.inject.Singleton
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import kotlin.time.toTimeUnit
 
 @Named @Singleton
 class ApiDelayService
 @Inject constructor(private val storageService: StorageService) {
-    fun <T> delayFuture(apiContext: ApiContext, completableStage: CompletionStage<T>) = System.currentTimeMillis().let { start ->
+    @JvmOverloads
+    fun <T> delayFuture(apiContext: ApiContext, completableStage: CompletionStage<T>, executor: ExecutorService = ForkJoinPool.commonPool()) = System.currentTimeMillis().let { start ->
         ModelPropertyUtils.mergeProperty(apiContext.apiPath, apiContext.apiDefinitions, ApiCommonConfigurations<*>::delay)?.let { config ->
             completableStage.thenCompose { r ->
                 computeDelay(config, System.currentTimeMillis() - start)?.let { (delay, timeUnit) ->
-                    // TODO we should provide parent executor instead of using ASYNC_POOL
-                    val executor = CompletableFuture.delayedExecutor(delay, timeUnit)
-                    CompletableFuture.supplyAsync({ r }, executor)
+                    val delayExecutor = CompletableFuture.delayedExecutor(delay, timeUnit, executor)
+                    CompletableFuture.supplyAsync({ r }, delayExecutor)
                 } ?: CompletableFuture.completedFuture(r)
             }
         } ?: completableStage

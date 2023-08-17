@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.aspects
 
 import io.github.ktakashi.oas.annotations.Delayable
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
+import io.github.ktakashi.oas.services.ExecutorProviderService
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -13,9 +14,12 @@ import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
+private const val EXECUTOR_NAME = "delayableAspect"
 @Aspect
 @Component
-class DelayableAspect(private val apiDelayService: ApiDelayService) {
+class DelayableAspect(private val apiDelayService: ApiDelayService,
+                      executorProviderService: ExecutorProviderService) {
+    private val executor = executorProviderService.getExecutor(EXECUTOR_NAME)
     @Around("@annotation(io.github.ktakashi.oas.annotations.Delayable) && @annotation(delayable)")
     fun delayMono(jointPoint: ProceedingJoinPoint, delayable: Delayable): Any {
         val start = System.currentTimeMillis()
@@ -34,12 +38,12 @@ class DelayableAspect(private val apiDelayService: ApiDelayService) {
             }
             is CompletionStage<*> -> r.thenCompose { v ->
                 doDelay(delayable, start) { (delay, unit) ->
-                    val executor = CompletableFuture.delayedExecutor(delay, unit)
+                    val executor = CompletableFuture.delayedExecutor(delay, unit, executor)
                     CompletableFuture.supplyAsync({ v }, executor)
                 } ?: CompletableFuture.completedFuture(v)
             }
             else -> doDelay(delayable, start) { (delay, unit) ->
-                CompletableFuture.supplyAsync({ r }, CompletableFuture.delayedExecutor(delay, unit)).get()
+                CompletableFuture.supplyAsync({ r }, CompletableFuture.delayedExecutor(delay, unit, executor)).get()
             } ?: r
         }
     }

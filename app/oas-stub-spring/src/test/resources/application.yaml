@@ -1,0 +1,5 @@
+oas:
+  servlet:
+    adminPrefix: /__admin0
+  executors:
+    parallelism: 5

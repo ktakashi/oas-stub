@@ -6,6 +6,8 @@ import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.servlets.OasDispatchServlet
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.NestedConfigurationProperty
+import org.springframework.boot.context.properties.bind.ConstructorBinding
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -28,17 +30,18 @@ class OasApplicationConfiguration(private val oasApplicationServletProperties: O
 
 @Configuration
 class OasServletConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties,
-                              private val apiExecutionService: ApiExecutionService,
-                              private val apiDelayService: ApiDelayService) {
+                              private val servlet: OasDispatchServlet) {
     @Bean
-    fun servletBean() = ServletRegistrationBean(OasDispatchServlet(apiExecutionService, apiDelayService), "${oasApplicationServletProperties.prefix}/*")
+    fun servletBean() = ServletRegistrationBean(servlet, "${oasApplicationServletProperties.prefix}/*")
             .also { registration ->
                 registration.setLoadOnStartup(1)
                 registration.setAsyncSupported(true)
             }
 }
 
-@Component
 @ConfigurationProperties(prefix = "oas.servlet")
-data class OasApplicationServletProperties(val prefix: String = "/oas",
-                                           val adminPrefix: String = "/__admin")
+data class OasApplicationServletProperties(var prefix: String = "/oas",
+                                           var adminPrefix: String = "/__admin")
+
+@ConfigurationProperties(prefix = "oas.executors")
+data class ExecutorsProperties(var parallelism: Int = Runtime.getRuntime().availableProcessors())
