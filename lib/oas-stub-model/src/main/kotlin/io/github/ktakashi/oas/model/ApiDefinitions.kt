@@ -3,9 +3,11 @@ package io.github.ktakashi.oas.model
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import java.time.Duration
 import java.util.SortedMap
 import java.util.TreeMap
 import kotlin.time.DurationUnit
+import kotlin.time.toTimeUnit
 
 enum class PluginType {
     GROOVY
@@ -19,9 +21,30 @@ fun interface MergeableApiConfig<T: MergeableApiConfig<T>> {
     fun merge(other: T): T
 }
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes(
+        JsonSubTypes.Type(value = ApiFailureNone::class, name = "none"),
+        JsonSubTypes.Type(value = ApiProtocolFailure::class, name = "protocol"),
+        JsonSubTypes.Type(value = ApiHttpError::class, name = "http")
+)
+sealed interface ApiFailure
+data object ApiFailureNone: ApiFailure
+data object ApiProtocolFailure: ApiFailure
+data class ApiHttpError(val status: Int = 500): ApiFailure
+data class ApiLatency(val interval: Long, val unit: DurationUnit = DurationUnit.SECONDS) {
+    fun toDuration(): Duration = Duration.of(interval, unit.toTimeUnit().toChronoUnit())
+}
+
 data class ApiOptions
-@JvmOverloads constructor(val shouldValidate: Boolean? = null): MergeableApiConfig<ApiOptions> {
-    override fun merge(other: ApiOptions) = ApiOptions(shouldValidate = shouldValidate ?: other.shouldValidate)
+@JvmOverloads constructor(val shouldValidate: Boolean? = null,
+                          val latency: ApiLatency? = null,
+                          val failure: ApiFailure? = null): MergeableApiConfig<ApiOptions> {
+    override fun merge(other: ApiOptions) = ApiOptions(shouldValidate = shouldValidate ?: other.shouldValidate,
+            latency = latency ?: other.latency,
+            failure = failure ?: other.failure)
 }
 
 data class ApiHeaders
@@ -59,13 +82,12 @@ sealed interface ApiDelay: MergeableApiConfig<ApiDelay> {
         val DEFAULT_DURATION_UNIT = DurationUnit.MILLISECONDS
     }
     val delayDurationUnit: DurationUnit?
+    override fun merge(other: ApiDelay): ApiDelay = this
 }
 
 @JsonTypeName("fixed")
 data class ApiFixedDelay(override val delayDurationUnit: DurationUnit? = ApiDelay.DEFAULT_DURATION_UNIT,
-                         val fixedDelay: Long): ApiDelay {
-    override fun merge(other: ApiDelay): ApiDelay = this
-}
+                         val fixedDelay: Long): ApiDelay
 
 interface ApiCommonConfigurations<T: ApiCommonConfigurations<T>> {
     val headers: ApiHeaders?

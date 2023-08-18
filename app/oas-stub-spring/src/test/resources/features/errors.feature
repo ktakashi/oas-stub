@@ -14,3 +14,43 @@ Feature: Error cases
     Examples:
       | schema                   | context  | api      | plugin                                        | method | path     | content | contentType | status | responseContentType | response               |
       | /schema/v3/petstore.yaml | petstore | /v1/pets | classpath:/plugins/PetStoreErrorPlugin.groovy | GET    | /v1/pets |         |             | 200    | application/json    | $.size().toString()=10 |
+
+  @error @failure @protocol
+  Scenario Outline: Protocol error
+    Given this API definition '/schema/v3/petstore.yaml'
+    When I create 'petstore' API definition
+    And I update API definition with '<failure>' via '/options' of content type 'application/json'
+    Then I get http status 200
+    Then [Protocol Error] I 'GET' to '/v1/pets' with '' as ''
+    Examples:
+      | failure                           |
+      | {"failure": {"type": "protocol"}} |
+
+  @error @failure @http
+  Scenario Outline: Http error
+    Given this API definition '/schema/v3/petstore.yaml'
+    When I create 'petstore' API definition
+    And I update API definition with '<failure>' via '/options' of content type 'application/json'
+    Then I get http status 200
+    Then I 'GET' to '/v1/pets' with '' as ''
+    And I get http status <status>
+    Examples:
+      | failure                                      | status |
+      | {"failure": {"type": "http"}}                | 500    |
+      | {"failure": {"type": "http", "status": 503}} | 503    |
+
+  @error @failure @latency
+  Scenario Outline: High latency
+    Given this API definition '/schema/test-api.yaml'
+    Given these HTTP headers
+      | name       | value                                |
+      | Request-ID | cca43b93-a4ff-46cf-8564-d8e4f3899657 |
+    When I create 'test-api' API definition
+    And I update API definition with '<failure>' via '/options' of content type 'application/json'
+    Then I get http status 200
+    Then I 'GET' to '/profiles/1' with '' as ''
+    And I get http status <status>
+    And Reading response took at least <least> 'milliseconds'
+    Examples:
+      | failure                                                | status | least |
+      | {"latency": {"interval": 100, "unit": "MILLISECONDS"}} | 200    | 1500  |

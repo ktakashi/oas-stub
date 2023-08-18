@@ -20,10 +20,13 @@ import io.restassured.http.Headers
 import java.net.URI
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
+import org.apache.http.client.ClientProtocolException
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.lessThan
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -44,7 +47,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @Before
     fun setup() {
-        testContext = TestContext("http://localhost:$localPort", oasApplicationServletProperties.prefix)
+        testContext = TestContext("http://localhost:$localPort", oasApplicationServletProperties.prefix, )
     }
 
     @Given("this API definition {string}")
@@ -134,8 +137,19 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         testContext.response = given().delete(uri)
     }
 
-    @And("I {string} to {string} with {string} as {string}")
+    @Then("I {string} to {string} with {string} as {string}")
     fun `I {string} to {string} with {string} as {string}`(method: String, path: String, content: String, contentType: String) {
+        requestApi(path, contentType, content, method)
+    }
+
+
+    @Then("[Protocol Error] I {string} to {string} with {string} as {string}")
+    fun `Protocol Error I {string} to {string} with {string} as {string}`(method: String, path: String, content: String, contentType: String) {
+        assertThrows<ClientProtocolException> { requestApi(path, contentType, content, method) }
+    }
+
+    private fun requestApi(path: String, contentType: String, content: String, method: String) {
+        val start = System.currentTimeMillis()
         val p = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(testContext.prefix)
@@ -149,17 +163,18 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 it.contentType(contentType)
             }
         }.headers(Headers(testContext.headers))
-        
+
         val body = maybeContent(content)
         testContext.response = when (method.uppercase()) {
             "GET" -> spec.get(uri)
-            "POST" -> spec.apply { body?.let { spec.body(body)} }.post(uri)
-            "PUT" -> spec.apply { body?.let { spec.body(body)} }.put(uri)
+            "POST" -> spec.apply { body?.let { spec.body(body) } }.post(uri)
+            "PUT" -> spec.apply { body?.let { spec.body(body) } }.put(uri)
             "DELETE" -> spec.delete(uri)
-            "PATCH" -> spec.apply { body?.let { spec.body(body)} }.patch(uri)
+            "PATCH" -> spec.apply { body?.let { spec.body(body) } }.patch(uri)
             "OPTIONS" -> spec.options(uri)
             else -> throw IllegalArgumentException("Not supported (yet?)")
         }
+        testContext.responseTime = System.currentTimeMillis() - start
     }
 
     @Then("I get http status {int}")
@@ -195,5 +210,12 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     fun `I waited at most {int} {string}`(duration: Long, unit: String) {
         val durationUnit = DurationUnit.valueOf(unit.uppercase())
         testContext.response?.then()?.time(lessThan(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
+    }
+
+    @Then("Reading response took at least {long} {string}")
+    fun `Reading response took at least {long} {string}`(duration: Long, unit: String) {
+        val durationUnit = DurationUnit.valueOf(unit.uppercase())
+        val responseTime = testContext.responseTime?: throw IllegalStateException("No response time")
+        assertTrue(responseTime > durationUnit.toTimeUnit().toMillis(duration)) { "Reading entire response must take more than $duration$unit" }
     }
 }

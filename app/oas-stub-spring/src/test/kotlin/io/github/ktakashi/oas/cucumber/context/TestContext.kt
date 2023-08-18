@@ -8,4 +8,5 @@ data class TestContext(var applicationUrl: String,
                        var apiDefinitionPath: String = "",
                        var apiName: String = "",
                        var headers: MutableList<Header> = mutableListOf(),
-                       var response: Response? = null)
+                       var response: Response? = null,
+                       var responseTime: Long? = null)

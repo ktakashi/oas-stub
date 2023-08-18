@@ -9,7 +9,9 @@ import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiDefinitions
+import io.github.ktakashi.oas.model.ApiHttpError
 import io.github.ktakashi.oas.model.ApiOptions
+import io.github.ktakashi.oas.model.ApiProtocolFailure
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
@@ -23,6 +25,7 @@ import jakarta.servlet.http.HttpServletResponse
 import java.io.IOException
 import java.net.HttpCookie
 import java.net.URI
+import java.time.Duration
 import java.util.Optional
 import java.util.TreeMap
 import org.apache.http.HttpStatus
@@ -144,8 +147,6 @@ class DefaultApiService
         if (operation.isEmpty) {
             return emitResponse(requestContext, makeErrorResponse(HttpStatus.SC_METHOD_NOT_ALLOWED))
         }
-        // TODO failure
-
         val responseContext = if (requestContext.skipValidation) {
             apiResultProvider.provideResult(operation.get(), requestContext)
         } else {
@@ -176,19 +177,35 @@ class DefaultApiService
                         rawRequest = request, rawResponse = response)
             }
 
-    private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext): ResponseContext =
-        responseContext.let { context ->
-            ModelPropertyUtils.mergeProperty(requestContext.apiPath, requestContext.apiDefinitions, ApiCommonConfigurations<*>::headers)?.response?.let { responseHeaders ->
-                val newHeaders = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
-                    putAll(responseHeaders)
-                    putAll(context.headers)
-                }
-                context.mutate().headers(newHeaders).build()
-            } ?: context
-        }.customize(requestContext)
+    private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext): ResponseContext = if (requestContext.apiOptions?.failure != null) {
+        when (val f = requestContext.apiOptions.failure) {
+            is ApiProtocolFailure -> DefaultResponseContext(-1)
+            is ApiHttpError -> DefaultResponseContext(f.status, headers = responseContext.headers)
+            // None, won't fail then
+            else -> customizeResponse(responseContext, requestContext)
+        }
+    } else {
+        customizeResponse(responseContext, requestContext)
+    }
 
-    private fun ResponseContext.customize(requestContext: RequestContext) = pluginService.applyPlugin(requestContext, this)
+    private fun customizeResponse(responseContext: ResponseContext, requestContext: ApiContextAwareRequestContext) = responseContext.let { context ->
+        ModelPropertyUtils.mergeProperty(requestContext.apiPath, requestContext.apiDefinitions, ApiCommonConfigurations<*>::headers)?.response?.let { responseHeaders ->
+            val newHeaders = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
+                putAll(responseHeaders)
+                putAll(context.headers)
+            }
+            context.mutate().headers(newHeaders).build()
+        } ?: context
+    }.customize(requestContext)
 
+    private fun ResponseContext.customize(requestContext: ApiContextAwareRequestContext) = pluginService.applyPlugin(requestContext, this).let {
+        val l = requestContext.apiOptions?.latency
+        if (l != null) {
+            HighLatencyResponseContext(this, l.toDuration())
+        } else {
+            this
+        }
+    }
 }
 
 @Named @Singleton
@@ -329,4 +346,32 @@ internal data class DefaultResponseContext(override val status: Int,
 
         override fun build() = DefaultResponseContext(status, content, contentType, headers)
     }
+}
+
+internal data class HighLatencyResponseContext(override val status: Int,
+                                               override val content: Optional<ByteArray> = Optional.empty(),
+                                               override val contentType: Optional<String> = Optional.empty(),
+                                               override val headers: Map<String, List<String>> = mapOf(),
+                                               private val interval: Duration): ResponseContext {
+    constructor(responseContext: ResponseContext, interval: Duration):
+        this(responseContext.status, responseContext.content, responseContext.contentType, responseContext.headers, interval)
+
+    override fun mutate(): ResponseContext.ResponseContextBuilder = throw UnsupportedOperationException("Mutation of this class is not allowed")
+
+    override fun emitResponse(response: HttpServletResponse) {
+        response.status = this.status
+        contentType.ifPresent { t -> response.contentType = t }
+        headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
+        val outputStream = response.outputStream
+        // flush first, after flush we can't emit header nor status
+        outputStream.flush()
+        // now let's
+        content.ifPresent { ba ->
+            ba.forEach { b ->
+                Thread.sleep(interval.toMillis())
+                outputStream.write(b.toInt())
+            }
+        }
+    }
+
 }
