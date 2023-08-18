@@ -9,8 +9,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 class InMemorySessionStorage: SessionStorage {
     private val storage = ConcurrentHashMap<String, Any>()
-    override fun <T> put(key: String, value: T, ttl: Duration) {
+    override fun <T> put(key: String, value: T, ttl: Duration): Boolean {
         storage[key] = value as Any
+        return true
     }
 
     override fun <T: Any> get(key: String, type: Class<T>): Optional<T> = storage[key]?.let { v ->

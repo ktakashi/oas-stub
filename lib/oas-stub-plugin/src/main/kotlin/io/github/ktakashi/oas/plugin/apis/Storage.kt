@@ -21,9 +21,8 @@ interface Storage {
      *
      * The stored value *should* not expire unless the storage has hard expiration period.
      */
-    fun <T> put(key: String, value: T) {
-        put(key, value, Duration.ZERO)
-    }
+    fun <T> put(key: String, value: T) = put(key, value, Duration.ZERO)
+
 
     /**
      * Puts [value] associating to [key] into the storage.
@@ -33,7 +32,7 @@ interface Storage {
      * If [ttl] is equivalent to 0, then the stored value should not expire.
      * Otherwise, it *should* expire in [ttl] period.
      */
-    fun <T> put(key: String, value: T, ttl: Duration)
+    fun <T> put(key: String, value: T, ttl: Duration): Boolean
 
     /**
      * Retrieves the value associated to [key].

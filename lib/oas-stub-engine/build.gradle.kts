@@ -6,11 +6,11 @@ group = "$group.engine"
 description = "OAS stub engine"
 
 dependencies {
-    implementation(project(":lib:oas-stub-model"))
-    implementation(project(":lib:oas-stub-plugin"))
-    implementation(project(":lib:storages:oas-stub-storage-api"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("jakarta.servlet:jakarta.servlet-api")
+    api(project(":lib:oas-stub-model"))
+    api(project(":lib:oas-stub-plugin"))
+    api(project(":lib:storages:oas-stub-storage-api"))
+    api("org.jetbrains.kotlin:kotlin-stdlib")
+    api("jakarta.servlet:jakarta.servlet-api")
     implementation("jakarta.inject:jakarta.inject-api")
     implementation("jakarta.ws.rs:jakarta.ws.rs-api")
     implementation("org.glassfish.jersey.core:jersey-client:3.1.3")

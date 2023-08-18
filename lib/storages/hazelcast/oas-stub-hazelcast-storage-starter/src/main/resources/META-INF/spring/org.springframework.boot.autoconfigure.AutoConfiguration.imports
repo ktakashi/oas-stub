@@ -1,0 +1,4 @@
+io.github.ktakashi.oas.storages.hazelcast.configuration.AutoHazelcastConfiguration
+io.github.ktakashi.oas.storages.hazelcast.configuration.AutoHazelcastSessionStorageConfiguration
+io.github.ktakashi.oas.storages.hazelcast.configuration.AutoHazelcastPersistentStorageConfiguration
+
