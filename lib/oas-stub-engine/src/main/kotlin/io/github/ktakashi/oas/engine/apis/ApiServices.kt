@@ -201,9 +201,9 @@ class DefaultApiService
     private fun ResponseContext.customize(requestContext: ApiContextAwareRequestContext) = pluginService.applyPlugin(requestContext, this).let {
         val l = requestContext.apiOptions?.latency
         if (l != null) {
-            HighLatencyResponseContext(this, l.toDuration())
+            HighLatencyResponseContext(it, l.toDuration())
         } else {
-            this
+            it
         }
     }
 }

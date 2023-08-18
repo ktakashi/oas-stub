@@ -10,6 +10,7 @@ import io.cucumber.spring.CucumberContextConfiguration
 import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
 import io.github.ktakashi.oas.cucumber.context.TestContext
 import io.github.ktakashi.oas.maybeContent
+import io.github.ktakashi.oas.storage.apis.PersistentStorage
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
@@ -36,6 +37,7 @@ import org.springframework.web.util.UriComponentsBuilder
 @CucumberContextConfiguration
 @EnableAutoConfiguration
 class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int,
+                      private val persistentStorage: PersistentStorage,
                       private val oasApplicationServletProperties: OasApplicationServletProperties) {
     private lateinit var testContext: TestContext
 
@@ -69,6 +71,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @When("I create {string} API definition")
     fun `I create {string} API definition`(context: String) {
+        persistentStorage.deleteApiDefinition(context)
         createAPI(context, "classpath:${testContext.apiDefinitionPath}", ContentType.TEXT)
     }
 

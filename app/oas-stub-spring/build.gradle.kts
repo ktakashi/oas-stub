@@ -34,6 +34,7 @@ dependencies {
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    testImplementation(project(":lib:storages:oas-stub-storage-api"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation("io.cucumber:cucumber-java")
