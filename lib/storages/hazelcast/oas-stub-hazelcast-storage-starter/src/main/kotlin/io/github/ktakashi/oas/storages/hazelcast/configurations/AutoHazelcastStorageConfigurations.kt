@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.storages.hazelcast.configuration
+package io.github.ktakashi.oas.storages.hazelcast.configurations
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
-@Configuration
+@AutoConfiguration
 @ConditionalOnMissingBean(value = [HazelcastInstance::class])
 @ConditionalOnExpression("'hazelcast'.equals('\${oas.storage.type.session}') or 'hazelcast'.equals('\${oas.storage.type.persistent}') ")
 @EnableConfigurationProperties(HazelcastStorageProperties::class)

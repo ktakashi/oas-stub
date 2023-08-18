@@ -12,8 +12,8 @@ class HazelcastPlugin: EventListener {
         lateinit var hazelcastInstance: HazelcastInstance
     }
     override fun setEventPublisher(publisher: EventPublisher) {
-        publisher.registerHandlerFor(TestRunStarted::class.java) { event -> setup() }
-        publisher.registerHandlerFor(TestRunFinished::class.java) { event -> cleanup() }
+        publisher.registerHandlerFor(TestRunStarted::class.java) { _ -> setup() }
+        publisher.registerHandlerFor(TestRunFinished::class.java) { _ -> cleanup() }
     }
 
     private fun setup() {

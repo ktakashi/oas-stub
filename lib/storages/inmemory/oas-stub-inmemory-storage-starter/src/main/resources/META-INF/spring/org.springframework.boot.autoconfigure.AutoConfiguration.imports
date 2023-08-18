@@ -1,2 +1,2 @@
-io.github.ktakashi.oas.storages.inmemory.configuration.AutoInMemoryPersistentStorageConfiguration
-io.github.ktakashi.oas.storages.inmemory.configuration.AutoInMemorySessionStorageConfiguration
+io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemoryPersistentStorageConfiguration
+io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemorySessionStorageConfiguration

@@ -1,0 +1,15 @@
+oas:
+  storage:
+    type:
+      session: mongodb
+      persistent: mongodb
+  mongodb:
+    client:
+      host: ${mongodb.host}
+      port: ${mongodb.port}
+    session:
+      database: database
+      collection: session
+    persistent:
+      database: database
+      collection: persistent

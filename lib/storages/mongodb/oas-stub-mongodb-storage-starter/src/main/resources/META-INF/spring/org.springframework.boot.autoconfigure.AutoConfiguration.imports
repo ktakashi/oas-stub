@@ -1,0 +1,3 @@
+io.github.ktakashi.oas.storages.mongodb.configurations.AutoMongodbConfiguration
+io.github.ktakashi.oas.storages.mongodb.configurations.AutoMongodbPersistentStorageConfiguration
+io.github.ktakashi.oas.storages.mongodb.configurations.AutoMongodbSessionStorageConfiguration

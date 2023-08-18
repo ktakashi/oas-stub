@@ -4,10 +4,9 @@ plugins {
 }
 
 group = "$group.storage"
-description = "OAS stub hazelcast storage starter"
+description = "OAS stub mongodb storage starter"
 
 val springBootVersion by extra(property("spring-boot.version") as String)
-val hazelcastVersion by extra(property("hazelcast.version") as String)
 
 dependencyManagement {
     imports {
@@ -18,8 +17,9 @@ dependencyManagement {
 dependencies {
     implementation(project(":lib:oas-stub-plugin"))
     api(project(":lib:storages:oas-stub-storage-api"))
-    api(project(":lib:storages:hazelcast:oas-stub-hazelcast-storage"))
+    api(project(":lib:storages:mongodb:oas-stub-mongodb-storage"))
     implementation("org.springframework:spring-context")
+    implementation("org.springframework:spring-web")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("com.fasterxml.jackson.core:jackson-databind")

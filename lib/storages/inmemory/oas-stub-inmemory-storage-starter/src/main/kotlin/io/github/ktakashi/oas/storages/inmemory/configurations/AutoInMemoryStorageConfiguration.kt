@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.storages.inmemory.configuration
+package io.github.ktakashi.oas.storages.inmemory.configurations
 
 import io.github.ktakashi.oas.storage.apis.PersistentStorage
 import io.github.ktakashi.oas.storage.apis.SessionStorage
