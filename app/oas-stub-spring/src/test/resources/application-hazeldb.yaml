@@ -1,0 +1,14 @@
+oas:
+  storage:
+    type:
+      session: hazelcast
+      persistent: mongodb
+    hazelcast:
+      session-map: session
+    mongodb:
+      client:
+        host: ${mongodb.host}
+        port: ${mongodb.port}
+      persistent:
+        database: database
+        collection: persistent

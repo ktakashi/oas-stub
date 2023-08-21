@@ -18,7 +18,7 @@ class MongodbPlugin: EventListener {
         publisher.registerHandlerFor(TestRunFinished::class.java) { _ -> cleanup() }
     }
 
-    private fun setup() {
+    fun setup() {
         transitions = Mongod.instance().start(Version.Main.V5_0)
         val serverAddress = transitions.current().serverAddress
         System.setProperty("mongodb.host", serverAddress.host)
@@ -26,7 +26,7 @@ class MongodbPlugin: EventListener {
         System.setProperty("spring.profiles.active", "mongodb")
     }
 
-    private fun cleanup() {
+    fun cleanup() {
         transitions.close()
         System.clearProperty("mongodb.host")
         System.clearProperty("mongodb.port")
