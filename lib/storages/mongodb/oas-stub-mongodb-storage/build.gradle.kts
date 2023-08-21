@@ -6,7 +6,7 @@ plugins {
 group = "$group.storage"
 description = "OAS stub mongodb storage"
 
-val mongoDriverVersion by extra(property("mongodb.driver.version") as String)
+val mongoDriverVersion by extra(property("mongodb.version") as String)
 
 dependencyManagement {
     dependencies {

@@ -17,52 +17,47 @@ import org.bson.codecs.pojo.PojoCodecProvider
 import org.bson.codecs.pojo.annotations.BsonCreator
 import org.bson.codecs.pojo.annotations.BsonProperty
 
-abstract class MongodbStorage<T>(mongoClient: MongoClient,
-                                 database: String,
-                                 collection: String,
-                                 clazz: Class<T>) {
+abstract class MongodbStorage(private val objectMapper: ObjectMapper,
+                              mongoClient: MongoClient,
+                              database: String,
+                              collection: String) {
     private val pojoCodevProvider = PojoCodecProvider.builder().automatic(true).build()
     private val pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), CodecRegistries.fromProviders(pojoCodevProvider))
     private val mongoDatabase = mongoClient.getDatabase(database).withCodecRegistry(pojoCodecRegistry)
-    protected val mongoCollection: MongoCollection<T> = mongoDatabase.getCollection(collection, clazz)
-}
+    protected val mongoCollection: MongoCollection<MongoEntry> = mongoDatabase.getCollection(collection, MongoEntry::class.java)
+    protected val updateOptions = UpdateOptions().upsert(true)
 
-class MongodbSessionStorage(private val objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
-    : MongodbStorage<SessionEntry>(mongoClient, database, collection, SessionEntry::class.java), SessionStorage {
-    override fun <T> put(key: String, value: T, ttl: Duration): Boolean {
-        // TODO ttl
-        val jsonValue = objectMapper.writeValueAsString(value)
-        return mongoCollection.updateOne(eq("name", key),
-                Updates.set("value", jsonValue),
-                UpdateOptions().upsert(true))
-                .wasAcknowledged()
+    protected fun <T> upsert(key: String, value: T) = objectMapper.writeValueAsString(value).let {
+        mongoCollection.updateOne(eq("name", key), Updates.set("value", it), updateOptions)
     }
 
-    override fun <T : Any> get(key: String, type: Class<T>): Optional<T> = Optional.ofNullable(mongoCollection.find(eq("name", key)).first())
+    protected fun <T : Any> findOne(key: String, type: Class<T>): Optional<T> = Optional.ofNullable(mongoCollection.find(eq("name", key)).first())
             .map { e -> e.value }
-            .map { v -> objectMapper.readValue(v, type) }
+            .map { v -> objectMapper.readValue(v, type)}
 
-    override fun delete(key: String): Boolean = mongoCollection.deleteOne(eq("name", key)).wasAcknowledged()
+    protected fun deleteOne(key: String) = mongoCollection.deleteOne(eq("name", key))
+}
+
+class MongodbSessionStorage(objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
+    : MongodbStorage(objectMapper, mongoClient, database, collection), SessionStorage {
+
+    // TODO ttl
+    override fun <T> put(key: String, value: T, ttl: Duration): Boolean = upsert(key, value).wasAcknowledged()
+
+    override fun <T : Any> get(key: String, type: Class<T>) = findOne(key, type)
+
+    override fun delete(key: String): Boolean = deleteOne(key).wasAcknowledged()
 
 }
 
-class MongodbPersistentStorage(mongoClient: MongoClient, database: String, collection: String)
-    : MongodbStorage<PersistentEntry>(mongoClient, database, collection, PersistentEntry::class.java), PersistentStorage {
-    override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> =
-            Optional.ofNullable(mongoCollection.find(eq("name", applicationName)).first())
-                    .map { e -> e.definitions }
+class MongodbPersistentStorage(objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
+    : MongodbStorage(objectMapper, mongoClient, database, collection), PersistentStorage {
+    override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = findOne(applicationName, ApiDefinitions::class.java)
 
-    override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean =
-        mongoCollection.updateOne(eq("name", applicationName),
-                Updates.set("definitions", apiDefinitions),
-                UpdateOptions().upsert(true))
-                .wasAcknowledged()
+    override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean = upsert(applicationName, apiDefinitions).wasAcknowledged()
 
-    override fun deleteApiDefinition(name: String): Boolean =
-            mongoCollection.deleteOne(eq("name", name)).wasAcknowledged()
+    override fun deleteApiDefinition(name: String): Boolean = deleteOne(name).wasAcknowledged()
 }
 
-data class SessionEntry
+data class MongoEntry
 @BsonCreator constructor(@BsonProperty("name") val name: String, @BsonProperty("value") val value: String)
-data class PersistentEntry
-@BsonCreator constructor(@BsonProperty("name") val name: String, @BsonProperty("definitions") val definitions: ApiDefinitions)

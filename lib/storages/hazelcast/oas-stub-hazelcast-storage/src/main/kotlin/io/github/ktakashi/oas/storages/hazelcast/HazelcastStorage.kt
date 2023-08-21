@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit
 
 class HazelcastStorage(private val objectMapper: ObjectMapper,
                        hazelcastInstance: HazelcastInstance,
-                       mapName: String): SessionStorage, PersistentStorage {
+                       mapName: String) {
     private val map = hazelcastInstance.getMap<String, JsonNode>(mapName)
-    override fun <T> put(key: String, value: T, ttl: Duration): Boolean {
+    fun <T> put(key: String, value: T, ttl: Duration): Boolean {
         val node = objectMapper.valueToTree<JsonNode>(value)
         map.put(key, node)
         if (!ttl.isZero) {
@@ -24,16 +24,26 @@ class HazelcastStorage(private val objectMapper: ObjectMapper,
         return true
     }
 
-    override fun <T : Any> get(key: String, type: Class<T>): Optional<T> = Optional.ofNullable(map[key])
+    fun <T : Any> get(key: String, type: Class<T>): Optional<T> = Optional.ofNullable(map[key])
             .map { v -> objectMapper.treeToValue(v, type) }
 
-    override fun delete(key: String): Boolean = map.remove(key) != null
+    fun delete(key: String): Boolean = map.remove(key) != null
+}
 
-    override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = get(applicationName, ApiDefinitions::class.java)
+class HazelcastSessionStorage(private val hazelcastStorage: HazelcastStorage): SessionStorage {
+    override fun <T> put(key: String, value: T, ttl: Duration): Boolean = hazelcastStorage.put(key, value, ttl)
 
-    override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean = put(applicationName, apiDefinitions)
+    override fun <T : Any> get(key: String, type: Class<T>): Optional<T> = hazelcastStorage.get(key, type)
 
-    override fun deleteApiDefinition(name: String): Boolean = delete(name)
+    override fun delete(key: String): Boolean = hazelcastStorage.delete(key)
+}
+
+class HazelcastPersistentStorage(private val hazelcastStorage: HazelcastStorage): PersistentStorage {
+    override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = hazelcastStorage.get(applicationName, ApiDefinitions::class.java)
+
+    override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean = hazelcastStorage.put(applicationName, apiDefinitions, Duration.ZERO)
+
+    override fun deleteApiDefinition(name: String): Boolean = hazelcastStorage.delete(name)
 
 }
 

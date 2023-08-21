@@ -67,9 +67,9 @@ class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStor
 class AutoMongodbPersistentStorageConfiguration(private val properties: MongodbStorageProperties) {
     @Bean
     @ConditionalOnMissingBean(PersistentStorage::class)
-    fun persistentStorage(mongoClient: MongoClient): PersistentStorage {
+    fun persistentStorage(mongoClient: MongoClient, objectMapper: ObjectMapper): PersistentStorage {
         val persistent = properties.persistent?: throw IllegalStateException("'oas.storage.mongodb.persistent' must be provided")
-        return MongodbPersistentStorage(mongoClient, persistent.database, persistent.collection)
+        return MongodbPersistentStorage(objectMapper, mongoClient, persistent.database, persistent.collection)
     }
 }
 

@@ -12,6 +12,14 @@ import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
 import io.github.ktakashi.oas.cucumber.context.TestContext
 import io.github.ktakashi.oas.maybeContent
 import io.github.ktakashi.oas.storage.apis.PersistentStorage
+import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
+import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
+import io.github.ktakashi.oas.storages.hazelcast.HazelcastStorage
+import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
+import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
+import io.github.ktakashi.oas.storages.mongodb.MongodbPersistentStorage
+import io.github.ktakashi.oas.storages.mongodb.MongodbSessionStorage
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
@@ -43,7 +51,10 @@ import org.springframework.web.util.UriComponentsBuilder
 @DirtiesContext
 class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int,
                       private val persistentStorage: PersistentStorage,
-                      private val oasApplicationServletProperties: OasApplicationServletProperties) {
+                      private val sessionStorage: SessionStorage,
+                      private val oasApplicationServletProperties: OasApplicationServletProperties,
+                      @Value("\${oas.storage.type.persistent:inmemory}") private val persistentStorageType: String,
+                      @Value("\${oas.storage.type.session:inmemory}") private val sessionStorageType: String) {
     private lateinit var testContext: TestContext
 
     companion object {
@@ -252,5 +263,22 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         val durationUnit = DurationUnit.valueOf(unit.uppercase())
         val responseTime = testContext.responseTime?: throw IllegalStateException("No response time")
         assertTrue(responseTime > durationUnit.toTimeUnit().toMillis(duration)) { "Reading entire response must take more than $duration$unit" }
+    }
+
+    @Then("I have proper storages")
+    fun `I have proper storages`() {
+        println("$persistentStorageType = $persistentStorage")
+        when (persistentStorageType) {
+            "hazelcast" -> assertTrue(persistentStorage is HazelcastPersistentStorage)
+            "mongodb" -> assertTrue(persistentStorage is MongodbPersistentStorage)
+            else -> assertTrue(persistentStorage is InMemoryPersistentStorage)
+        }
+
+        println("$sessionStorageType = $sessionStorage")
+        when (sessionStorageType) {
+            "hazelcast" -> assertTrue(sessionStorage is HazelcastSessionStorage)
+            "mongodb" -> assertTrue(sessionStorage is MongodbSessionStorage)
+            else -> assertTrue(sessionStorage is InMemorySessionStorage)
+        }
     }
 }

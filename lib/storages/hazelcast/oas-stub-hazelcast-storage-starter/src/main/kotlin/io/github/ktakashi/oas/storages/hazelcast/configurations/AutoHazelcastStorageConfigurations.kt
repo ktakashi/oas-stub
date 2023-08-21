@@ -11,6 +11,8 @@ import com.hazelcast.nio.serialization.Serializer
 import com.hazelcast.security.UsernamePasswordCredentials
 import io.github.ktakashi.oas.storage.apis.PersistentStorage
 import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
+import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastStorage
 import io.github.ktakashi.oas.storages.hazelcast.JsonSerializer
 import java.util.Optional
@@ -73,7 +75,7 @@ class AutoHazelcastSessionStorageConfiguration(private val properties: Hazelcast
     @Bean
     @ConditionalOnMissingBean
     fun sessionStorage(hazelcastInstance: HazelcastInstance, objectMapper: ObjectMapper): SessionStorage =
-        HazelcastStorage(objectMapper, hazelcastInstance, properties.sessionMap)
+        HazelcastSessionStorage(HazelcastStorage(objectMapper, hazelcastInstance, properties.sessionMap))
 }
 
 @AutoConfiguration(
@@ -88,7 +90,7 @@ class AutoHazelcastPersistentStorageConfiguration(private val properties: Hazelc
     @Bean
     @ConditionalOnMissingBean
     fun persistentStorage(hazelcastInstance: HazelcastInstance, objectMapper: ObjectMapper): PersistentStorage =
-            HazelcastStorage(objectMapper, hazelcastInstance, properties.sessionMap)
+            HazelcastPersistentStorage(HazelcastStorage(objectMapper, hazelcastInstance, properties.sessionMap))
 }
 
 

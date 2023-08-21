@@ -5,19 +5,14 @@ plugins {
 
 description = "OAS stub Spring Boot application"
 val springBootVersion by extra(property("spring-boot.version") as String)
-val mongoDriverVersion by extra(property("mongodb.driver.version") as String)
 
 dependencyManagement {
     dependencies {
         dependency("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
-        dependency("org.mongodb:mongodb-driver-sync:${mongoDriverVersion}")
     }
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}") {
-            bomProperties(mapOf("mongodb.version" to mongoDriverVersion))
-        }
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:2022.0.4")
-
         mavenBom("io.projectreactor:reactor-bom:2022.0.9")
     }
 }
@@ -37,7 +32,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.swagger.core.v3:swagger-annotations")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
-    implementation("org.mongodb:mongodb-driver-sync:${mongoDriverVersion}")
+    implementation("org.mongodb:mongodb-driver-sync")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
