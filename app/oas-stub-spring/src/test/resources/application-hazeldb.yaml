@@ -6,9 +6,12 @@ oas:
     hazelcast:
       session-map: session
     mongodb:
-      client:
-        host: ${mongodb.host}
-        port: ${mongodb.port}
       persistent:
         database: database
         collection: persistent
+
+spring:
+  data:
+    mongodb:
+      host: ${mongodb.host}
+      port: ${mongodb.port}

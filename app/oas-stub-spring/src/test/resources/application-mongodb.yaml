@@ -4,9 +4,6 @@ oas:
       session: mongodb
       persistent: mongodb
     mongodb:
-      client:
-        host: ${mongodb.host}
-        port: ${mongodb.port}
       session:
         database: database
         collection: session
@@ -14,7 +11,8 @@ oas:
         database: database
         collection: persistent
 
-# MonogoDB is supported by Spring Boot's auto-configuration by default, so need this as well for our testing
+# We don't provide own MongoClient auto-configuration, so either users need to create their own
+# or use the one provided by spring data
 spring:
   data:
     mongodb:
