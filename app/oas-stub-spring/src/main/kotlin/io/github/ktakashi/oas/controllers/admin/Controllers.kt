@@ -397,9 +397,9 @@ abstract class AbstractContextController(protected val apiRegistrationService: A
                 Mono.justOrEmpty(apiRegistrationService.getApiDefinitions(context))
             }
 
-    protected fun <T> getApiDefinitionsProperty(context: String, retriever: (ApiDefinitions) -> T): Mono<ResponseEntity<T>> =
+    protected fun <T> getApiDefinitionsProperty(context: String, retriever: (ApiDefinitions) -> T?): Mono<ResponseEntity<T>> =
             getApiDefinitions(context)
-                    .map(retriever)
+                    .flatMap<T> { v -> Mono.justOrEmpty(retriever(v)) }
                     .map { v -> ResponseEntity.ok().body(v) }
                     .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 
@@ -411,7 +411,7 @@ abstract class AbstractContextController(protected val apiRegistrationService: A
             .map { ResponseEntity.noContent().build<Unit>() }
             .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 
-    protected fun updateApiDefinitionsProperty(context: String, updator: (ApiDefinitions) -> ApiDefinitions): Mono<ApiDefinitions?> =
+    private fun updateApiDefinitionsProperty(context: String, updator: (ApiDefinitions) -> ApiDefinitions): Mono<ApiDefinitions?> =
             getApiDefinitions(context)
                     .map(updator)
                     .flatMap { def -> Mono.justOrEmpty(if (apiRegistrationService.saveApiDefinitions(context, def)) def else null) }
@@ -436,13 +436,13 @@ abstract class AbstractSingleApiController(private val apiRegistrationService: A
             .map { ResponseEntity.noContent().build<Unit>() }
             .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 
-    protected fun updateConfigurationProperty(context: String, api: URI, updator: (ApiConfiguration?) -> ApiConfiguration?) = getApiDefinitions(context)
+    private fun updateConfigurationProperty(context: String, api: URI, updator: (ApiConfiguration?) -> ApiConfiguration?) = getApiDefinitions(context)
             .flatMap { def ->
                 val decodedApi = URLDecoder.decode(api.toString(), StandardCharsets.UTF_8)
                 Mono.justOrEmpty(updator(def.configurations?.get(decodedApi))?.let { v -> def.updateConfiguration(decodedApi, v) })
             }
             .flatMap { def -> Mono.justOrEmpty(if (apiRegistrationService.saveApiDefinitions(context, def)) def else null) }
 
-    protected fun getApiDefinitions(context: String): Mono<ApiDefinitions> =
+    private fun getApiDefinitions(context: String): Mono<ApiDefinitions> =
             Mono.defer { Mono.justOrEmpty(apiRegistrationService.getApiDefinitions(context)) }
 }

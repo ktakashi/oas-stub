@@ -23,5 +23,6 @@ class HazelcastPlugin: EventListener {
 
     private fun cleanup() {
         hazelcastInstance.shutdown()
+        System.clearProperty("spring.profiles.active")
     }
 }

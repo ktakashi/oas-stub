@@ -4,7 +4,6 @@ import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.transitions.Mongod
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess
 import de.flapdoodle.reverse.TransitionWalker
-import de.flapdoodle.reverse.Transitions
 import io.cucumber.plugin.EventListener
 import io.cucumber.plugin.event.EventPublisher
 import io.cucumber.plugin.event.TestRunFinished
@@ -29,5 +28,8 @@ class MongodbPlugin: EventListener {
 
     private fun cleanup() {
         transitions.close()
+        System.clearProperty("mongodb.host")
+        System.clearProperty("mongodb.port")
+        System.clearProperty("spring.profiles.active")
     }
 }

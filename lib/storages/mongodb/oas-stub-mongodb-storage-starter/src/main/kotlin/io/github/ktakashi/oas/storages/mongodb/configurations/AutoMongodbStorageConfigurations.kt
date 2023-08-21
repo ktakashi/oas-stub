@@ -5,6 +5,8 @@ import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
+import io.github.ktakashi.oas.storage.apis.PersistentStorage
+import io.github.ktakashi.oas.storage.apis.SessionStorage
 import io.github.ktakashi.oas.storages.mongodb.MongodbPersistentStorage
 import io.github.ktakashi.oas.storages.mongodb.MongodbSessionStorage
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -20,12 +22,12 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.util.UriComponentsBuilder
 
 @AutoConfiguration
-@ConditionalOnMissingBean(value = [MongoClient::class])
 @ConditionalOnExpression("'mongodb'.equals('\${oas.storage.type.session}') or 'mongodb'.equals('\${oas.storage.type.persistent}') ")
 @EnableConfigurationProperties(MongodbStorageProperties::class)
 class AutoMongodbConfiguration(private val properties: MongodbStorageProperties) {
 
-    @ConditionalOnMissingBean
+    @Bean
+    @ConditionalOnMissingBean(MongoClient::class)
     fun mongoClient(objectMapper: ObjectMapper): MongoClient {
         val connection = properties.client ?: throw IllegalStateException("'oas.storage.mongodb.client' is required")
         val connectionString = connection.toConnectionString()
@@ -38,7 +40,7 @@ class AutoMongodbConfiguration(private val properties: MongodbStorageProperties)
 }
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configuration.AutoInMemorySessionStorageConfiguration"],
+        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemorySessionStorageConfiguration"],
         after = [AutoMongodbConfiguration::class]
 )
 @Configuration
@@ -47,15 +49,15 @@ class AutoMongodbConfiguration(private val properties: MongodbStorageProperties)
 @EnableConfigurationProperties(MongodbStorageProperties::class)
 class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStorageProperties) {
     @Bean
-    @ConditionalOnMissingBean
-    fun sessionStorage(mongoClient: MongoClient, objectMapper: ObjectMapper): MongodbSessionStorage {
+    @ConditionalOnMissingBean(SessionStorage::class)
+    fun sessionStorage(mongoClient: MongoClient, objectMapper: ObjectMapper): SessionStorage {
         val session = properties.session ?: throw IllegalStateException("'oas.storage.mongodb.session' must be provided")
         return MongodbSessionStorage(objectMapper, mongoClient, session.database, session.collection)
     }
 }
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configuration.AutoInMemoryPersistentStorageConfiguration"],
+        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemoryPersistentStorageConfiguration"],
         after = [AutoMongodbConfiguration::class]
 )
 @Configuration
@@ -64,8 +66,8 @@ class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStor
 @EnableConfigurationProperties(MongodbStorageProperties::class)
 class AutoMongodbPersistentStorageConfiguration(private val properties: MongodbStorageProperties) {
     @Bean
-    @ConditionalOnMissingBean
-    fun persistentStorage(mongoClient: MongoClient): MongodbPersistentStorage {
+    @ConditionalOnMissingBean(PersistentStorage::class)
+    fun persistentStorage(mongoClient: MongoClient): PersistentStorage {
         val persistent = properties.persistent?: throw IllegalStateException("'oas.storage.mongodb.persistent' must be provided")
         return MongodbPersistentStorage(mongoClient, persistent.database, persistent.collection)
     }

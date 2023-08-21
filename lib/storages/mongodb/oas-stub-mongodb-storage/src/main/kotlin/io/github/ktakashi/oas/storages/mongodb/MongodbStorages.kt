@@ -14,6 +14,8 @@ import java.time.Duration
 import java.util.Optional
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.pojo.PojoCodecProvider
+import org.bson.codecs.pojo.annotations.BsonCreator
+import org.bson.codecs.pojo.annotations.BsonProperty
 
 abstract class MongodbStorage<T>(mongoClient: MongoClient,
                                  database: String,
@@ -60,5 +62,7 @@ class MongodbPersistentStorage(mongoClient: MongoClient, database: String, colle
             mongoCollection.deleteOne(eq("name", name)).wasAcknowledged()
 }
 
-data class SessionEntry(val name: String, val value: String)
-data class PersistentEntry(val name: String, val definitions: ApiDefinitions)
+data class SessionEntry
+@BsonCreator constructor(@BsonProperty("name") val name: String, @BsonProperty("value") val value: String)
+data class PersistentEntry
+@BsonCreator constructor(@BsonProperty("name") val name: String, @BsonProperty("definitions") val definitions: ApiDefinitions)

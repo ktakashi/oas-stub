@@ -3,6 +3,6 @@ oas:
     type:
       session: hazelcast
       persistent: hazelcast
-  hazelcast:
-    session-map: session
-    persistent-map: persistent
+    hazelcast:
+      session-map: session
+      persistent-map: persistent

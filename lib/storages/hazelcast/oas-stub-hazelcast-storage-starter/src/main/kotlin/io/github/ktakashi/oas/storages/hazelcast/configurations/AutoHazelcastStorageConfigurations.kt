@@ -9,6 +9,8 @@ import com.hazelcast.config.SerializerConfig
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.nio.serialization.Serializer
 import com.hazelcast.security.UsernamePasswordCredentials
+import io.github.ktakashi.oas.storage.apis.PersistentStorage
+import io.github.ktakashi.oas.storage.apis.SessionStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastStorage
 import io.github.ktakashi.oas.storages.hazelcast.JsonSerializer
 import java.util.Optional
@@ -60,7 +62,7 @@ class AutoHazelcastConfiguration(private val properties: HazelcastStoragePropert
 }
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configuration.AutoInMemorySessionStorageConfiguration"],
+        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemorySessionStorageConfiguration"],
         after = [AutoHazelcastConfiguration::class]
 )
 @Configuration
@@ -70,12 +72,12 @@ class AutoHazelcastConfiguration(private val properties: HazelcastStoragePropert
 class AutoHazelcastSessionStorageConfiguration(private val properties: HazelcastStorageProperties) {
     @Bean
     @ConditionalOnMissingBean
-    fun sessionStorage(hazelcastInstance: HazelcastInstance, objectMapper: ObjectMapper) =
+    fun sessionStorage(hazelcastInstance: HazelcastInstance, objectMapper: ObjectMapper): SessionStorage =
         HazelcastStorage(objectMapper, hazelcastInstance, properties.sessionMap)
 }
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configuration.AutoInMemoryPersistentStorageConfiguration"],
+        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemoryPersistentStorageConfiguration"],
         after = [AutoHazelcastConfiguration::class]
 )
 @Configuration
@@ -85,7 +87,7 @@ class AutoHazelcastSessionStorageConfiguration(private val properties: Hazelcast
 class AutoHazelcastPersistentStorageConfiguration(private val properties: HazelcastStorageProperties) {
     @Bean
     @ConditionalOnMissingBean
-    fun persistentStorage(hazelcastInstance: HazelcastInstance, objectMapper: ObjectMapper) =
+    fun persistentStorage(hazelcastInstance: HazelcastInstance, objectMapper: ObjectMapper): PersistentStorage =
             HazelcastStorage(objectMapper, hazelcastInstance, properties.sessionMap)
 }
 

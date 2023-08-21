@@ -8,6 +8,19 @@ Feature: Create APIs from OAS file
     Then I get http status <status>
     And I get response header of 'content-type' with '<responseContentType>'
     And I get response JSON satisfies this '<response>'
+    Then I get API definition via ''
+    And I get http status 200
+    And I get response JSON satisfies this 'configurations=<null>;headers=<null>;options=<null>;data=<null>;delay=<null>'
+    And I get API definition via '/data'
+    And I get http status 404
+    Then I get API definition via '/options'
+    And I get http status 404
+    Then I get API definition via '/configurations'
+    And I get http status 404
+    Then I get API definition via '/headers'
+    And I get http status 404
+    Then I get API definition via '/delay'
+    And I get http status 404
     @v3 @petstore
     Examples:
       | schema                   | method | path             | content | contentType | status | responseContentType | response               |
@@ -44,6 +57,8 @@ Feature: Create APIs from OAS file
     Then I delete the API definition
     And I '<method>' to '<path>' with '' as ''
     Then I get http status 404
+    Then I get API definition via ''
+    And I get http status 404
     @v3 @petstore
     Examples:
       | schema                   | method | path             |

@@ -6,6 +6,9 @@ Feature: Update APIs
     When I create '<context>' API definition
     And I update API definition with '{"shouldValidate": false}' via '/options' of content type 'application/json'
     Then I get http status 200
+    And I get API definition via '/options'
+    Then I get http status 200
+    And I get response JSON satisfies this 'shouldValidate=false'
     Then I '<method>' to '<path>' with '<content>' as '<contentType>'
     And I get http status <status>
     @v2 @uber
@@ -28,6 +31,9 @@ Feature: Update APIs
     Then I get http status 400
     And I update API definition with '<config>' via '/headers' of content type 'application/json'
     Then I get http status 200
+    And I get API definition via '/headers'
+    Then I get http status 200
+    And I get response JSON satisfies this 'request.Request-ID[0]=<uuid>;response.X-Trace-ID[0]=trace-id'
     Then I 'GET' to '<path>' with '' as ''
     Then I get http status 200
     And I get response header of 'X-Trace-ID' with 'trace-id'
@@ -44,6 +50,8 @@ Feature: Update APIs
       | Request-ID | cca43b93-a4ff-46cf-8564-d8e4f3899657 |
     When I create '<context>' API definition
     And I update API definition with '<config>' via '/data' of content type 'application/json'
+    And I get API definition via '/data'
+    Then I get http status 200
     And I update API '<path>' with '<plugin>' via '/plugins/groovy' of content type 'application/octet-stream'
     Then I get http status 200
     Then I 'GET' to '<path>' with '' as ''

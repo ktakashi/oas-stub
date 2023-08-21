@@ -3,13 +3,20 @@ oas:
     type:
       session: mongodb
       persistent: mongodb
-  mongodb:
-    client:
+    mongodb:
+      client:
+        host: ${mongodb.host}
+        port: ${mongodb.port}
+      session:
+        database: database
+        collection: session
+      persistent:
+        database: database
+        collection: persistent
+
+# MonogoDB is supported by Spring Boot's auto-configuration by default, so need this as well for our testing
+spring:
+  data:
+    mongodb:
       host: ${mongodb.host}
       port: ${mongodb.port}
-    session:
-      database: database
-      collection: session
-    persistent:
-      database: database
-      collection: persistent

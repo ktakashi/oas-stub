@@ -12,7 +12,8 @@ import org.springframework.context.annotation.Configuration
 
 @AutoConfiguration
 @Configuration
-@ConditionalOnProperty(name = [ "oas.storage.type.persistent" ], matchIfMissing = true)
+@ConditionalOnProperty(name = [ "oas.storage.type.persistent" ], havingValue = "inmemory", matchIfMissing = true)
+@ConditionalOnMissingBean(value = [PersistentStorage::class])
 class AutoInMemoryPersistentStorageConfiguration {
     @Bean
     @ConditionalOnMissingBean
@@ -21,7 +22,8 @@ class AutoInMemoryPersistentStorageConfiguration {
 
 @AutoConfiguration
 @Configuration
-@ConditionalOnProperty(name = [ "oas.storage.type.session" ], matchIfMissing = true)
+@ConditionalOnProperty(name = [ "oas.storage.type.session" ], havingValue = "inmemory", matchIfMissing = true)
+@ConditionalOnMissingBean(value = [SessionStorage::class])
 class AutoInMemorySessionStorageConfiguration {
     @Bean
     @ConditionalOnMissingBean

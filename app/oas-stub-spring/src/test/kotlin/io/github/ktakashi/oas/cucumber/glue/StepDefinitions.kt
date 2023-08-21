@@ -7,6 +7,7 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import io.cucumber.spring.CucumberContextConfiguration
+import io.github.ktakashi.oas.OasApplication
 import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
 import io.github.ktakashi.oas.cucumber.context.TestContext
 import io.github.ktakashi.oas.maybeContent
@@ -22,20 +23,24 @@ import java.net.URI
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
 import org.apache.http.client.ClientProtocolException
+import org.hamcrest.Matcher
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.lessThan
+import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.web.util.UriComponentsBuilder
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [OasApplication::class])
 @CucumberContextConfiguration
 @EnableAutoConfiguration
+@DirtiesContext
 class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int,
                       private val persistentStorage: PersistentStorage,
                       private val oasApplicationServletProperties: OasApplicationServletProperties) {
@@ -113,7 +118,18 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         testContext.response = given().contentType(contentType)
                 .body(maybeContent(value))
                 .put(uri)
-        println(testContext.response?.body?.asString())
+    }
+
+    @And("I get API definition via {string}")
+    fun `I get API definition via {string}`(path: String) {
+        val adminApi = URI.create(path)
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+                .path(oasApplicationServletProperties.adminPrefix)
+                .pathSegment(testContext.apiName)
+                .path(adminApi.path)
+                .query(adminApi.query)
+                .build().toUri()
+        testContext.response = given().get(uri)
     }
 
     @And("I update API {string} with {string} via {string} of content type {string}")
@@ -198,10 +214,26 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
             val r = body.asByteArray()
             assertEquals(0, r.size)
         } else {
-            val (path, value) = condition.lastIndexOf('=').let { if (it < 0) condition to "" else condition.substring(0, it) to condition.substring(it + 1) }
-            testContext.response?.then()?.body(path, equalTo(value)) ?: throw IllegalStateException("No response")
+            val validatableResponse = testContext.response?.then()?: throw IllegalStateException("No response")
+            condition.split(';').forEach { cond ->
+                val (path, matcher) = cond.lastIndexOf('=').let {
+                    if (it < 0) cond to equalTo(null)
+                    else cond.substring(0, it) to checkMarker(cond.substring(it + 1))
+                }
+                validatableResponse.body(path, matcher)
+            }
         }
     }
+
+    private fun checkMarker(value: String): Matcher<Any?> {
+        return when (value) {
+            "<null>" -> equalTo(null)
+            "<uuid>" -> matchesPattern("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}") as Matcher<Any?>
+            "true", "false" -> equalTo(value.toBoolean())
+            else -> equalTo(value)
+        }
+    }
+
 
     @Then("I waited at least {long} {string}")
     fun `I waited at least {int} {string}`(duration: Long, unit: String) {

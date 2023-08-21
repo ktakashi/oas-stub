@@ -7,10 +7,16 @@ group = "$group.storage"
 description = "OAS stub mongodb storage starter"
 
 val springBootVersion by extra(property("spring-boot.version") as String)
+val mongoDriverVersion by extra(property("mongodb.driver.version") as String)
 
 dependencyManagement {
+    dependencies {
+        dependency("org.mongodb:mongodb-driver-sync:${mongoDriverVersion}")
+    }
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}") {
+            bomProperties(mapOf("mongodb.version" to mongoDriverVersion))
+        }
     }
 }
 
