@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     // https://github.com/gradle/gradle/issues/20084
     id(libs.plugins.kotlin.jvm.get().pluginId) version libs.versions.kotlin
@@ -12,10 +10,7 @@ repositories {
     gradlePluginPortal()
 }
 
-val gradleProperties = File(File("$projectDir").parentFile, "gradle.properties").inputStream().use {
-    Properties().apply { load(it) }
-}
-val kotlinVersion = gradleProperties["kotlin.version"]
+val kotlinVersion = libs.versions.kotlin.get()
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17

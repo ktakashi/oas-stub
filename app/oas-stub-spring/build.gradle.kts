@@ -1,6 +1,9 @@
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
 plugins {
     alias(libs.plugins.kotlin.spring)
     id("io.github.ktakashi.oas.conventions")
+    alias(libs.plugins.spring.boot)
 }
 
 description = "OAS stub Spring Boot application"
@@ -15,6 +18,10 @@ dependencyManagement {
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:2022.0.4")
         mavenBom("io.projectreactor:reactor-bom:2022.0.9")
     }
+}
+
+tasks.named<BootJar>("bootJar") {
+    archiveClassifier.set("standalone")
 }
 
 dependencies {

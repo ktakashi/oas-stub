@@ -7,7 +7,6 @@ group = "$group.storage"
 description = "OAS stub hazelcast storage starter"
 
 val springBootVersion by extra(property("spring-boot.version") as String)
-val hazelcastVersion by extra(property("hazelcast.version") as String)
 
 dependencyManagement {
     imports {

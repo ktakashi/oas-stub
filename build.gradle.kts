@@ -6,7 +6,13 @@ plugins {
     id("io.spring.dependency-management") version "1.1.2"
 }
 
-val kotlinVersion = property("kotlin.version")
+val kotlinVersion = libs.versions.kotlin.get()
+val springBootVersion = libs.versions.spring.boot.get()
+val mongodbVersion = libs.versions.mongodb.get()
+val hazelcastVersion = libs.versions.hazelcast.get()
+
+val dokkaPlugin = libs.plugins.dokka.get().pluginId
+
 val servletApiVersion by extra("6.0.0")
 val swaggerCoreVersion by extra("2.2.15")
 val junitVersion by extra("5.9.3")
@@ -22,7 +28,6 @@ allprojects {
     }
 }
 
-val dokkaPlugin = libs.plugins.dokka.get().pluginId
 
 subprojects {
     apply(plugin = "kotlin")
@@ -30,6 +35,10 @@ subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = dokkaPlugin)
     apply(plugin = "io.spring.dependency-management")
+
+    ext["mongodb.version"] = mongodbVersion
+    ext["hazelcast.version"] = hazelcastVersion
+    ext["spring-boot.version"] = springBootVersion
 
     dependencyManagement {
         dependencies {
