@@ -1,6 +1,10 @@
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
+    `java-library`
+    `maven-publish`
+    id(libs.plugins.kotlin.jvm.get().pluginId)
+    id(libs.plugins.dokka.get().pluginId)
     alias(libs.plugins.kotlin.spring)
     id("io.github.ktakashi.oas.conventions")
     alias(libs.plugins.spring.boot)
