@@ -16,7 +16,7 @@ class InMemorySessionStorage: SessionStorage {
 
     override fun <T: Any> get(key: String, type: Class<T>): Optional<T> = storage[key]?.let { v ->
         if (type.isAssignableFrom(v.javaClass)) {
-            Optional.of(v as T)
+            Optional.of(type.cast(v))
         } else {
             Optional.empty()
         }

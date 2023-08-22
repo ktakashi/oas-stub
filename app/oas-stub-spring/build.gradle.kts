@@ -26,9 +26,9 @@ tasks.named<BootJar>("bootJar") {
 
 dependencies {
     api(project(":lib:oas-stub-engine"))
-    implementation(project(":lib:storages:inmemory:oas-stub-inmemory-storage-starter"))
-    implementation(project(":lib:storages:hazelcast:oas-stub-hazelcast-storage-starter"))
-    implementation(project(":lib:storages:mongodb:oas-stub-mongodb-storage-starter"))
+    implementation(project(":lib:storages:inmemory:oas-stub-inmemory-storage-autoconfigure"))
+    implementation(project(":lib:storages:hazelcast:oas-stub-hazelcast-storage-autoconfigure"))
+    implementation(project(":lib:storages:mongodb:oas-stub-mongodb-storage-autoconfigure"))
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-aop")

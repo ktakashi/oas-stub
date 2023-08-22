@@ -15,6 +15,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 class ConventionsPlugin: Plugin<Project> {
@@ -43,8 +44,11 @@ internal fun configureKotlinConventions(project: Project) {
             jar.from(dokkaJavadoc.flatMap { task -> (task as DokkaTask).outputDirectory })
         }
         project.tasks.withType(KotlinCompile::class.java) { task ->
-            task.kotlinOptions.apply {
-                freeCompilerArgs = listOf("-Xjvm-default=all")
+            (task.kotlinOptions as KotlinJvmOptions).apply {
+                freeCompilerArgs += listOf("-Xjvm-default=all")
+                apiVersion = "1.9"
+                languageVersion = "1.9"
+                jvmTarget = "17"
             }
         }
         project.extensions.getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(17)
