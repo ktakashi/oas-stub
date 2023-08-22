@@ -74,9 +74,15 @@ class AutoHazelcastConfiguration(private val properties: HazelcastStoragePropert
         })
     }
     private fun initClientConfig(instance: HazelcastInstanceProperties) = ClientConfig().apply {
-        setCredentials(UsernamePasswordCredentials(instance.username, instance.password))
-        instanceName = instance.name
-        clusterName = instance.clusterName
+        if (instance.username != null && instance.password != null) {
+            setCredentials(UsernamePasswordCredentials(instance.username, instance.password))
+        }
+        if (instance.name != null) {
+            instanceName = instance.name
+        }
+        if (instance.clusterName != null) {
+            clusterName = instance.clusterName
+        }
         networkConfig.addresses = instance.nodeIps?.toList() ?: listOf()
         networkConfig.isSmartRouting = true
     }

@@ -4,5 +4,7 @@ oas:
       session: hazelcast
       persistent: hazelcast
     hazelcast:
+      instance:
+        node-ips: "${hazelcast.cluster.members}"
       session-map: session
       persistent-map: persistent

@@ -4,6 +4,8 @@ oas:
       session: hazelcast
       persistent: mongodb
     hazelcast:
+      instance:
+        node-ips: "${hazelcast.cluster.members}"
       session-map: session
     mongodb:
       persistent:
