@@ -55,7 +55,7 @@ class AutoHazelcastConfiguration(private val properties: HazelcastStoragePropert
     @ConditionalOnMissingBean
     fun hazelcastInstance(objectMapper: ObjectMapper): HazelcastInstance {
         val instance = properties.instance
-        val config = instance?.let(this::initClientConfig) ?: ClientConfig()
+        val config = instance?.let(this::initClientConfig) ?: ClientConfig.load()
         val serializer = JsonSerializer(objectMapper, properties.typeId)
         addSerializer(config, serializer)
         return Optional.ofNullable(instance)
