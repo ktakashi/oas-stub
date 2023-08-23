@@ -47,7 +47,7 @@ class OasDispatchServlet(private val apiExecutionService: ApiExecutionService,
                         res.outputStream.write(e.message?.toByteArray() ?: byteArrayOf())
                     }
                     asyncContext
-                }.thenAccept(AsyncContext::complete)
+                }.whenComplete { context, _ -> context.complete() }
     }
 
     private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletionStage<AsyncContext> {

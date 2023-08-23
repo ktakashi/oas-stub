@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    signing
     id(libs.plugins.kotlin.jvm.get().pluginId)
     id(libs.plugins.dokka.get().pluginId)
     alias(libs.plugins.kotlin.spring)
@@ -10,15 +11,9 @@ plugins {
 group = "$group.storage"
 description = "OAS stub in-memory storage starter"
 
-val springBootVersion by extra(property("spring-boot.version") as String)
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
-    }
-}
-
 dependencies {
+    implementation(enforcedPlatform(libs.spring.boot.dependencies))
+    implementation(platform(libs.kotlin.bom))
     implementation(project(":lib:oas-stub-plugin"))
     api(project(":lib:storages:oas-stub-storage-api"))
     api(project(":lib:storages:inmemory:oas-stub-inmemory-storage"))

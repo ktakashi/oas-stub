@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    signing
     id(libs.plugins.kotlin.jvm.get().pluginId)
     id(libs.plugins.dokka.get().pluginId)
     alias(libs.plugins.kotlin.spring)
@@ -10,15 +11,11 @@ plugins {
 group = "$group.storage"
 description = "OAS stub hazelcast storage starter"
 
-val springBootVersion by extra(property("spring-boot.version") as String)
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
-    }
-}
-
 dependencies {
+    annotationProcessor(enforcedPlatform(libs.spring.boot.dependencies))
+    implementation(enforcedPlatform(libs.spring.boot.dependencies))
+    implementation(platform(libs.kotlin.bom))
+    implementation(platform(libs.jackson.bom))
     implementation(project(":lib:oas-stub-plugin"))
     api(project(":lib:storages:oas-stub-storage-api"))
     api(project(":lib:storages:hazelcast:oas-stub-hazelcast-storage"))
