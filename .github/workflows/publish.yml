@@ -54,6 +54,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.7.0
       - name: Build
-        run: ./gradlew build -x test -Psigning.password=${{ secrets.password }}
+        run: ./gradlew build -x test
       - name: Publish
         run: ./gradlew publish -Psigning.password=${{ secrets.password }} -Pdeployment.username=${{secrets.mavenUsername }} -Pdeployment.password=${{ secrets.mavenPassword }}

@@ -117,7 +117,7 @@ internal fun configureMavenPublishingConventions(project: Project) {
 
 private fun configureSigningConventions(project: Project) {
     project.plugins.withType(SigningPlugin::class.java) {
-        if (project.hasProperty("signing.key")) {
+        if (project.hasProperty("signing.key") && project.hasProperty("signing.password")) {
             val signing = project.extensions.getByType(SigningExtension::class.java)
             if (project.hasProperty("signing.keyId")) {
                 val keyId = project.property("signing.keyId") as String
