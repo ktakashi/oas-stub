@@ -25,3 +25,15 @@ jobs:
         run: ./gradlew build -x test
       - name: Run tests
         run: ./gradlew test
+  snapshot-publish:
+    needs: [ build ]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    name: SNAPSHOT publish
+    uses: ./.github/workflows/publish.yml
+    secrets:
+      password: ${{ secrets.GPG_PASS_PHRASE }}
+      key: ${{ secrets.GPG_SECRET_KEY }}
+      mavenUsername: ${{ secrets.OSSRHUSERNAME }}
+      mavenPassword: ${{ secrets.OSSRHPASSWORD }}
+    with:
+      repository: ${{ vars.SNAPSHOT_REPOSITORY }}
