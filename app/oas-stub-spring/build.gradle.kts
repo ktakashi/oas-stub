@@ -2,15 +2,14 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     `java-library`
-    `maven-publish`
-    signing
     id(libs.plugins.kotlin.jvm.get().pluginId)
-    id(libs.plugins.dokka.get().pluginId)
     alias(libs.plugins.kotlin.spring)
     id("io.github.ktakashi.oas.conventions")
+    id("io.github.ktakashi.oas.deployed")
     alias(libs.plugins.spring.boot)
 }
 
+group = "$group.spring"
 description = "OAS stub Spring Boot application"
 
 tasks.named<BootJar>("bootJar") {
@@ -19,6 +18,10 @@ tasks.named<BootJar>("bootJar") {
 
 tasks.named<Jar>("jar") {
     archiveClassifier.set("")
+}
+
+tasks.withType<GenerateModuleMetadata> {
+     suppressedValidationErrors.add("enforced-platform")
 }
 
 dependencies {

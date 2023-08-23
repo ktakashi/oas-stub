@@ -34,5 +34,9 @@ gradlePlugin {
             id = "io.github.ktakashi.oas.conventions"
             implementationClass = "io.github.ktakashi.oas.build.ConventionsPlugin"
         }
+        create("deployedPlugin") {
+            id = "io.github.ktakashi.oas.deployed"
+            implementationClass = "io.github.ktakashi.oas.build.DeployedPlugin"
+        }
     }
 }

@@ -1,15 +1,17 @@
 plugins {
     `java-library`
-    `maven-publish`
-    signing
     id(libs.plugins.kotlin.jvm.get().pluginId)
-    id(libs.plugins.dokka.get().pluginId)
     alias(libs.plugins.kotlin.spring)
     id("io.github.ktakashi.oas.conventions")
+    id("io.github.ktakashi.oas.deployed")
 }
 
-group = "$group.storage"
+group = "$group.spring"
 description = "OAS stub hazelcast storage starter"
+
+tasks.withType<GenerateModuleMetadata> {
+    suppressedValidationErrors.add("enforced-platform")
+}
 
 dependencies {
     annotationProcessor(enforcedPlatform(libs.spring.boot.dependencies))

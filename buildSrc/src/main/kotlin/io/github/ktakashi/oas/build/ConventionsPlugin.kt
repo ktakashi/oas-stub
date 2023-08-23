@@ -13,6 +13,9 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
+import org.gradle.plugins.signing.SigningExtension
+import org.gradle.plugins.signing.SigningPlugin
+import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
@@ -23,6 +26,7 @@ class ConventionsPlugin: Plugin<Project> {
         configureJavaConventions(project)
         configureKotlinConventions(project)
         configureMavenPublishingConventions(project)
+        configureSigningConventions(project)
     }
 }
 
@@ -37,6 +41,7 @@ internal fun configureJavaConventions(project: Project) {
 
 internal fun configureKotlinConventions(project: Project) {
     project.plugins.withId("org.jetbrains.kotlin.jvm") { _ ->
+        project.plugins.apply(DokkaPlugin::class.java)
         project.tasks.register("dokkaJavadocJar", Jar::class.java) { jar ->
             jar.archiveClassifier.set("javadoc")
             val dokkaJavadoc = project.tasks.named("dokkaJavadoc")
@@ -58,16 +63,21 @@ internal fun configureKotlinConventions(project: Project) {
 internal fun configureMavenPublishingConventions(project: Project) {
     project.plugins.withType(MavenPublishPlugin::class.java) { _ ->
         val publishing = project.extensions.getByType(PublishingExtension::class.java)
-        if (project.hasProperty("deploymentRepository")) {
+        if (project.hasProperty("deployment.repository")) {
             publishing.repositories.maven { mavenRepository ->
-                mavenRepository.url = URI.create(project.property("deploymentRepository") as String)
+                mavenRepository.url = URI.create(project.property("deployment.repository") as String)
                 mavenRepository.name = "deployment"
+                mavenRepository.credentials.apply {
+                    if (project.hasProperty("deployment.username")) {
+                        username = project.property("deployment.username") as String
+                    }
+                    if (project.hasProperty("deployment.password")) {
+                        password = project.property("deployment.password") as String
+                    }
+                }
             }
         }
-        publishing.publications.create("mavenJava", MavenPublication::class.java)
         publishing.publications.withType(MavenPublication::class.java).all { publication ->
-            val component = project.components.findByName("java")
-            publication.from(component)
             publication.artifact(project.tasks.getByName("dokkaJavadocJar"))
             publication.pom.apply {
                 name.set(project.provider(project::getName))
@@ -105,6 +115,23 @@ internal fun configureMavenPublishingConventions(project: Project) {
     }
 }
 
+private fun configureSigningConventions(project: Project) {
+    project.plugins.withType(SigningPlugin::class.java) {
+        if (project.hasProperty("signing.key")) {
+            val signing = project.extensions.getByType(SigningExtension::class.java)
+            if (project.hasProperty("signing.keyId")) {
+                val keyId = project.property("signing.keyId") as String
+                val key = project.property("signing.key") as String
+                val password = project.property("signing.password") as String
+                signing.useInMemoryPgpKeys(keyId, key, password)
+            }
+            val publishing = project.extensions.getByType(PublishingExtension::class.java)
+            publishing.publications.matching { p -> p.name == MAVEN_PUBLICATION_NAME }
+                    .all(signing::sign)
+        }
+    }
+}
+
 private fun configureJavaManifestConventions(project: Project) {
     fun determineImplementationTitle(project: Project, sourceJarTaskNames: Set<String>, javadocJarTaskNames: Set<String>, jar: Jar): String {
         if (sourceJarTaskNames.contains(jar.name)) {
@@ -129,5 +156,4 @@ private fun configureJavaManifestConventions(project: Project) {
             }
         }
     }
-
 }

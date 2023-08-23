@@ -1,17 +1,14 @@
 plugins {
     `java-library`
-    `maven-publish`
-    signing
     id(libs.plugins.kotlin.jvm.get().pluginId)
-    id(libs.plugins.dokka.get().pluginId)
     id("io.github.ktakashi.oas.conventions")
+    id("io.github.ktakashi.oas.deployed")
 }
 
-group = "$group.engine"
 description = "OAS stub engine"
 
 dependencies {
-    implementation(enforcedPlatform(libs.kotlin.bom))
+    implementation(platform(libs.kotlin.bom))
     api(project(":lib:oas-stub-model"))
     api(project(":lib:oas-stub-plugin"))
     api(project(":lib:storages:oas-stub-storage-api"))
