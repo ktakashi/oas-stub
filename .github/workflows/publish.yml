@@ -51,7 +51,9 @@ jobs:
         run: |
           content=`cat gradle.properties | sed -E 's/version=.+/version=${{ inputs.version }}/'`
           echo "$content" > gradle.properties
-      - name: Publish with Gradle
+      - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.7.0
-        with:
-          arguments: publish -Psigning.password=${{ secrets.password }} -Pdeployment.username=${{secrets.mavenUsername }} -Pdeployment.password=${{ secrets.mavenPassword }}
+      - name: Build
+        run: ./gradlew build -x test
+      - name: Publish
+        run: ./gradlew publish -Psigning.password=${{ secrets.password }} -Pdeployment.username=${{secrets.mavenUsername }} -Pdeployment.password=${{ secrets.mavenPassword }}
