@@ -11,9 +11,7 @@ dependencies {
     implementation(platform(libs.kotlin.bom))
     implementation(platform(libs.jackson.bom))
 
-    implementation(project(":lib:oas-stub-model"))
-    implementation(project(":lib:oas-stub-plugin"))
-    implementation(project(":lib:storages:oas-stub-storage-api"))
+    api(project(":lib:oas-stub-storage-api"))
 
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")

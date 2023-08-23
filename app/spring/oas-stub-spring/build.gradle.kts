@@ -33,9 +33,9 @@ dependencies {
     implementation(platform(libs.jackson.bom))
 
     api(project(":lib:oas-stub-engine"))
-    implementation(project(":lib:storages:inmemory:oas-stub-inmemory-storage-autoconfigure"))
-    implementation(project(":lib:storages:hazelcast:oas-stub-hazelcast-storage-autoconfigure"))
-    implementation(project(":lib:storages:mongodb:oas-stub-mongodb-storage-autoconfigure"))
+    api(project(":app:spring:oas-stub-inmemory-storage-autoconfigure"))
+    api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
+    api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-aop")
@@ -52,7 +52,6 @@ dependencies {
 
     testImplementation(enforcedPlatform(libs.cucumber.bom))
     testImplementation(platform(libs.junit.bom))
-    testImplementation(project(":lib:storages:oas-stub-storage-api"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation("io.cucumber:cucumber-java")
