@@ -4,3 +4,4 @@ This is a Users' reference manual for OAS stub.
 
 - <<introduction, Introduction>>
 - <<getting-started, Getting Started>>
+- <<plugin, Plugin>>

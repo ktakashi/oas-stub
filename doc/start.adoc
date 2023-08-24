@@ -104,3 +104,5 @@ curl http://localhost:8080/oas/petstore/v1/pets
 ----
 
 Then you'll receive a JSON array with default value.
+
+TIP: The request against the API is validated unless specified not to do by you.

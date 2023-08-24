@@ -1,0 +1,58 @@
+[#plugin]
+== API Plugin
+
+OAS stub by default returns very dumb value unless the API
+definition contains rich example value. If you want to test
+your application with OAS stub, you may want it to behave
+clever way. To do it, you can configure a plugin to your API.
+
+:oas-example: footnote:[https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.0/petstore.yaml]
+
+Suppose, you have configured petstore{oas-example} APIs in your OAS stub
+application. Then, you want to get a pet named `Tama`, tagged `Cat` with
+ID `1`. So, whenever you request `GET /v1/pets/1` then the response must
+be
+
+[source, json]
+----
+{
+  "id": 1,
+  "name": "Tama",
+  "tag": "Cat"
+}
+----
+
+Now, you can write a plugin. To achieve the above requirement, the plugin
+can look simply like this:
+
+[source, groovy]
+----
+class PetstoreGetPetPlugin implements ApiPlugin {
+    @Override
+    ResponseContext customize(PluginContext pluginContext) {
+        return pluginContext.responseContext.mutate()
+                .content("""{"id": 1,"name": "Tama","tag": "Cat"}""".getBytes(StandardCharsets.UTF_8))
+                .build()
+    }
+}
+----
+
+:use-swagger-ui: footnote:[You can also use Swagger UI to do it]
+
+You save this plugin to `PetstoreGetPetPlugin.groovy`, then upload
+it with `curl` like this{use-swagger-ui}:
+
+[source, shell]
+----
+curl -X PUT -H'Content-Type: application/octet-stream' \
+  http://localhost:8080/__admin/petstore/configurations/plugins/groovy?api=/v1/pets/1 \
+  --data-binary @PetstoreGetPetPlugin.groovy
+----
+
+After that, you can call `GET /v1/pets/1`, then you'll receive the
+desired response. The plugin is only applied to `/v1/pets/1` API,
+so if you call `GET /v1/pets/2`, then you'd still receive the default
+response. To apply to all petIds, then you can use `/v1/pets/{petId}`
+API path, instead of `/v1/pets/1`.
+
+TIP: `curl` doesn't encode curly braces, you need to manually decode them
