@@ -1,0 +1,105 @@
+[#headers]
+== HTTP headers
+
+APIs may require HTTP headers, which may provided by a proxy located
+between your application and the backend service, such as
+`X-Forwarded-For` headers. And the backend application may require
+such headers. e.g. `XFCC`. One of the way to avoid validation error
+due to this kind of situation is that you remove the requirement
+from the API specification. However, as a developer, at least for me,
+we want to keep the provided API specification as intact as possible.
+
+To resolve this dilemma, OAS stub provides header configuration to
+populate extra headers before validations. The configuration can be
+done on a API path level, or global level. Below table shows the
+configuration endpoints:
+
+[cols="1,1,1"]
+|===
+| Endpoint                                      | Query Parameter | Content-Type
+
+| PUT /__admin/{context}/headers                | N/A             | application/json
+| PUT /__admin/{context}/configurations/headers | api={apiPath}   | application/json
+|===
+
+Both endpoints have the same JSON body of the following format.
+
+[source, json]
+----
+{
+  "request": {
+    "Request-Header-Name": ["Request Header value"]
+  },
+  "response": {
+    "Response-Header-Name": ["Response Header value"]
+  }
+}
+----
+
+TIP: HTTP header can contain multiple values, so the header values are an array.
+
+Suppose, you have `petstore` APIs on your OAS stub application.
+And all the APIs require `XFCC` header. For simplicity, the value
+doesn't matter, but the presence of the header. And, your application
+require a response header named `X-Response-ID`. This can achieve
+with `curl` like this:
+
+[source, shell]
+----
+curl -X PUT http://localhost:8080/__admin/petstore/headers \
+  -H'Content-Type: application/json' \
+  --data-binary '{"request": {"X-Forwarded-Client-Cert": ["bla"]}, "response": {"X-Response-ID": ["1"]} }'
+----
+
+Then you can see the header of `GET /v1/pets/1` like this:
+
+[source, shell]
+----
+curl -v http://localhost:8080/oas/petstore/v1/pets/1
+
+# Output response headers
+# < HTTP/1.1 200
+# < X-Response-ID: 1
+# < Content-Type: application/json
+# < Content-Length: 37
+# < Date: Thu, 24 Aug 2023 18:39:42 GMT
+----
+
+Now, you want to put a specific response header on `GET /v1/pets/1`
+endpoint, say `My-Favourite-Pet-ID`. The header mustn't be in any
+other endpoints, but this one. To do it, you can use
+`PUT /__admin/{context}/configurations/headers` endpoint, like this:
+
+[source, shell]
+----
+curl -X PUT 'http://localhost:8080/__admin/petstore/configurations/headers?api=/v1/pets/1' \
+  -H'Content-Type: application/json' \
+  --data-binary '{"response": {"My-Favourite-Pet-ID": ["1"]} }'
+----
+
+Now you can check the response.
+
+[source, shell]
+----
+curl -v http://localhost:8080/oas/petstore/v1/pets/1
+# Output response header
+# < HTTP/1.1 200
+# < My-Favourite-Pet-ID: 1
+# < X-Response-ID: 1
+# < Content-Type: application/json
+# < Content-Length: 39
+# < Date: Thu, 24 Aug 2023 18:45:57 GMT
+
+curl -v http://localhost:8080/oas/petstore/v1/pets/2
+# Output response header
+# < HTTP/1.1 200
+# < X-Response-ID: 1
+# < Content-Type: application/json
+# < Content-Length: 37
+# < Date: Thu, 24 Aug 2023 18:46:30 GMT
+----
+
+The `My-Favourite-Pet-ID` response header is only applied to the
+`/v1/pets/1` not the other endpoints.
+
+TIP: If there's global header configured, then the it'd also be populated.

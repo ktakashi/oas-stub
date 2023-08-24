@@ -8,7 +8,7 @@ clever way. To do it, you can configure a plugin to your API.
 
 :oas-example: footnote:[https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.0/petstore.yaml]
 
-Suppose, you have configured petstore{oas-example} APIs in your OAS stub
+Suppose, you have configured `petstore`{oas-example} APIs in your OAS stub
 application. Then, you want to get a pet named `Tama`, tagged `Cat` with
 ID `1`. So, whenever you request `GET /v1/pets/1` then the response must
 be
@@ -55,4 +55,4 @@ so if you call `GET /v1/pets/2`, then you'd still receive the default
 response. To apply to all petIds, then you can use `/v1/pets/{petId}`
 API path, instead of `/v1/pets/1`.
 
-TIP: `curl` doesn't encode curly braces, you need to manually decode them
+TIP: `curl` doesn't encode curly braces, you need to manually encode them

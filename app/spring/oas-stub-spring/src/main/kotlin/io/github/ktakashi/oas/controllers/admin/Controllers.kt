@@ -363,14 +363,14 @@ class DataConfigurationsController(apiRegistrationService: ApiRegistrationServic
 @Admin
 @RestController
 @RequestMapping(path = ["/{context}/configurations/delay"])
-@Tag(name = "API Data", description = "Single API delay CRUD")
+@Tag(name = "API Delay", description = "Single API delay CRUD")
 class DelayConfigurationsController(apiRegistrationService: ApiRegistrationService): AbstractSingleApiController(apiRegistrationService) {
 
     @Operation(summary = "Get API delay configuration", description = "Get the delay of the API if exists")
     @ApiResponse(responseCode = "200", description = "The API data is retrieved", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (delay) is not found", content = [Content(schema = Schema())])
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = getConfigurationProperty(context, api) { v ->
+    fun getDelay(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = getConfigurationProperty(context, api) { v ->
         v?.delay
     }
 
@@ -378,7 +378,7 @@ class DelayConfigurationsController(apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "200", description = "The API delay is updated")
     @ApiResponse(responseCode = "404", description = "Specified context or API is not found", content = [Content(schema = Schema())])
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun putData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate, @RequestBody request: ApiDelay) = putConfigurationProperty(context, api) { apiConfiguration ->
+    fun putDelay(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate, @RequestBody request: ApiDelay) = putConfigurationProperty(context, api) { apiConfiguration ->
         apiConfiguration?.updateDelay(request) ?: ApiConfiguration(delay = request)
     }
 
@@ -386,7 +386,7 @@ class DelayConfigurationsController(apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "204", description = "The API delay is deleted", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (delay) is not found", content = [Content(schema = Schema())])
     @DeleteMapping
-    fun deleteData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = deleteConfigurationProperty(context, api) { v ->
+    fun deleteDelay(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = deleteConfigurationProperty(context, api) { v ->
         v?.updateDelay(null)
     }
 }
