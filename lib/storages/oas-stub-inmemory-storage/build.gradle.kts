@@ -8,8 +8,7 @@ plugins {
 description = "OAS stub in-memory storage"
 
 dependencies {
-    implementation(platform(libs.kotlin.bom))
     api(project(":lib:oas-stub-storage-api"))
     implementation(libs.inject.api)
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation(libs.kotlin.stdlib)
 }

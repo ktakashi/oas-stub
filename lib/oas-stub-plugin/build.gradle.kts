@@ -8,7 +8,6 @@ plugins {
 description = "OAS stub plugin APIs"
 
 dependencies {
-    implementation(platform(libs.kotlin.bom))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation(libs.kotlin.stdlib)
     api(libs.servlet.api)
 }

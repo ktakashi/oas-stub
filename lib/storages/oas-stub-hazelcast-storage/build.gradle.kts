@@ -8,12 +8,9 @@ plugins {
 description = "OAS stub hazelcast storage"
 
 dependencies {
-    implementation(platform(libs.kotlin.bom))
-    implementation(platform(libs.jackson.bom))
-
     api(project(":lib:oas-stub-storage-api"))
-
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
     api(libs.hazelcast)
+
+    implementation(libs.jackson.databind)
+    implementation(libs.kotlin.stdlib)
 }

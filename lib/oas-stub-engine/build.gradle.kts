@@ -8,13 +8,12 @@ plugins {
 description = "OAS stub engine"
 
 dependencies {
-    implementation(platform(libs.kotlin.bom))
     api(project(":lib:oas-stub-model"))
     api(project(":lib:oas-stub-plugin"))
     api(project(":lib:oas-stub-storage-api"))
     api(libs.servlet.api)
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation(libs.kotlin.stdlib)
     implementation(libs.inject.api)
     implementation(libs.ws.rs.api)
     implementation(libs.jersey.client)

@@ -10,6 +10,5 @@ description = "OAS stub storage APIs"
 dependencies {
     api(project(":lib:oas-stub-model"))
     api(project(":lib:oas-stub-plugin"))
-    implementation(platform(libs.kotlin.bom))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation(libs.kotlin.stdlib)
 }
