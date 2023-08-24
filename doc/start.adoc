@@ -1,0 +1,41 @@
+[#getting-started]
+== Getting started
+
+:latest-is-greatest: footnote:[Use the latest version, you can check on Maven central :)]
+To start building your own stub application, your first step is
+to add the below dependency into your `pom.xml`.{latest-is-greatest}
+We also assume, you are using Java 17 or later. OAS stub is built
+atop Java 17 toolchain, so if you are using Java 11, then you need
+to upgrade the JDK version.
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.github.ktakashi.oas.stub.spring</groupId>
+    <artifactId>oas-stub-spring</artifactId>
+    <version>${oas-stub.version}</version>
+</dependency>
+----
+
+:spring-boot: footnote:[https://spring.io/projects/spring-boot]
+:todo-list: footnote:[We are planning to make pure JEE web application by using Guice]
+:for-now: footnote:[For now, please check `oas-stub-engine` and `oas-stub-spring` to grab how to do it]
+
+To make our lives easier, we assume that you are using
+Spring Boot{spring-boot}. If you are using other DI library
+or prefer not to use Spring Boot, then you need to do it by
+your self.{todo-list}{for-now}
+
+After you added the dependency on your Spring Boot application,
+then you need to add `OasApplication` to be loaded into your
+application context. Below example shows how to do it:
+
+[source, java]
+----
+@SpringBootApplication
+public class ExampleApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(new Class[] { ExampleApplication.class, OasApplication.class }, args);
+    }
+}
+----

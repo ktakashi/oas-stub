@@ -1,0 +1,37 @@
+[#introduction]
+== Introduction
+
+:my-opinion: footnote:[I'm not complaining, just how it is, and it sucks...]
+:oas: footnote:[Open Application Specification]
+
+The world is getting more and more micro services oriented,
+which is okay if you have a good environment to test. However,
+most of the time, at least for me, this wasn't the case.
+Management teams decided not to have a proper test environment
+anymore. Other teams decided not to provide their test applications
+nor any support unless it's a production issue.{my-opinion}
+
+Luckily, most of the time service providers provide OAS{oas} or
+Swagger file. Now, I thought if they don't want to provide any
+test environment, then I need to create their stub applications
+according to the API specification provided by the OAS files.
+However, writing stub application each time is extremely expensive
+and inefficient. The stub application must be their just by
+feeding the files they provided. So, I decided to write this
+application.
+
+[#intrudiction-why-not-wiremock]
+=== Why not WireMock?
+
+:wiremock: footnote:[https://wiremock.org/]
+WireMock{wiremock} is a great product for testing. However, it
+requires manual configuration per stub endpoint. Suppose, your
+backend service has 10 endpoints. Using WireMock requires you
+to configure all 10 endpoints with proper response and all.
+
+OAS stub reduces this. Once you feed the OAS file, then it
+automatically generates the endpoints and its default response.
+If you just want to make sure to have backend services, OAS stub
+might be a better choice, however, if you need to verify number
+of requests and/or the content of the requests, then WireMock
+might be a better choice.

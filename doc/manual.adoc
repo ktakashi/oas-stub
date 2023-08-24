@@ -1,0 +1,5 @@
+= Users' reference of OAS stub
+
+This is a Users' reference manual for OAS stub.
+
+- <<introduction, Introduction>>
