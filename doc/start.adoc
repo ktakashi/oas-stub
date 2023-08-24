@@ -32,6 +32,8 @@ application context. Below example shows how to do it:
 
 [source, java]
 ----
+package oas.example;
+
 @SpringBootApplication
 public class ExampleApplication {
     public static void main(String[] args) {
@@ -39,3 +41,66 @@ public class ExampleApplication {
     }
 }
 ----
+
+To build a standalone jar file, you need to add the below `<build>`
+section to your `pom.xml`.
+
+[source, xml]
+----
+<build>
+    <finalName>oas-stub-example</finalName>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>repackage</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <classifier>dist</classifier>
+                <mainClass>oas.example.ExampleApplication</mainClass>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+----
+
+After you build the application, then you'll see
+`oas-stub-example-dist.jar` in `target/` directory. The jar file
+is an executable, so you can simply run like this:
+
+[source, shell]
+----
+java -jar ./target/oas-stub-example-dist.jar
+----
+
+The application provides Swagger UI for its admin endpoints.
+The URL of the above command's UI is
+`http://localhost:8080/swagger-ui.html`. If the application is
+deployed on a server, then adjust the scheme, host and port.
+
+Now, you are ready to upload your OAS file to the application.
+The easiest way to do it is using the above Swagger UI. If you
+want to automate the process, then below shows an example how to
+do it with `curl`.
+
+[source, shell]
+----
+ curl -X POST http://localhost:8080/__admin/petstore \
+  -H'Content-Type: application/octet-stream' \
+  --data-binary @{oas_file}
+----
+
+Suppose, you've uploaded a `petstore.yaml` from the OAS example,
+then you can get pets from the `GET /v1/pets` endpoint like this:
+
+[source, shell]
+----
+curl http://localhost:8080/oas/petstore/v1/pets
+----
+
+Then you'll receive a JSON array with default value.

@@ -11,3 +11,5 @@ Document
 --------
 
 See [Users' manual](./doc/manual.adoc)
+
+For quick start: [Getting Started](./doc/start.adoc)

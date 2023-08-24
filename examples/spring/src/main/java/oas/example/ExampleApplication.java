@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.example;
+package oas.example;
 
 import io.github.ktakashi.oas.OasApplication;
 import org.springframework.boot.SpringApplication;
