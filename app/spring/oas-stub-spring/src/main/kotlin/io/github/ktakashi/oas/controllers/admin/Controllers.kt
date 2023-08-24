@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.util.UriTemplate
 import reactor.core.publisher.Mono
 
 @Admin
@@ -239,7 +240,7 @@ class PluginConfigurationsController(apiRegistrationService: ApiRegistrationServ
     @ApiResponse(responseCode = "200", description = "The API plugin is retrieved", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (plugin) is not found", content = [Content(schema = Schema())])
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getPlugin(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = getConfigurationProperty(context, api) { v ->
+    fun getPlugin(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = getConfigurationProperty(context, api) { v ->
         v?.plugin
     }
 
@@ -251,7 +252,7 @@ class PluginConfigurationsController(apiRegistrationService: ApiRegistrationServ
             consumes = [MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE],
             produces = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun putPlugin(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI, @RequestBody request: String) = putConfigurationProperty(context, api) { apiConfiguration ->
+    fun putPlugin(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate, @RequestBody request: String) = putConfigurationProperty(context, api) { apiConfiguration ->
         PluginDefinition(type = PluginType.GROOVY, script = request).let {
             apiConfiguration?.updatePlugin(it) ?: ApiConfiguration(plugin = it)
         }
@@ -261,7 +262,7 @@ class PluginConfigurationsController(apiRegistrationService: ApiRegistrationServ
     @ApiResponse(responseCode = "204", description = "The API plugin is deleted", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (plugin) is not found", content = [Content(schema = Schema())])
     @DeleteMapping
-    fun deletePlugin(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = deleteConfigurationProperty(context, api) { v ->
+    fun deletePlugin(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = deleteConfigurationProperty(context, api) { v ->
         v?.updatePlugin(null)
     }
 }
@@ -276,7 +277,7 @@ class HeadersConfigurationsController(apiRegistrationService: ApiRegistrationSer
     @ApiResponse(responseCode = "200", description = "The API headers is retrieved", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (headers) is not found", content = [Content(schema = Schema())])
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getHeaders(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = getConfigurationProperty(context, api) { v ->
+    fun getHeaders(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = getConfigurationProperty(context, api) { v ->
         v?.headers
     }
 
@@ -284,7 +285,7 @@ class HeadersConfigurationsController(apiRegistrationService: ApiRegistrationSer
     @ApiResponse(responseCode = "200", description = "The API headers are updated")
     @ApiResponse(responseCode = "404", description = "Specified context or API is not found", content = [Content(schema = Schema())])
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun putHeaders(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI, @RequestBody request: ApiHeaders) = putConfigurationProperty(context, api) { apiConfiguration ->
+    fun putHeaders(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate, @RequestBody request: ApiHeaders) = putConfigurationProperty(context, api) { apiConfiguration ->
         apiConfiguration?.updateHeaders(request) ?: ApiConfiguration(headers = request)
     }
 
@@ -292,7 +293,7 @@ class HeadersConfigurationsController(apiRegistrationService: ApiRegistrationSer
     @ApiResponse(responseCode = "204", description = "The API headers is deleted", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (headers) is not found", content = [Content(schema = Schema())])
     @DeleteMapping
-    fun deleteHeaders(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = deleteConfigurationProperty(context, api) { v ->
+    fun deleteHeaders(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = deleteConfigurationProperty(context, api) { v ->
         v?.updateHeaders(null)
     }
 }
@@ -307,7 +308,7 @@ class OptionsConfigurationsController(apiRegistrationService: ApiRegistrationSer
     @ApiResponse(responseCode = "200", description = "The API options is retrieved", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (options) is not found", content = [Content(schema = Schema())])
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getOptions(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = getConfigurationProperty(context, api) { v ->
+    fun getOptions(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = getConfigurationProperty(context, api) { v ->
         v?.options
     }
 
@@ -315,7 +316,7 @@ class OptionsConfigurationsController(apiRegistrationService: ApiRegistrationSer
     @ApiResponse(responseCode = "200", description = "The API options is updated")
     @ApiResponse(responseCode = "404", description = "Specified context or API is not found", content = [Content(schema = Schema())])
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun putOptions(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI, @RequestBody request: ApiOptions) = putConfigurationProperty(context, api) { apiConfiguration ->
+    fun putOptions(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate, @RequestBody request: ApiOptions) = putConfigurationProperty(context, api) { apiConfiguration ->
         apiConfiguration?.updateOptions(request) ?: ApiConfiguration(options = request)
     }
 
@@ -323,7 +324,7 @@ class OptionsConfigurationsController(apiRegistrationService: ApiRegistrationSer
     @ApiResponse(responseCode = "204", description = "The API options is deleted", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (options) is not found", content = [Content(schema = Schema())])
     @DeleteMapping
-    fun deleteOptions(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = deleteConfigurationProperty(context, api) { v ->
+    fun deleteOptions(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = deleteConfigurationProperty(context, api) { v ->
         v?.updateOptions(null)
     }
 }
@@ -338,7 +339,7 @@ class DataConfigurationsController(apiRegistrationService: ApiRegistrationServic
     @ApiResponse(responseCode = "200", description = "The API data is retrieved", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (data) is not found", content = [Content(schema = Schema())])
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = getConfigurationProperty(context, api) { v ->
+    fun getData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = getConfigurationProperty(context, api) { v ->
         v?.data
     }
 
@@ -346,7 +347,7 @@ class DataConfigurationsController(apiRegistrationService: ApiRegistrationServic
     @ApiResponse(responseCode = "200", description = "The API data is updated")
     @ApiResponse(responseCode = "404", description = "Specified context or API is not found", content = [Content(schema = Schema())])
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun putData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI, @RequestBody request: ApiData) = putConfigurationProperty(context, api) { apiConfiguration ->
+    fun putData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate, @RequestBody request: ApiData) = putConfigurationProperty(context, api) { apiConfiguration ->
         apiConfiguration?.updateData(request) ?: ApiConfiguration(data = request)
     }
 
@@ -354,7 +355,7 @@ class DataConfigurationsController(apiRegistrationService: ApiRegistrationServic
     @ApiResponse(responseCode = "204", description = "The API data is deleted", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (data) is not found", content = [Content(schema = Schema())])
     @DeleteMapping
-    fun deleteData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = deleteConfigurationProperty(context, api) { v ->
+    fun deleteData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = deleteConfigurationProperty(context, api) { v ->
         v?.updateData(null)
     }
 }
@@ -369,7 +370,7 @@ class DelayConfigurationsController(apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "200", description = "The API data is retrieved", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (delay) is not found", content = [Content(schema = Schema())])
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = getConfigurationProperty(context, api) { v ->
+    fun getData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = getConfigurationProperty(context, api) { v ->
         v?.delay
     }
 
@@ -377,7 +378,7 @@ class DelayConfigurationsController(apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "200", description = "The API delay is updated")
     @ApiResponse(responseCode = "404", description = "Specified context or API is not found", content = [Content(schema = Schema())])
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun putData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI, @RequestBody request: ApiDelay) = putConfigurationProperty(context, api) { apiConfiguration ->
+    fun putData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate, @RequestBody request: ApiDelay) = putConfigurationProperty(context, api) { apiConfiguration ->
         apiConfiguration?.updateDelay(request) ?: ApiConfiguration(delay = request)
     }
 
@@ -385,7 +386,7 @@ class DelayConfigurationsController(apiRegistrationService: ApiRegistrationServi
     @ApiResponse(responseCode = "204", description = "The API delay is deleted", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "404", description = "Specified context or API (delay) is not found", content = [Content(schema = Schema())])
     @DeleteMapping
-    fun deleteData(@PathVariable("context") context: String, @RequestParam(name = "api") api: URI) = deleteConfigurationProperty(context, api) { v ->
+    fun deleteData(@PathVariable("context") context: String, @RequestParam(name = "api") api: UriTemplate) = deleteConfigurationProperty(context, api) { v ->
         v?.updateDelay(null)
     }
 }
@@ -420,7 +421,7 @@ abstract class AbstractContextController(protected val apiRegistrationService: A
 
 
 abstract class AbstractSingleApiController(private val apiRegistrationService: ApiRegistrationService) {
-    protected fun <T> getConfigurationProperty(context: String, api: URI, retriever: (ApiConfiguration?) -> T) = getApiDefinitions(context)
+    protected fun <T> getConfigurationProperty(context: String, api: UriTemplate, retriever: (ApiConfiguration?) -> T) = getApiDefinitions(context)
             .flatMap { def ->
                 val decodedApi = URLDecoder.decode(api.toString(), StandardCharsets.UTF_8)
                 Mono.justOrEmpty(retriever(def.configurations?.get(decodedApi)))
@@ -428,15 +429,15 @@ abstract class AbstractSingleApiController(private val apiRegistrationService: A
             .map { v -> ResponseEntity.ok().body(v) }
             .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 
-    protected fun putConfigurationProperty(context: String, api: URI, updator: (ApiConfiguration?) -> ApiConfiguration) = updateConfigurationProperty(context, api, updator)
+    protected fun putConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration) = updateConfigurationProperty(context, api, updator)
             .map { def -> ResponseEntity.ok().body(def) }
             .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 
-    protected fun deleteConfigurationProperty(context: String, api: URI, updator: (ApiConfiguration?) -> ApiConfiguration?) = updateConfigurationProperty(context, api, updator)
+    protected fun deleteConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration?) = updateConfigurationProperty(context, api, updator)
             .map { ResponseEntity.noContent().build<Unit>() }
             .switchIfEmpty(Mono.defer { Mono.just(ResponseEntity.notFound().build()) })
 
-    private fun updateConfigurationProperty(context: String, api: URI, updator: (ApiConfiguration?) -> ApiConfiguration?) = getApiDefinitions(context)
+    private fun updateConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration?) = getApiDefinitions(context)
             .flatMap { def ->
                 val decodedApi = URLDecoder.decode(api.toString(), StandardCharsets.UTF_8)
                 Mono.justOrEmpty(updator(def.configurations?.get(decodedApi))?.let { v -> def.updateConfiguration(decodedApi, v) })
