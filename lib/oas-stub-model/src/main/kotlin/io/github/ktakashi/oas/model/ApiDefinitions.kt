@@ -81,13 +81,13 @@ sealed interface ApiDelay: MergeableApiConfig<ApiDelay> {
         @JvmStatic
         val DEFAULT_DURATION_UNIT = DurationUnit.MILLISECONDS
     }
-    val delayDurationUnit: DurationUnit?
+    val delayUnit: DurationUnit?
     override fun merge(other: ApiDelay): ApiDelay = this
 }
 
 @JsonTypeName("fixed")
-data class ApiFixedDelay(override val delayDurationUnit: DurationUnit? = ApiDelay.DEFAULT_DURATION_UNIT,
-                         val fixedDelay: Long): ApiDelay
+data class ApiFixedDelay(override val delayUnit: DurationUnit? = ApiDelay.DEFAULT_DURATION_UNIT,
+                         val delay: Long): ApiDelay
 
 interface ApiCommonConfigurations<T: ApiCommonConfigurations<T>> {
     val headers: ApiHeaders?

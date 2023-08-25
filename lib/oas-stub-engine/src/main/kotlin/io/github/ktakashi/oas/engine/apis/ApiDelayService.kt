@@ -38,8 +38,8 @@ class ApiDelayService
 
     private fun computeDelay(config: ApiDelay, processTime: Long): Pair<Long, TimeUnit>? = when (config) {
         is ApiFixedDelay -> {
-            val unit = config.delayDurationUnit?: ApiDelay.DEFAULT_DURATION_UNIT
-            val delay = unit.toTimeUnit().toMillis(config.fixedDelay)
+            val unit = config.delayUnit?: ApiDelay.DEFAULT_DURATION_UNIT
+            val delay = unit.toTimeUnit().toMillis(config.delay)
             if (processTime < delay) {
                 delay - processTime to TimeUnit.MILLISECONDS
             } else {
