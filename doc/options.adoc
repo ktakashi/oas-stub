@@ -37,3 +37,9 @@ Both endpoints have the same JSON body of the following format.
 | latency | Emulates high network latency | `{"interval": 1, "unit": "SECONDS"}`
 | failure | Enforce API failure | `{"type": "protocol"}`
 |===
+
+=== Latency
+
+Latency option is only meaningful when the response has body.
+Due to the limitation of JEE servlet, we don't have the control
+to emit HTTP status and header, but the body content.

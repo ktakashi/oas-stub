@@ -31,3 +31,10 @@ Both endpoints have the same JSON body of the following format.
 | delayUnit | Unit for the `delay` | `"MILLISECONDS"`
 |===
 
+=== Delay and latency
+
+Delay and latency configuration have similar effect to OAS stub,
+the difference between them is that delay configuration delays the
+response whilst latency configuration emits response slowly.
+This means, delay is suitable for read timeout tests and
+latency is suitable for others.
