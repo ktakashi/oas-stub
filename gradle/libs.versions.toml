@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.0"
+kotlin = "1.9.10"
 dokka = "1.8.20"
 jackson = "2.15.2"
 servlet-api = "6.0.0"
