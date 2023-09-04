@@ -1,9 +1,11 @@
-package io.github.ktakashi.oas.servlets
+package io.github.ktakashi.oas.web.servlets
 
 import io.github.ktakashi.oas.engine.apis.ApiContext
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
-import io.github.ktakashi.oas.services.ExecutorProviderService
+import io.github.ktakashi.oas.web.services.ExecutorProvider
+import jakarta.inject.Named
+import jakarta.inject.Singleton
 import jakarta.servlet.AsyncContext
 import jakarta.servlet.AsyncEvent
 import jakarta.servlet.AsyncListener
@@ -14,17 +16,15 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
-import org.springframework.stereotype.Component
 
 private val logger = LoggerFactory.getLogger(OasDispatchServlet::class.java)
 private const val EXECUTOR_NAME = "oasServlet"
 
-@Component
+@Named @Singleton
 class OasDispatchServlet(private val apiExecutionService: ApiExecutionService,
                          private val apiDelayService: ApiDelayService,
-                         executorProviderService: ExecutorProviderService): HttpServlet() {
-    private val executor = executorProviderService.getExecutor(EXECUTOR_NAME)
+                         executorProvider: ExecutorProvider): HttpServlet() {
+    private val executor = executorProvider.getExecutor(EXECUTOR_NAME)
     override fun service(req: HttpServletRequest, res: HttpServletResponse) {
         val asyncContext = req.startAsync()
         val listener = OasDispatchServletAsyncListener()
@@ -37,13 +37,13 @@ class OasDispatchServlet(private val apiExecutionService: ApiExecutionService,
                     } else if (apiContext.isPresent) {
                         processApi(asyncContext, req, apiContext.get())
                     } else {
-                        res.status = HttpStatus.NOT_FOUND.value()
+                        res.status = 404
                         CompletableFuture.completedFuture(asyncContext)
                     }
                 }, executor).exceptionally { e ->
                     logger.error("Execution error: {}", e.message, e)
                     if (!listener.isCompleted) {
-                        res.status = HttpStatus.INTERNAL_SERVER_ERROR.value()
+                        res.status = 500
                         res.outputStream.write(e.message?.toByteArray() ?: byteArrayOf())
                     }
                     asyncContext
@@ -73,7 +73,7 @@ private class OasDispatchServletAsyncListener: AsyncListener {
     override fun onTimeout(event: AsyncEvent) {
         completed.set(true)
         val response = event.suppliedResponse as HttpServletResponse
-        response.status = HttpStatus.REQUEST_TIMEOUT.value()
+        response.status = 408 // request timeout
         event.asyncContext.complete()
     }
 

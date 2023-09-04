@@ -7,6 +7,7 @@ swagger-core = "2.2.15"
 junit = "5.9.3"
 hazelcast = "5.3.2"
 mongodb = "4.10.2"
+groovy = "4.0.13"
 spring = "6.0.11"
 spring-boot="3.1.2"
 spring-cloud = "4.0.4"
@@ -26,6 +27,7 @@ kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", versio
 jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
 jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
+jackson-module-jakarta-xmlbind-annotations = { group = "com.fasterxml.jackson.module", name = "jackson-module-jakarta-xmlbind-annotations", version.ref = "jackson"}
 
 dokka-gradle-plugin = { group = "org.jetbrains.dokka", name = "org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
@@ -41,10 +43,14 @@ swagger-core-jakarta = { group = "io.swagger.core.v3", name = "swagger-core-jaka
 swagger-core-annotations-jakarta = { group = "io.swagger.core.v3", name = "swagger-annotations-jakarta", version.ref = "swagger-core" }
 
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version = "3.1.7" }
-groovy = { group = "org.apache.groovy", name = "groovy", version = "4.0.13" }
+groovy-core = { group = "org.apache.groovy", name = "groovy", version.ref = "groovy" }
+groovy-xml = { group = "org.apache.groovy", name = "groovy-xml", version.ref = "groovy" }
+groovy-json = { group = "org.apache.groovy", name = "groovy-json", version.ref = "groovy" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.7" }
 
 jersey-client = { group = "org.glassfish.jersey.core", name = "jersey-client", version.ref = "jersey-client" }
+aspectj = { group  = "org.aspectj", name = "aspectjweaver", version = "1.9.20" }
+
 hazelcast = { group = "com.hazelcast", name = "hazelcast", version.ref = "hazelcast" }
 mongodb-driver-sync = { group = "org.mongodb", name = "mongodb-driver-sync", version.ref = "mongodb" }
 
@@ -58,6 +64,7 @@ spring-boot-starter-core = { group = "org.springframework.boot", name = "spring-
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-starter-aop = { group = "org.springframework.boot", name = "spring-boot-starter-aop", version.ref = "spring-boot" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-starter-jersey = { group = "org.springframework.boot", name = "spring-boot-starter-jersey", version.ref = "spring-boot" }
 spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure", version.ref = "spring-boot" }
 spring-boot-configuration-processor = { group = "org.springframework.boot", name = "spring-boot-configuration-processor", version.ref = "spring-boot" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring-boot" }

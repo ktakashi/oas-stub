@@ -1,6 +1,6 @@
 package io.github.ktakashi.oas.controllers
 
-import io.github.ktakashi.oas.annotations.Delayable
+import io.github.ktakashi.oas.web.annotations.Delayable
 import java.util.concurrent.CompletableFuture
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping

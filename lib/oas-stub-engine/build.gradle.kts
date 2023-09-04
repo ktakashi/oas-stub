@@ -25,7 +25,7 @@ dependencies {
     }
     implementation(libs.swagger.core.jakarta)
     implementation(libs.caffeine)
-    implementation(libs.groovy)
+    implementation(libs.groovy.core)
     implementation(libs.slf4j.api)
 
     testImplementation(platform(libs.junit.bom))
