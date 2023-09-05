@@ -7,3 +7,7 @@ management:
   endpoint:
     shutdown:
       enabled: true
+
+spring:
+  jackson:
+    default-property-inclusion: non_null

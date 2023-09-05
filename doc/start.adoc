@@ -35,7 +35,6 @@ application context. Below example shows how to do it:
 package oas.example;
 
 @SpringBootApplication
-@ComponentScan("io.github.ktakashi.oas") // This is required
 public class ExampleApplication {
     public static void main(String[] args) {
         SpringApplication.run(ExampleApplication.class, args);
