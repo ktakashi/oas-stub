@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.configuration
 
 import io.github.ktakashi.oas.engine.apis.API_PATH_NAME_QUALIFIER
+import io.github.ktakashi.oas.services.DefaultExecutorProvider
 import io.github.ktakashi.oas.web.annotations.Admin
 import io.github.ktakashi.oas.web.rests.ContextConfigurationsController
 import io.github.ktakashi.oas.web.rests.ContextController
@@ -13,6 +14,7 @@ import io.github.ktakashi.oas.web.rests.DelayConfigurationsController
 import io.github.ktakashi.oas.web.rests.HeadersConfigurationsController
 import io.github.ktakashi.oas.web.rests.OptionsConfigurationsController
 import io.github.ktakashi.oas.web.rests.PluginConfigurationsController
+import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
 import org.glassfish.jersey.server.ResourceConfig
 import org.glassfish.jersey.server.ServerProperties
@@ -31,7 +33,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @AutoConfiguration
 @Configuration
-@EnableConfigurationProperties(OasApplicationServletProperties::class, ExecutorsProperties::class)
+@EnableConfigurationProperties(OasApplicationServletProperties::class)
 class AutoOasEngineConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties) {
 
     @Bean(API_PATH_NAME_QUALIFIER)
@@ -44,7 +46,12 @@ class AutoOasEngineConfiguration(private val oasApplicationServletProperties: Oa
         after = [AutoOasEngineConfiguration::class]
 )
 @Configuration
+@EnableConfigurationProperties(ExecutorsProperties::class)
 class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties): WebMvcConfigurer {
+
+    @Bean
+    @ConditionalOnMissingBean
+    fun executorProvider(executorsProperties: ExecutorsProperties): ExecutorProvider = DefaultExecutorProvider(executorsProperties)
 
     @Bean
     @ConditionalOnMissingBean

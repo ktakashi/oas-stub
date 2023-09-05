@@ -15,7 +15,7 @@ class GroovyPluginCompiler: PluginCompiler(PluginType.GROOVY) {
             if (ApiPlugin::class.java.isAssignableFrom(clazz)) {
                 return clazz as Class<ApiPlugin>
             }
-            throw IllegalArgumentException("The script doesn't extend ApiPlugin")
+            throw IllegalArgumentException("The script doesn't extend ApiPlugin: $clazz")
         }
     }
 }

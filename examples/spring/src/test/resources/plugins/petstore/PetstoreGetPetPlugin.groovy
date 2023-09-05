@@ -1,6 +1,5 @@
 package plugins.petstore
 
-
 import io.github.ktakashi.oas.plugin.apis.ApiPlugin
 import io.github.ktakashi.oas.plugin.apis.PluginContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext

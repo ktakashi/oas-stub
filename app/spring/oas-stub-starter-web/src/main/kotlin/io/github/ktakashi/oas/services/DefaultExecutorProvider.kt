@@ -7,10 +7,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinWorkerThread
-import org.springframework.stereotype.Service
 
-@Service
-class ExecutorProviderService(private val executorsProperties: ExecutorsProperties): ExecutorProvider {
+class DefaultExecutorProvider(private val executorsProperties: ExecutorsProperties): ExecutorProvider {
 
     private val executors: ConcurrentHashMap<String, ExecutorService> = ConcurrentHashMap()
     override fun getExecutor(name: String) = executors.computeIfAbsent(name) { _ ->
