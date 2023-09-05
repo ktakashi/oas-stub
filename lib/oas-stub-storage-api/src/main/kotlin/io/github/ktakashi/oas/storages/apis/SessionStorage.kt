@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.storage.apis
+package io.github.ktakashi.oas.storages.apis
 
 import io.github.ktakashi.oas.plugin.apis.Storage
 

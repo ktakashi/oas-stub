@@ -8,8 +8,8 @@ import com.mongodb.client.model.Filters.eq
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import io.github.ktakashi.oas.model.ApiDefinitions
-import io.github.ktakashi.oas.storage.apis.PersistentStorage
-import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.PersistentStorage
+import io.github.ktakashi.oas.storages.apis.SessionStorage
 import java.time.Duration
 import java.util.Optional
 import org.bson.codecs.configuration.CodecRegistries

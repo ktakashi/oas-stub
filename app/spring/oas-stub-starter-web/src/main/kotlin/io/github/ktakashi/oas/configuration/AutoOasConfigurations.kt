@@ -24,7 +24,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.HandlerTypePredicate
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer
@@ -46,9 +45,7 @@ class AutoOasEngineConfiguration(private val oasApplicationServletProperties: Oa
         after = [AutoOasEngineConfiguration::class]
 )
 @Configuration
-@ComponentScan(basePackages = ["io.github.ktakashi.oas"])
-class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties,
-                              private val servlet: OasDispatchServlet): WebMvcConfigurer {
+class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties): WebMvcConfigurer {
 
     @Bean
     @ConditionalOnMissingBean
@@ -81,7 +78,7 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
     }
 
     @Bean
-    fun servletBean() = ServletRegistrationBean(servlet, "${oasApplicationServletProperties.prefix}/*")
+    fun servletBean(servlet: OasDispatchServlet) = ServletRegistrationBean(servlet, "${oasApplicationServletProperties.prefix}/*")
             .also { registration ->
                 registration.setLoadOnStartup(1)
                 registration.setAsyncSupported(true)

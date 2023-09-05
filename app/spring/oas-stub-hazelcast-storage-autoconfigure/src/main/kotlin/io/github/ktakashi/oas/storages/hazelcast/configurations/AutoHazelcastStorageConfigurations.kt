@@ -9,8 +9,8 @@ import com.hazelcast.config.SerializerConfig
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.nio.serialization.Serializer
 import com.hazelcast.security.UsernamePasswordCredentials
-import io.github.ktakashi.oas.storage.apis.PersistentStorage
-import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.PersistentStorage
+import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastStorage

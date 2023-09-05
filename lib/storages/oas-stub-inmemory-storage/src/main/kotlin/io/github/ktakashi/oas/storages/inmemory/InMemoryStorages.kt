@@ -1,8 +1,8 @@
 package io.github.ktakashi.oas.storages.inmemory
 
 import io.github.ktakashi.oas.model.ApiDefinitions
-import io.github.ktakashi.oas.storage.apis.PersistentStorage
-import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.PersistentStorage
+import io.github.ktakashi.oas.storages.apis.SessionStorage
 import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap

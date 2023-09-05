@@ -2,8 +2,8 @@ package io.github.ktakashi.oas.storages.mongodb.configurations
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.mongodb.client.MongoClient
-import io.github.ktakashi.oas.storage.apis.PersistentStorage
-import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.PersistentStorage
+import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.mongodb.MongodbPersistentStorage
 import io.github.ktakashi.oas.storages.mongodb.MongodbSessionStorage
 import org.springframework.boot.autoconfigure.AutoConfiguration

@@ -1,7 +1,7 @@
 package io.github.ktakashi.oas.storages.inmemory.configurations
 
-import io.github.ktakashi.oas.storage.apis.PersistentStorage
-import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.PersistentStorage
+import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 import org.springframework.boot.autoconfigure.AutoConfiguration

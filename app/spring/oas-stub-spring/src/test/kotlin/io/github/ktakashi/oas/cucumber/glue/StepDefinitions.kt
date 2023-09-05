@@ -7,10 +7,11 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import io.cucumber.spring.CucumberContextConfiguration
-import io.github.ktakashi.oas.OasApplication
 import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
-import io.github.ktakashi.oas.storage.apis.PersistentStorage
-import io.github.ktakashi.oas.storage.apis.SessionStorage
+import io.github.ktakashi.oas.cucumber.context.TestContext
+import io.github.ktakashi.oas.maybeContent
+import io.github.ktakashi.oas.storages.apis.PersistentStorage
+import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
@@ -27,8 +28,6 @@ import io.restassured.http.Headers
 import java.net.URI
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
-import io.github.ktakashi.oas.cucumber.context.TestContext
-import io.github.ktakashi.oas.maybeContent
 import org.apache.http.client.ClientProtocolException
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.equalTo
@@ -44,7 +43,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.web.util.UriComponentsBuilder
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [OasApplication::class])
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @CucumberContextConfiguration
 @EnableAutoConfiguration
 @DirtiesContext
