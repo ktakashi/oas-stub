@@ -16,25 +16,46 @@ import io.github.ktakashi.oas.web.rests.PluginConfigurationsController
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
 import org.glassfish.jersey.server.ResourceConfig
 import org.glassfish.jersey.server.ServerProperties
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.jersey.JerseyAutoConfiguration
 import org.springframework.boot.autoconfigure.web.servlet.DefaultJerseyApplicationPath
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.HandlerTypePredicate
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
+@AutoConfiguration
 @Configuration
-class OasApplicationConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties): WebMvcConfigurer {
+@EnableConfigurationProperties(OasApplicationServletProperties::class, ExecutorsProperties::class)
+class AutoOasEngineConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties) {
 
     @Bean(API_PATH_NAME_QUALIFIER)
+    @ConditionalOnMissingBean
     fun apiPathPrefix() = oasApplicationServletProperties.prefix
 
+}
+
+@AutoConfiguration(
+        before = [JerseyAutoConfiguration::class],
+        after = [AutoOasEngineConfiguration::class]
+)
+@Configuration
+@ComponentScan(basePackages = ["io.github.ktakashi.oas"])
+class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties,
+                              private val servlet: OasDispatchServlet): WebMvcConfigurer {
+
     @Bean
+    @ConditionalOnMissingBean
     fun jerseyApplicationPath(resourceConfig: ResourceConfig) = DefaultJerseyApplicationPath(oasApplicationServletProperties.adminPrefix, resourceConfig)
 
     @Bean
+    @ConditionalOnMissingBean
     fun resourceConfig() = ResourceConfig().apply {
         register(ContextController::class.java)
         register(ContextOptionsController::class.java)
@@ -58,11 +79,7 @@ class OasApplicationConfiguration(private val oasApplicationServletProperties: O
         configurer.addPathPrefix(oasApplicationServletProperties.adminPrefix,
                 HandlerTypePredicate.forAnnotation(Admin::class.java))
     }
-}
 
-@Configuration
-class OasServletConfiguration(private val oasApplicationServletProperties: OasApplicationServletProperties,
-                              private val servlet: OasDispatchServlet) {
     @Bean
     fun servletBean() = ServletRegistrationBean(servlet, "${oasApplicationServletProperties.prefix}/*")
             .also { registration ->
