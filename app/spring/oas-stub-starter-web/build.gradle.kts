@@ -39,7 +39,6 @@ dependencies {
     implementation(libs.jackson.module.kotlin)
     implementation(libs.swagger.core.annotations.jakarta)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
-    implementation(libs.mongodb.driver.sync)
 
     annotationProcessor(libs.spring.boot.configuration.processor)
 }

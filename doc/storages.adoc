@@ -1,0 +1,37 @@
+[#storages]
+== Other storages
+
+OAS stub supports multiple storage implementations, currently
+we support the followings:
+
+- In-memory
+- Hazelcast
+- MongoDB
+
+All the storages are located in separate modules.
+
+=== For Spring Boot users
+
+If you are using `oas-stub-starter-web` module, then `in-memory`
+storage is used by default. The belows are the auto-configuration
+modules of the other storages:
+
+For Hazelcast storage:
+[source, xml]
+----
+<dependency>
+    <groupId>io.github.ktakashi.oas.stub.spring</groupId>
+    <artifactId>oas-stub-hazelcast-storage-autoconfigure</artifactId>
+    <version>${oas-stub.version}</version>
+</dependency>
+----
+
+For MongoDB storage:
+[source, xml]
+----
+<dependency>
+    <groupId>io.github.ktakashi.oas.stub.spring</groupId>
+    <artifactId>oas-stub-mongodb-storage-autoconfigure</artifactId>
+    <version>${oas-stub.version}</version>
+</dependency>
+----

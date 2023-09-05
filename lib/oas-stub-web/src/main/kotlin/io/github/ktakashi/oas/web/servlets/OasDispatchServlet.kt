@@ -4,6 +4,7 @@ import io.github.ktakashi.oas.engine.apis.ApiContext
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.web.services.ExecutorProvider
+import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import jakarta.servlet.AsyncContext
@@ -21,9 +22,10 @@ private val logger = LoggerFactory.getLogger(OasDispatchServlet::class.java)
 private const val EXECUTOR_NAME = "oasServlet"
 
 @Named @Singleton
-class OasDispatchServlet(private val apiExecutionService: ApiExecutionService,
-                         private val apiDelayService: ApiDelayService,
-                         executorProvider: ExecutorProvider): HttpServlet() {
+class OasDispatchServlet
+@Inject constructor(private val apiExecutionService: ApiExecutionService,
+                    private val apiDelayService: ApiDelayService,
+                    executorProvider: ExecutorProvider): HttpServlet() {
     private val executor = executorProvider.getExecutor(EXECUTOR_NAME)
     override fun service(req: HttpServletRequest, res: HttpServletResponse) {
         val asyncContext = req.startAsync()

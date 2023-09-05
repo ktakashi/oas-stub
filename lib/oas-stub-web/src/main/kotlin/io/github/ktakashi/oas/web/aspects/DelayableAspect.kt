@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.web.aspects
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.web.annotations.Delayable
 import io.github.ktakashi.oas.web.services.ExecutorProvider
+import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import java.time.Duration
@@ -18,8 +19,9 @@ import reactor.core.publisher.Mono
 private const val EXECUTOR_NAME = "delayableAspect"
 @Aspect
 @Named @Singleton
-class DelayableAspect(private val apiDelayService: ApiDelayService,
-                      executorProvider: ExecutorProvider) {
+class DelayableAspect
+@Inject constructor(private val apiDelayService: ApiDelayService,
+                    executorProvider: ExecutorProvider) {
     private val executor = executorProvider.getExecutor(EXECUTOR_NAME)
     @Around("@annotation(io.github.ktakashi.oas.web.annotations.Delayable) && @annotation(delayable)")
     fun delayMono(jointPoint: ProceedingJoinPoint, delayable: Delayable): Any {

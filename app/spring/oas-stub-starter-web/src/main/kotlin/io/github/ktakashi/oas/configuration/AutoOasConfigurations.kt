@@ -37,7 +37,6 @@ class AutoOasEngineConfiguration(private val oasApplicationServletProperties: Oa
     @Bean(API_PATH_NAME_QUALIFIER)
     @ConditionalOnMissingBean
     fun apiPathPrefix() = oasApplicationServletProperties.prefix
-
 }
 
 @AutoConfiguration(
@@ -78,11 +77,10 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
     }
 
     @Bean
-    fun servletBean(servlet: OasDispatchServlet) = ServletRegistrationBean(servlet, "${oasApplicationServletProperties.prefix}/*")
-            .also { registration ->
-                registration.setLoadOnStartup(1)
-                registration.setAsyncSupported(true)
-            }
+    fun servletBean(servlet: OasDispatchServlet) = ServletRegistrationBean(servlet, "${oasApplicationServletProperties.prefix}/*").also { registration ->
+        registration.setLoadOnStartup(1)
+        registration.setAsyncSupported(true)
+    }
 }
 
 @ConfigurationProperties(prefix = "oas.servlet")
