@@ -22,9 +22,15 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.7.0
       - name: Build
-        run: ./gradlew build -x test
-      - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew build
+      - name: Publish to maven local
+        run: ./gradlew publishToMavenLocal
+      - name: Build example
+        run: mvn package
+        working-directory: examples/spring
+      - name: Run example app test script
+        run: ./scripts/example-app-test.sh
+        working-directory: examples/spring
   snapshot-publish:
     needs: [ build ]
     if: ${{ github.ref == 'refs/heads/main' }}
