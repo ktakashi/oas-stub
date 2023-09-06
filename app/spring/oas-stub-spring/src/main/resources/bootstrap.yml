@@ -1,11 +1,3 @@
 spring:
   jackson:
     default-property-inclusion: non_null
-
-oas:
-  servlet:
-    admin-prefix: /__admin
-
-springdoc:
-  swagger-ui:
-    url: ${oas.servlet.admin-prefix}/openapi.json

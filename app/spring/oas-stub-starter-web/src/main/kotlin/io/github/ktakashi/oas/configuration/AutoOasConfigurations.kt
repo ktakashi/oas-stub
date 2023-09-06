@@ -47,6 +47,9 @@ import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource
 import org.glassfish.jersey.server.ResourceConfig
 import org.glassfish.jersey.server.ServerProperties
+import org.springdoc.core.properties.SwaggerUiConfigParameters
+import org.springdoc.core.properties.SwaggerUiConfigProperties
+import org.springdoc.webmvc.ui.SwaggerConfig
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -61,6 +64,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.HandlerTypePredicate
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+
 
 // *sigh*...
 @AutoConfiguration(
@@ -157,7 +161,7 @@ class AutoOasEngineConfiguration {
 }
 
 @AutoConfiguration(
-        before = [JerseyAutoConfiguration::class],
+        before = [JerseyAutoConfiguration::class, SwaggerConfig::class],
         after = [AutoOasEngineConfiguration::class]
 )
 @Configuration
@@ -214,6 +218,14 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
     fun servletBean(servlet: OasDispatchServlet) = ServletRegistrationBean(servlet, "${oasApplicationServletProperties.prefix}/*").also { registration ->
         registration.setLoadOnStartup(1)
         registration.setAsyncSupported(true)
+    }
+
+    // sort of abuse
+    @Bean
+    @ConditionalOnMissingBean
+    fun swaggerUiConfigParameters(swaggerUiConfig: SwaggerUiConfigProperties): SwaggerUiConfigParameters {
+        swaggerUiConfig.url = "${oasApplicationServletProperties.adminPrefix}/openapi.json"
+        return SwaggerUiConfigParameters(swaggerUiConfig)
     }
 }
 
