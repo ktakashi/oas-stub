@@ -41,6 +41,7 @@ validation-api = { group = "jakarta.validation", name = "jakarta.validation-api"
 swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version = "2.1.16" }
 swagger-core-jakarta = { group = "io.swagger.core.v3", name = "swagger-core-jakarta", version.ref = "swagger-core" }
 swagger-core-annotations-jakarta = { group = "io.swagger.core.v3", name = "swagger-annotations-jakarta", version.ref = "swagger-core" }
+swagger-core-jaxrs2-jakarta = { group = "io.swagger.core.v3", name = "swagger-jaxrs2-jakarta", version.ref = "swagger-core" }
 
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version = "3.1.7" }
 groovy-core = { group = "org.apache.groovy", name = "groovy", version.ref = "groovy" }

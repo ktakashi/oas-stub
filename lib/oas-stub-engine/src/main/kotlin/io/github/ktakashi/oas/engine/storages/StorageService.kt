@@ -46,4 +46,6 @@ class StorageService
             .map { v -> v.configurations }
             .flatMap { v -> findMatchingPathValue(path, v as Map<String, ApiConfiguration>) }
             .map { v -> v.plugin }
+
+    fun getApiNames(): Set<String> = persistentStorage.getNames()
 }

@@ -96,6 +96,11 @@ interface ApiRegistrationService: ApiContextService {
      * Deletes API definition from the [name]
      */
     fun deleteApiDefinitions(name: String): Boolean
+
+    /**
+     * Retrieves all the registered API names
+     */
+    fun getAllNames(): Set<String>
 }
 
 @Named @Singleton
@@ -134,6 +139,8 @@ class DefaultApiService
                 .orElse(false)
     } ?: storageService.saveApiDefinitions(name, apiDefinitions)
     override fun deleteApiDefinitions(name: String): Boolean = storageService.deleteApiDefinitions(name)
+
+    override fun getAllNames(): Set<String> = storageService.getApiNames()
 
     override fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {
         val path = apiContext.apiPath

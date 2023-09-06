@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.projectreactor.reactor.core)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.swagger.core.annotations.jakarta)
+    implementation(libs.swagger.core.jaxrs2.jakarta)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
 
     annotationProcessor(libs.spring.boot.configuration.processor)

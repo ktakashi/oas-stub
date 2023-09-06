@@ -28,6 +28,8 @@ class HazelcastStorage(private val objectMapper: ObjectMapper,
             .map { v -> objectMapper.treeToValue(v, type) }
 
     fun delete(key: String): Boolean = map.remove(key) != null
+
+    fun names(): Set<String> = map.keys
 }
 
 class HazelcastSessionStorage(private val hazelcastStorage: HazelcastStorage): SessionStorage {
@@ -44,6 +46,8 @@ class HazelcastPersistentStorage(private val hazelcastStorage: HazelcastStorage)
     override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean = hazelcastStorage.put(applicationName, apiDefinitions, Duration.ZERO)
 
     override fun deleteApiDefinition(name: String): Boolean = hazelcastStorage.delete(name)
+
+    override fun getNames(): Set<String> = hazelcastStorage.names()
 
 }
 

@@ -10,7 +10,6 @@ import io.github.ktakashi.oas.engine.apis.ApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.engine.apis.ApiPathService
-import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.ApiRequestBodyValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestParameterValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestPathVariableValidator
@@ -18,17 +17,12 @@ import io.github.ktakashi.oas.engine.apis.ApiRequestSecurityValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestValidator
 import io.github.ktakashi.oas.engine.apis.ApiResultProvider
 import io.github.ktakashi.oas.engine.apis.DefaultApiService
-import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataPopulator
-import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataValidator
-import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataPopulator
-import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataValidator
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.plugins.groovy.GroovyPluginCompiler
 import io.github.ktakashi.oas.engine.storages.StorageService
-import io.github.ktakashi.oas.engine.validators.FormatValidator
-import io.github.ktakashi.oas.engine.validators.Validator
+import io.github.ktakashi.oas.openapi.OAS_APPLICATION_PATH_CONFIG
 import io.github.ktakashi.oas.services.DefaultExecutorProvider
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -36,6 +30,7 @@ import io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemoryPersi
 import io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemorySessionStorageConfiguration
 import io.github.ktakashi.oas.web.annotations.Admin
 import io.github.ktakashi.oas.web.aspects.DelayableAspect
+import io.github.ktakashi.oas.web.rests.ApiController
 import io.github.ktakashi.oas.web.rests.ContextConfigurationsController
 import io.github.ktakashi.oas.web.rests.ContextController
 import io.github.ktakashi.oas.web.rests.ContextDataController
@@ -49,6 +44,7 @@ import io.github.ktakashi.oas.web.rests.OptionsConfigurationsController
 import io.github.ktakashi.oas.web.rests.PluginConfigurationsController
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource
 import org.glassfish.jersey.server.ResourceConfig
 import org.glassfish.jersey.server.ServerProperties
 import org.springframework.beans.factory.annotation.Qualifier
@@ -179,6 +175,7 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
     @Bean
     @ConditionalOnMissingBean
     fun resourceConfig() = ResourceConfig().apply {
+        register(ApiController::class.java)
         register(ContextController::class.java)
         register(ContextOptionsController::class.java)
         register(ContextConfigurationsController::class.java)
@@ -193,6 +190,8 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
         register(DelayConfigurationsController::class.java)
 
         property(ServerProperties.LOCATION_HEADER_RELATIVE_URI_RESOLUTION_DISABLED, true)
+        property(OAS_APPLICATION_PATH_CONFIG, oasApplicationServletProperties.adminPrefix)
+        register(OpenApiResource::class.java)
     }
 
     override fun configurePathMatch(configurer: PathMatchConfigurer) {

@@ -41,6 +41,18 @@ import java.util.concurrent.CompletableFuture
 typealias UriTemplate = String
 
 @Admin
+@Path("/")
+@Tag(name = "API info", description = "API info")
+@Named @Singleton
+class ApiController @Inject constructor(private val apiRegistrationService: ApiRegistrationService) {
+    @Operation(summary = "Get API names", description = "Retrieves list of API names")
+    @ApiResponse(responseCode = "200", description = "List of names")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    fun get() = apiRegistrationService.getAllNames()
+}
+
+@Admin
 @Path("/{context}")
 @Tag(name = "API Context", description = "API context CRUD")
 @Named @Singleton
@@ -229,7 +241,7 @@ class ContextDataController @Inject constructor(apiRegistrationService: ApiRegis
 
 @Admin
 @Path("/{context}/delay")
-@Tag(name = "API Context data", description = "API context delay CRUD")
+@Tag(name = "API Context delay", description = "API context delay CRUD")
 @Named @Singleton
 class ContextDelayController @Inject constructor(apiRegistrationService: ApiRegistrationService): AbstractContextController(apiRegistrationService) {
     @Operation(summary = "Get API delay", description = "Get API delay of the {context}")

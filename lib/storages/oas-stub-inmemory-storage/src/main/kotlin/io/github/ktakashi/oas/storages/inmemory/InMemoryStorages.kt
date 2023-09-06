@@ -39,4 +39,6 @@ class InMemoryPersistentStorage: PersistentStorage {
         return true
     }
 
+    override fun getNames(): Set<String> = storage.keys
+
 }

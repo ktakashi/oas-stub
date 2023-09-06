@@ -36,6 +36,8 @@ abstract class MongodbStorage(private val objectMapper: ObjectMapper,
             .map { v -> objectMapper.readValue(v, type)}
 
     protected fun deleteOne(key: String) = mongoCollection.deleteOne(eq("name", key))
+
+    protected fun listNames() = mongoCollection.find().map { e -> e.name }.toSet()
 }
 
 class MongodbSessionStorage(objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
@@ -57,6 +59,8 @@ class MongodbPersistentStorage(objectMapper: ObjectMapper, mongoClient: MongoCli
     override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean = upsert(applicationName, apiDefinitions).wasAcknowledged()
 
     override fun deleteApiDefinition(name: String): Boolean = deleteOne(name).wasAcknowledged()
+
+    override fun getNames(): Set<String> = listNames()
 }
 
 data class MongoEntry
