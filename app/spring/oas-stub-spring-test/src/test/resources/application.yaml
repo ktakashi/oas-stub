@@ -1,0 +1,10 @@
+oas:
+  stub:
+    test:
+      definitions:
+        petstore:
+          specification: 'classpath:/schema/petstore.yaml'
+          configurations:
+            '[/v1/pets/{id}]':
+              plugin:
+                script: 'classpath:/plugins/PetStoreGetPetPlugin.groovy'

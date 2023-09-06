@@ -37,6 +37,7 @@ ws-rs-api = { group = "jakarta.ws.rs", name = "jakarta.ws.rs-api", version = "3.
 mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.1.2" }
 xml-bind-api = { group = "jakarta.xml.bind", name = "jakarta.xml.bind-api", version = "4.0.0" }
 validation-api = { group = "jakarta.validation", name = "jakarta.validation-api", version = "3.0.2" }
+annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version = "2.1.1" }
 
 swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version = "2.1.16" }
 swagger-core-jakarta = { group = "io.swagger.core.v3", name = "swagger-core-jakarta", version.ref = "swagger-core" }
@@ -67,6 +68,7 @@ spring-boot-starter-aop = { group = "org.springframework.boot", name = "spring-b
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "spring-boot" }
 spring-boot-starter-jersey = { group = "org.springframework.boot", name = "spring-boot-starter-jersey", version.ref = "spring-boot" }
 spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure", version.ref = "spring-boot" }
+spring-boot-test-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-test-autoconfigure", version.ref = "spring-boot" }
 spring-boot-configuration-processor = { group = "org.springframework.boot", name = "spring-boot-configuration-processor", version.ref = "spring-boot" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring-boot" }
 
