@@ -11,9 +11,9 @@ description = "OAS stub for testing"
 
 dependencies {
     api(project(":app:spring:oas-stub-spring-boot-starter-web"))
+    api(libs.spring.boot.starter.test)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
-    implementation(libs.spring.boot.starter.test)
     implementation(libs.annotation.api)
 
     testImplementation(enforcedPlatform(libs.cucumber.bom))
