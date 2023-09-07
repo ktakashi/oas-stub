@@ -10,7 +10,7 @@ group = "$group.spring"
 description = "OAS stub for testing"
 
 dependencies {
-    api(project(":app:spring:oas-stub-starter-web"))
+    api(project(":app:spring:oas-stub-spring-boot-starter-web"))
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
     implementation(libs.spring.boot.starter.test)

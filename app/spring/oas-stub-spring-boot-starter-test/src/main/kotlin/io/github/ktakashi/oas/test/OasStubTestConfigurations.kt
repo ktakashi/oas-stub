@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.test
 import io.github.ktakashi.oas.configuration.AutoOasEngineConfiguration
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiConfiguration
+import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.PluginDefinition
@@ -15,6 +16,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 
 internal const val OAS_STUB_TEST_SERVICE_NAME = "oasStubTestService"
@@ -54,13 +56,16 @@ data class OasStubTestHeaders(
 
 data class OasStubTestConfiguration(
         @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders(),
-        @NestedConfigurationProperty var plugin: OasStubTestPlugin? = null,
+        @NestedConfigurationProperty var plugin: OasStubTestPlugin = OasStubTestPlugin(),
+        var data: Map<String, Any> = mapOf()
 ) {
-    fun toApiConfiguration() = ApiConfiguration(headers = headers.toApiHeaders(), plugin = plugin?.toPluginDefinition())
+    fun toApiConfiguration() = ApiConfiguration(headers = headers.toApiHeaders(), plugin = plugin?.toPluginDefinition(), data = ApiData(data))
 }
 
+private val defaultPlugin = ClassPathResource("/oas/stub/plugins/DefaultResponsePlugin.groovy")
+
 data class OasStubTestPlugin(
-        var script: Resource,
+        var script: Resource = defaultPlugin,
         var type: PluginType = PluginType.GROOVY
 ) {
     fun toPluginDefinition() = PluginDefinition(script = script.inputStream.reader().readText(), type = type)

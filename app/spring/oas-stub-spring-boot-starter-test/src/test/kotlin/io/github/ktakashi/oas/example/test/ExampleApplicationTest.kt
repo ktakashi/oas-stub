@@ -20,7 +20,7 @@ class ExampleApplicationTest(@Value("\${local.server.port}") private val localPo
 
         given().get(URI.create("http://localhost:$localPort/oas/petstore/v1/pets/2"))
                 .then()
-                .statusCode(200)
-                .body("id", equalTo(1))
+                .statusCode(404)
+                .body("message", equalTo("No pet found"))
     }
 }
