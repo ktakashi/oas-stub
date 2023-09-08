@@ -1,0 +1,105 @@
+[#testing]
+== Testing module
+
+If you are using `spring-boot-starter-test` module, and considering
+to use OAS stub for testing, you can easily integrate your tests
+with `oas-stub-spring-boot-starter-test` module.
+
+Module:
+[source, xml]
+----
+<dependency>
+    <groupId>io.github.ktakashi.oas.stub.spring</groupId>
+    <artifactId>oas-stub-spring-boot-starter-test</artifactId>
+    <version>${oas-stub.version}</version>
+    <scope>test</scope>
+</dependency>
+----
+
+WARNING: This module works only with a server, which means your test
+module must not use `SpringBootTest.WebEnvironment.MOCK` or
+`SpringBootTest.WebEnvironment.NONE`.
+
+=== Basic usage
+
+Suppose you have a Spring Boot application in `oas.example` package.
+Now you want to test it. So, your Spring Boot test should look like
+this:
+
+[source, java]
+----
+package ors.example;
+// imports...
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@EnableAutoConfiguration
+class ExampleApplicationTest {
+    @Value("${local.server.port}")
+    private int localPort;
+
+    @Test
+    void test() {
+        // HTTP access `http://localhost:${localPort}`
+    }
+}
+----
+
+After you set up the basic test application, then you need to
+add the `oas.stub.test` configuration to your configuration
+file, such as application.yaml or application.properties. Below
+example shows how to configure the petstore.
+
+Example configuration:
+[source, yaml]
+----
+oas.stub:
+  test:
+    definitions:
+      petstore:
+        # Spring Resource class
+        specification: 'classpath:/schema/petstore.yaml'
+        configurations:
+          # API path, can be URI template
+          '[/v1/pets/{id}]':
+            data:
+              # Request URI, must be a valid URI
+              '[/v1/pets/1]':
+                status: 200
+                # Response content, can be classpath:{path}
+                response: 'classpath:/json/pet1.json'
+              '[/v1/pets/2]':
+                status: 200
+                # or raw content (string), won't be normalized
+                response: |
+                  { "id": 2, "name": "Pochi" }
+              # Default response, when the request does not match above URIs
+              default:
+                status: 404
+                response: 'classpath:/json/404.json'
+          '[/v1/pets]':
+            data:
+              default:
+                status: 200
+                response: 'classpath:/json/pets.json'
+----
+
+Now you need to set up your backend service connection.
+Suppose you have a map of backend service URI in your
+configuration properties. And one of the key is `uri`.
+To access OAS stub test server, you can put your backend
+service like this:
+
+[source, yaml]
+----
+services:
+  petstore:
+    uri: http://localhost:${oas.stub.test.server.port}/oas/petstore
+----
+
+TIP: The context path `/oas` can be configured with
+`oas.stub.servlet.prefix`
+
+TIP: `/__admin/\{endpoint}` endpoints are also loaded into the
+server, so users can create/modify API definitions via the REST endpoints. The endpoints will be
+`http://localhost:${oas.stub.test.server.port}/__admin/\{endpoint}`
+
+TIP: `/__admin` can be configured with `oas.stub.servlet.admin-prefix`.

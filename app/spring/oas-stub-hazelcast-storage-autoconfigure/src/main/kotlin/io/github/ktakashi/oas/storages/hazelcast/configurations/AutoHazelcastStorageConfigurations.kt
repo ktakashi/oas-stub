@@ -11,11 +11,17 @@ import com.hazelcast.nio.serialization.Serializer
 import com.hazelcast.security.UsernamePasswordCredentials
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.conditions.ConditionalOnPropertyIsEmpty
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_INMEMORY_PERSISTENT_STORAGE_MODULE
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_INMEMORY_SESSION_STORAGE_MODULE
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_PERSISTENT
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_SESSION
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastStorage
 import io.github.ktakashi.oas.storages.hazelcast.JsonSerializer
-import java.util.Optional
+import java.util.*
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
@@ -25,25 +31,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Condition
-import org.springframework.context.annotation.ConditionContext
-import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.type.AnnotatedTypeMetadata
 
-
-@Conditional(ConditionalOnPropertyIsEmpty.OnPropertyIsEmptyCondition::class)
-annotation class ConditionalOnPropertyIsEmpty(val value: String) {
-    class OnPropertyIsEmptyCondition: Condition {
-        override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean {
-            val attrs = metadata.getAnnotationAttributes(ConditionalOnPropertyIsEmpty::class.java.name)
-                    ?: return true
-            val propertyName = attrs["value"] as String?
-            val value = propertyName?.let { v -> context.environment.getProperty(v) } ?: return true
-            return value.isBlank()
-        }
-    }
-}
 
 @AutoConfiguration
 @ConditionalOnMissingBean(value = [HazelcastInstance::class])
@@ -89,12 +78,12 @@ class AutoHazelcastConfiguration(private val properties: HazelcastStoragePropert
 }
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemorySessionStorageConfiguration"],
+        beforeName = [OAS_STUB_INMEMORY_SESSION_STORAGE_MODULE],
         after = [AutoHazelcastConfiguration::class]
 )
 @Configuration
 @ConditionalOnBean(value = [HazelcastInstance::class])
-@ConditionalOnProperty(name = [ "oas.storage.type.session" ], havingValue = "hazelcast")
+@ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_SESSION ], havingValue = "hazelcast")
 @EnableConfigurationProperties(HazelcastStorageProperties::class)
 class AutoHazelcastSessionStorageConfiguration(private val properties: HazelcastStorageProperties) {
     @Bean
@@ -104,12 +93,12 @@ class AutoHazelcastSessionStorageConfiguration(private val properties: Hazelcast
 }
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemoryPersistentStorageConfiguration"],
+        beforeName = [OAS_STUB_INMEMORY_PERSISTENT_STORAGE_MODULE],
         after = [AutoHazelcastConfiguration::class]
 )
 @Configuration
 @ConditionalOnBean(value = [HazelcastInstance::class])
-@ConditionalOnProperty(name = [ "oas.storage.type.persistent" ], havingValue = "hazelcast")
+@ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_PERSISTENT ], havingValue = "hazelcast")
 @EnableConfigurationProperties(HazelcastStorageProperties::class)
 class AutoHazelcastPersistentStorageConfiguration(private val properties: HazelcastStorageProperties) {
     @Bean
@@ -119,12 +108,11 @@ class AutoHazelcastPersistentStorageConfiguration(private val properties: Hazelc
 }
 
 
-@ConfigurationProperties(prefix = "oas.storage.hazelcast")
+@ConfigurationProperties(prefix = "${OAS_STUB_STORAGE}.hazelcast")
 data class HazelcastStorageProperties(var sessionMap: String = "sessionMap",
                                       var persistentMap: String = "persistentMap",
                                       var typeId: Int = Int.MAX_VALUE,
                                       @NestedConfigurationProperty var instance: HazelcastMainInstanceProperties?)
-
 
 sealed interface HazelcastInstanceProperties {
     val name: String?

@@ -50,7 +50,7 @@ internal fun configureKotlinConventions(project: Project) {
         }
         project.tasks.withType(KotlinCompile::class.java) { task ->
             (task.kotlinOptions as KotlinJvmOptions).apply {
-                freeCompilerArgs += listOf("-Xjvm-default=all")
+                freeCompilerArgs += listOf("-Xjvm-default=all", "-Xjsr305=strict")
                 apiVersion = "1.9"
                 languageVersion = "1.9"
                 jvmTarget = "17"

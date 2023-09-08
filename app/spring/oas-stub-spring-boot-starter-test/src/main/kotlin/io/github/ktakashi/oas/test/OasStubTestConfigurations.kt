@@ -66,12 +66,31 @@ data class OasStubTestConfiguration(
 
 class OasStubTestResources {
     companion object {
+        /**
+         * Default plugin resource
+         */
         @JvmField
         val DEFAULT_PLUGIN: Resource = ClassPathResource("/oas/stub/plugins/DefaultResponsePlugin.groovy")
+
+        /**
+         * Default plugin content
+         */
         @JvmField
         val DEFAULT_PLUGIN_SCRIPT = DEFAULT_PLUGIN.inputStream.reader().readText()
     }
 
+    /**
+     * The model of API data for the default plugin
+     *
+     * [status] represents the response HTTP status if provided
+     *
+     * [headers] are populated into the response if provided
+     *
+     * [response] replaces the default response if provided
+     *
+     * This model allows users to programmatically change the
+     * default plugin's behaviour.
+     */
     data class DefaultResponseModel
     @JvmOverloads constructor(val status: Int? = null, val headers: Map<String, List<String>>? = null, val response: String? = null) {
         fun toResponseContext(original: ResponseContext): ResponseContext {

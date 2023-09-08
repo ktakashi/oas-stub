@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    kotlin("kapt")
     id(libs.plugins.kotlin.jvm.get().pluginId)
     alias(libs.plugins.kotlin.spring)
     id("io.github.ktakashi.oas.conventions")
@@ -31,5 +32,5 @@ dependencies {
     implementation(libs.swagger.core.jaxrs2.jakarta)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
 
-    annotationProcessor(libs.spring.boot.configuration.processor)
+    kapt(libs.spring.boot.configuration.processor)
 }

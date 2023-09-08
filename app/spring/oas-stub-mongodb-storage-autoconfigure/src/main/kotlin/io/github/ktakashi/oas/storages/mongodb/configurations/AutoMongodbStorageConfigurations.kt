@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.mongodb.client.MongoClient
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_INMEMORY_PERSISTENT_STORAGE_MODULE
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_INMEMORY_SESSION_STORAGE_MODULE
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_PERSISTENT
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_SESSION
 import io.github.ktakashi.oas.storages.mongodb.MongodbPersistentStorage
 import io.github.ktakashi.oas.storages.mongodb.MongodbSessionStorage
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -19,12 +24,12 @@ import org.springframework.context.annotation.Configuration
 
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemorySessionStorageConfiguration"],
+        beforeName = [OAS_STUB_INMEMORY_SESSION_STORAGE_MODULE],
         after = [MongoAutoConfiguration::class]
 )
 @Configuration
 @ConditionalOnBean(value = [MongoClient::class])
-@ConditionalOnProperty(name = [ "oas.storage.type.session" ], havingValue = "mongodb")
+@ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_SESSION ], havingValue = "mongodb")
 @EnableConfigurationProperties(MongodbStorageProperties::class)
 class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStorageProperties) {
     @Bean
@@ -36,12 +41,12 @@ class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStor
 }
 
 @AutoConfiguration(
-        beforeName = ["io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemoryPersistentStorageConfiguration"],
+        beforeName = [OAS_STUB_INMEMORY_PERSISTENT_STORAGE_MODULE],
         after = [MongoAutoConfiguration::class]
 )
 @Configuration
 @ConditionalOnBean(value = [MongoClient::class])
-@ConditionalOnProperty(name = [ "oas.storage.type.persistent" ], havingValue = "mongodb")
+@ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_PERSISTENT ], havingValue = "mongodb")
 @EnableConfigurationProperties(MongodbStorageProperties::class)
 class AutoMongodbPersistentStorageConfiguration(private val properties: MongodbStorageProperties) {
     @Bean
@@ -53,7 +58,7 @@ class AutoMongodbPersistentStorageConfiguration(private val properties: MongodbS
 }
 
 
-@ConfigurationProperties(prefix = "oas.storage.mongodb")
+@ConfigurationProperties(prefix = "${OAS_STUB_STORAGE}.mongodb")
 data class MongodbStorageProperties(@NestedConfigurationProperty var session: MongodbConnectionProperties?,
                                     @NestedConfigurationProperty var persistent: MongodbConnectionProperties?)
 

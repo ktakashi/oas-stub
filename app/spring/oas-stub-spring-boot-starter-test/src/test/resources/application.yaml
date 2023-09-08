@@ -1,20 +1,15 @@
-oas:
-  stub:
-    test:
-      definitions:
-        petstore:
-          specification: 'classpath:/schema/petstore.yaml'
-          configurations:
-            '[/v1/pets/{id}]':
-              data:
-                '[/v1/pets/1]':
-                  status: 200
-                  response: 'classpath:/json/pet1.json'
-                default:
-                  status: 404
-                  response: |
-                    { "status": 404, "message": "No pet found" }
-                    
-                  
-                  
-                  
+oas.stub:
+  test:
+    definitions:
+      petstore:
+        specification: 'classpath:/schema/petstore.yaml'
+        configurations:
+          '[/v1/pets/{id}]':
+            data:
+              '[/v1/pets/1]':
+                status: 200
+                response: 'classpath:/json/pet1.json'
+              default:
+                status: 404
+                response: |
+                  { "status": 404, "message": "No pet found" }

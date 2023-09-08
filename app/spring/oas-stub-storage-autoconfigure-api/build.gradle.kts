@@ -7,11 +7,10 @@ plugins {
 }
 
 group = "$group.spring"
-description = "OAS stub in-memory storage starter"
+description = "OAS stub storage autoconfigure API"
 
 dependencies {
-    api(project(":app:spring:oas-stub-storage-autoconfigure-api"))
-    api(project(":lib:storages:oas-stub-inmemory-storage"))
-    implementation(libs.spring.boot.autoconfigure)
+    api(project(":lib:oas-stub-storage-api"))
     implementation(libs.kotlin.stdlib)
+    implementation(libs.spring.boot.autoconfigure)
 }

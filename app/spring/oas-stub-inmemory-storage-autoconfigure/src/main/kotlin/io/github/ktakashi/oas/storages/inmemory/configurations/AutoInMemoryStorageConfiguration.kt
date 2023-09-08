@@ -2,6 +2,8 @@ package io.github.ktakashi.oas.storages.inmemory.configurations
 
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_PERSISTENT
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_SESSION
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -12,7 +14,7 @@ import org.springframework.context.annotation.Configuration
 
 @AutoConfiguration
 @Configuration
-@ConditionalOnProperty(name = [ "oas.storage.type.persistent" ], havingValue = "inmemory", matchIfMissing = true)
+@ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_PERSISTENT ], havingValue = "inmemory", matchIfMissing = true)
 @ConditionalOnMissingBean(value = [PersistentStorage::class])
 class AutoInMemoryPersistentStorageConfiguration {
     @Bean
@@ -22,7 +24,7 @@ class AutoInMemoryPersistentStorageConfiguration {
 
 @AutoConfiguration
 @Configuration
-@ConditionalOnProperty(name = [ "oas.storage.type.session" ], havingValue = "inmemory", matchIfMissing = true)
+@ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_SESSION ], havingValue = "inmemory", matchIfMissing = true)
 @ConditionalOnMissingBean(value = [SessionStorage::class])
 class AutoInMemorySessionStorageConfiguration {
     @Bean

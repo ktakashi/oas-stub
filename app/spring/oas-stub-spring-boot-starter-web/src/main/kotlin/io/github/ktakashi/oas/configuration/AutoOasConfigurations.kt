@@ -229,9 +229,9 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
     }
 }
 
-@ConfigurationProperties(prefix = "oas.servlet")
+@ConfigurationProperties(prefix = "oas.stub.servlet")
 data class OasApplicationServletProperties(var prefix: String = "/oas",
                                            var adminPrefix: String = "/__admin")
 
-@ConfigurationProperties(prefix = "oas.executors")
+@ConfigurationProperties(prefix = "oas.stub.executors")
 data class ExecutorsProperties(var parallelism: Int = Runtime.getRuntime().availableProcessors())

@@ -8,3 +8,5 @@ This is a Users' reference manual for OAS stub.
 - <<headers, HTTP headers>>
 - <<options, Options>>
 - <<delay, Delay>>
+- <<storages, Storages>>
+- <<testing, Testing module>>
