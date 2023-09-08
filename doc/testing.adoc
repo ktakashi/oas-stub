@@ -43,6 +43,11 @@ class ExampleApplicationTest {
 }
 ----
 
+TIP: `@EnableAutoConfiguration` is required to make it work.
+This is because `oas-stub-spring-boot-starter-test` is based
+on `oas-stub-spring-boot-web` and this module is a bundle of
+auto-configuration modules.
+
 After you set up the basic test application, then you need to
 add the `oas.stub.test` configuration to your configuration
 file, such as application.yaml or application.properties. Below
