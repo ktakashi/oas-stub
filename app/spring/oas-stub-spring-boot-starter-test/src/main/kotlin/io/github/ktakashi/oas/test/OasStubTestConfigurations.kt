@@ -10,7 +10,7 @@ import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.SortedMap
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties

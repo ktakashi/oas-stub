@@ -21,7 +21,7 @@ import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastStorage
 import io.github.ktakashi.oas.storages.hazelcast.JsonSerializer
-import java.util.*
+import java.util.Optional
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
