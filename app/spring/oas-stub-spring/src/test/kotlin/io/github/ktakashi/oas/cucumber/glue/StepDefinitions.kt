@@ -12,6 +12,8 @@ import io.github.ktakashi.oas.cucumber.context.TestContext
 import io.github.ktakashi.oas.maybeContent
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_PERSISTENT
+import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_SESSION
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
 import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
@@ -51,8 +53,8 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                       private val persistentStorage: PersistentStorage,
                       private val sessionStorage: SessionStorage,
                       private val oasApplicationServletProperties: OasApplicationServletProperties,
-                      @Value("\${oas.storage.type.persistent:inmemory}") private val persistentStorageType: String,
-                      @Value("\${oas.storage.type.session:inmemory}") private val sessionStorageType: String) {
+                      @Value("\${${OAS_STUB_STORAGE_TYPE_PERSISTENT}:inmemory}") private val persistentStorageType: String,
+                      @Value("\${${OAS_STUB_STORAGE_TYPE_SESSION}:inmemory}") private val sessionStorageType: String) {
     private lateinit var testContext: TestContext
 
     companion object {

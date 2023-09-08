@@ -22,7 +22,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
-
+private const val OAS_STUB_STORAGE_MONGODB = "${OAS_STUB_STORAGE}.mongodb"
 @AutoConfiguration(
         beforeName = [OAS_STUB_INMEMORY_SESSION_STORAGE_MODULE],
         after = [MongoAutoConfiguration::class]
@@ -35,7 +35,7 @@ class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStor
     @Bean
     @ConditionalOnMissingBean(SessionStorage::class)
     fun sessionStorage(mongoClient: MongoClient, objectMapper: ObjectMapper): SessionStorage {
-        val session = properties.session ?: throw IllegalStateException("'oas.storage.mongodb.session' must be provided")
+        val session = properties.session ?: throw IllegalStateException("'${OAS_STUB_STORAGE_MONGODB}.session' must be provided")
         return MongodbSessionStorage(objectMapper, mongoClient, session.database, session.collection)
     }
 }
@@ -52,13 +52,13 @@ class AutoMongodbPersistentStorageConfiguration(private val properties: MongodbS
     @Bean
     @ConditionalOnMissingBean(PersistentStorage::class)
     fun persistentStorage(mongoClient: MongoClient, objectMapper: ObjectMapper): PersistentStorage {
-        val persistent = properties.persistent?: throw IllegalStateException("'oas.storage.mongodb.persistent' must be provided")
+        val persistent = properties.persistent?: throw IllegalStateException("'${OAS_STUB_STORAGE_MONGODB}.persistent' must be provided")
         return MongodbPersistentStorage(objectMapper, mongoClient, persistent.database, persistent.collection)
     }
 }
 
 
-@ConfigurationProperties(prefix = "${OAS_STUB_STORAGE}.mongodb")
+@ConfigurationProperties(prefix = OAS_STUB_STORAGE_MONGODB)
 data class MongodbStorageProperties(@NestedConfigurationProperty var session: MongodbConnectionProperties?,
                                     @NestedConfigurationProperty var persistent: MongodbConnectionProperties?)
 
