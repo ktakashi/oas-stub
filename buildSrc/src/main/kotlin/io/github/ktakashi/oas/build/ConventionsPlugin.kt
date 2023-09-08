@@ -20,6 +20,7 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.internal.KaptWithoutKotlincTask
 
 class ConventionsPlugin: Plugin<Project> {
     override fun apply(project: Project) {
@@ -48,6 +49,13 @@ internal fun configureKotlinConventions(project: Project) {
             jar.dependsOn(dokkaJavadoc)
             jar.from(dokkaJavadoc.flatMap { task -> (task as DokkaTask).outputDirectory })
         }
+        project.plugins.withId("org.jetbrains.kotlin.kapt") {
+            project.tasks.withType(KaptWithoutKotlincTask::class.java) { kaptKotlin ->
+                val dokkaJavadoc = project.tasks.named("dokkaJavadoc")
+                dokkaJavadoc.configure { it.dependsOn(kaptKotlin) }
+            }
+        }
+
         project.tasks.withType(KotlinCompile::class.java) { task ->
             (task.kotlinOptions as KotlinJvmOptions).apply {
                 freeCompilerArgs += listOf("-Xjvm-default=all", "-Xjsr305=strict")
