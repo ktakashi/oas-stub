@@ -1,0 +1,3 @@
+oas:
+  servlet:
+    admin-prefix: /__admin

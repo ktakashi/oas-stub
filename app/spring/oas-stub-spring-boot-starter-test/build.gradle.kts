@@ -15,7 +15,6 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
     implementation(libs.annotation.api)
-    implementation(libs.spring.cloud.context)
 
     annotationProcessor(libs.spring.boot.configuration.processor)
 
@@ -27,5 +26,8 @@ dependencies {
     testImplementation(libs.rest.assured) {
         exclude(group = "org.apache.groovy")
     }
+    testImplementation(libs.groovy.core)
+    testImplementation(libs.groovy.json)
+    testImplementation(libs.groovy.xml)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

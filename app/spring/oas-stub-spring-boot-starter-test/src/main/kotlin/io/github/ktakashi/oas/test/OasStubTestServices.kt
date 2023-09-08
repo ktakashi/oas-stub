@@ -2,17 +2,14 @@ package io.github.ktakashi.oas.test
 
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiDefinitions
-import java.lang.Exception
 import java.util.*
-import org.springframework.boot.context.event.ApplicationPreparedEvent
-import org.springframework.cloud.context.environment.EnvironmentChangeEvent
+import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent
 import org.springframework.context.ApplicationListener
-import org.springframework.context.event.ContextRefreshedEvent
-import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.io.Resource
 import org.springframework.test.context.TestContext
 import org.springframework.test.context.support.AbstractTestExecutionListener
+import org.springframework.test.util.TestSocketUtils
 
 class OasStubTestService(private val properties: OasStubTestProperties,
                          private val apiRegistrationService: ApiRegistrationService) {
@@ -37,19 +34,7 @@ class OasStubTestService(private val properties: OasStubTestProperties,
 private const val PROPERTY_SOURCE_KEY = "oas.stub.test"
 
 class OasStubTestExecutionListener: AbstractTestExecutionListener() {
-    override fun beforeTestClass(testContext: TestContext) {
-        // try to resolve ${local.server.port}
-        val environment = testContext.applicationContext.environment as ConfigurableEnvironment
-        val port = environment.getProperty("local.server.port", Int::class.java)
-        if (port != null) {
-            val propertySource = (environment.propertySources.get(PROPERTY_SOURCE_KEY) as MapPropertySource).source
-            val key = "${PROPERTY_SOURCE_KEY}.server.port"
-            propertySource[key] = port
-            testContext.publishEvent {
-                EnvironmentChangeEvent(setOf(key))
-            }
-        }
-    }
+
     override fun beforeTestExecution(testContext: TestContext) {
         getTestService(testContext).ifPresent { service ->
             service.setup()
@@ -76,12 +61,24 @@ class OasStubTestExecutionListener: AbstractTestExecutionListener() {
     }
 }
 
-class OasStubTestApplicationListener: ApplicationListener<ApplicationPreparedEvent> {
-    override fun onApplicationEvent(event: ApplicationPreparedEvent) {
-        val environment = event.applicationContext.environment as ConfigurableEnvironment
+class OasStubTestApplicationListener: ApplicationListener<ApplicationEnvironmentPreparedEvent> {
+    override fun onApplicationEvent(event: ApplicationEnvironmentPreparedEvent) {
+        val environment = event.environment
         val propertySource = environment.propertySources
-        if (!propertySource.contains(PROPERTY_SOURCE_KEY)) {
-            propertySource.addFirst(MapPropertySource(PROPERTY_SOURCE_KEY, mutableMapOf()))
+        val serverPort = environment.getProperty("server.port", Int::class.java)
+        if (serverPort != null) {
+            // let's replace the server port to random one here to deceive spring boot
+            // NB: I hope the name `Inlined Test Properties` won't change in the future...
+            if (serverPort == 0 && propertySource.contains("Inlined Test Properties")) {
+                val randomPort = TestSocketUtils.findAvailableTcpPort()
+                val source = (propertySource.get("Inlined Test Properties") as MapPropertySource).source
+                source["server.port"] = randomPort
+            }
+            if (!propertySource.contains(PROPERTY_SOURCE_KEY)) {
+                val oasServerSource = mutableMapOf<String, Any>()
+                oasServerSource["${PROPERTY_SOURCE_KEY}.server.port"] = environment.getProperty("server.port")!!
+                propertySource.addFirst(MapPropertySource(PROPERTY_SOURCE_KEY, oasServerSource))
+            }
         }
     }
 
