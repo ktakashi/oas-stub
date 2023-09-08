@@ -1,9 +1,11 @@
 package oas.example.petstore.broker.services.clients;
 
 import oas.example.petstore.broker.configurations.PetstoreBrokerProperties;
+import oas.example.petstore.broker.exceptions.NoPetFoundException;
 import oas.example.petstore.broker.models.petstore.Pet;
 import oas.example.petstore.broker.services.ServiceProvider;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -22,7 +24,7 @@ public class PetstoreClient {
         this.serviceProvider = serviceProvider;
     }
 
-    // Those methods must also check the response status as well as other HTTP headers, if required.
+    // This method must also check the response status as well as other HTTP headers, if required.
     // But for simplicity and example purpose, we assume that the response always contains a valid
     // JSON
     public Flux<Pet> getPets() {
@@ -39,6 +41,13 @@ public class PetstoreClient {
         var uri = UriComponentsBuilder.fromUri(service.url())
                 .path(PET_ENDPOINT)
                 .build(id);
-        return webClient.get().uri(uri).exchangeToMono(response -> response.bodyToMono(Pet.class));
+        return webClient.get().uri(uri).exchangeToMono(response -> exchangePet(response, id));
+    }
+
+    private static Mono<Pet> exchangePet(ClientResponse response, Long id) {
+        if (response.statusCode().is2xxSuccessful()) {
+            return response.bodyToMono(Pet.class);
+        }
+        return Mono.error(() -> new NoPetFoundException(id));
     }
 }

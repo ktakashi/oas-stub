@@ -65,7 +65,8 @@ data class PluginContextData(override val requestContext: RequestContext,
                     is Number -> if (Number::class.java.isAssignableFrom(clazz)) v else null
                     is ByteArray -> if (ByteArray::class.java.isAssignableFrom(clazz)) v else null
                     is Map<*, *> -> objectMapper.convertValue(v, clazz)
-                    else -> null // unknown type for now
+                    else -> if (v.javaClass.isAssignableFrom(clazz)) v else null
                 })
             })
+
 }

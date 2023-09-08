@@ -8,7 +8,9 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
-import java.util.SortedMap
+import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import java.nio.charset.StandardCharsets
+import java.util.*
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -62,10 +64,43 @@ data class OasStubTestConfiguration(
     fun toApiConfiguration() = ApiConfiguration(headers = headers.toApiHeaders(), plugin = plugin?.toPluginDefinition(), data = ApiData(data))
 }
 
-private val defaultPlugin = ClassPathResource("/oas/stub/plugins/DefaultResponsePlugin.groovy")
+class OasStubTestResources {
+    companion object {
+        @JvmField
+        val DEFAULT_PLUGIN: Resource = ClassPathResource("/oas/stub/plugins/DefaultResponsePlugin.groovy")
+        @JvmField
+        val DEFAULT_PLUGIN_SCRIPT = DEFAULT_PLUGIN.inputStream.reader().readText()
+    }
+
+    data class DefaultResponseModel
+    @JvmOverloads constructor(val status: Int? = null, val headers: Map<String, List<String>>? = null, val response: String? = null) {
+        fun toResponseContext(original: ResponseContext): ResponseContext {
+            val header = sortedMapOf<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
+            header.putAll(original.headers)
+            if (headers != null) {
+                header.putAll(headers)
+            }
+            return original.mutate()
+                    .status(status ?: original.status)
+                    .headers(header)
+                    .content(response?.let(this::readResponse) ?: original.content.orElse(null))
+                    .build()
+        }
+
+        private fun readResponse(response: String): ByteArray {
+            if (response.startsWith("classpath:")) {
+                val resource = ClassPathResource(response.substring("classpath:".length))
+                return resource.inputStream.readAllBytes()
+            }
+            return response.toByteArray(StandardCharsets.UTF_8)
+        }
+
+    }
+}
+
 
 data class OasStubTestPlugin(
-        var script: Resource = defaultPlugin,
+        var script: Resource = OasStubTestResources.DEFAULT_PLUGIN,
         var type: PluginType = PluginType.GROOVY
 ) {
     fun toPluginDefinition() = PluginDefinition(script = script.inputStream.reader().readText(), type = type)

@@ -1,18 +1,25 @@
 package oas.example.petstore.broker.cucumber.glue;
 
 import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.cucumber.spring.CucumberContextConfiguration;
+import io.github.ktakashi.oas.model.*;
+import io.github.ktakashi.oas.test.OasStubTestResources;
+import io.github.ktakashi.oas.test.OasStubTestService;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import oas.example.petstore.broker.cucumber.context.TestContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -28,8 +35,20 @@ public class StepDefinitions {
     private final Integer localPort;
     private final TestContext testContext = new TestContext();
 
+    @Autowired
+    private OasStubTestService oasStubTestService;
+
     public StepDefinitions(@Value("${local.server.port}") Integer localPort) {
         this.localPort = localPort;
+    }
+
+    @Given("this pet is not found {long}")
+    public void thisPetIsNotFoundId(long id) {
+        var config = new ApiConfiguration().updatePlugin(new PluginDefinition(PluginType.GROOVY, OasStubTestResources.DEFAULT_PLUGIN_SCRIPT))
+                .updateData(new ApiData(Map.of("/v2/pets/" + id, new OasStubTestResources.DefaultResponseModel(404))));
+        oasStubTestService.getTestApiContext("petstore")
+                .updateApi("/v2/pets/" + id, config)
+                .save();
     }
 
     @When("I get pets")
