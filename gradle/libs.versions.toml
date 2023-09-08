@@ -74,6 +74,7 @@ spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-
 
 spring-cloud-starter-bootstrap = { group = "org.springframework.cloud", name = "spring-cloud-starter-bootstrap", version.ref = "spring-cloud" }
 spring-cloud-starter-config = { group = "org.springframework.cloud", name = "spring-cloud-starter-config", version.ref = "spring-cloud" }
+spring-cloud-context = { group = "org.springframework.cloud", name = "spring-cloud-context", version.ref = "spring-cloud" }
 
 springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.2.0" }
 

@@ -24,16 +24,6 @@ dependencies {
         exclude(group = "jakarta.xml.bind")
     }
     implementation(libs.xml.bind.api)
-    implementation(libs.spring.cloud.starter.bootstrap) {
-        exclude(group = "org.springframework.boot")
-        exclude(group = "com.fasterxml.jackson.core")
-        exclude(group = "com.fasterxml.jackson.module")
-    }
-    implementation(libs.spring.cloud.starter.config) {
-        exclude(group = "org.springframework.boot")
-        exclude(group = "com.fasterxml.jackson.core")
-        exclude(group = "com.fasterxml.jackson.module")
-    }
     implementation(libs.kotlin.stdlib)
     implementation(libs.projectreactor.reactor.core)
     implementation(libs.jackson.module.kotlin)

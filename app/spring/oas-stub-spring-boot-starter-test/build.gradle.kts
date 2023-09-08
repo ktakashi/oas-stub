@@ -15,19 +15,17 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
     implementation(libs.annotation.api)
+    implementation(libs.spring.cloud.context)
+
+    annotationProcessor(libs.spring.boot.configuration.processor)
 
     testImplementation(enforcedPlatform(libs.cucumber.bom))
     testImplementation(platform(libs.junit.bom))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
-//    testImplementation("io.cucumber:cucumber-java")
-//    testImplementation("io.cucumber:cucumber-junit-platform-engine")
-//    testImplementation("io.cucumber:cucumber-spring")
     testImplementation(libs.spring.web)
     testImplementation(libs.rest.assured) {
         exclude(group = "org.apache.groovy")
     }
-    testImplementation(libs.groovy.xml)
-    testImplementation(libs.groovy.json)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

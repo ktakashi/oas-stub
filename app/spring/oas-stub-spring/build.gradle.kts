@@ -14,6 +14,16 @@ dependencies {
     api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
     api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
     implementation(libs.spring.boot.autoconfigure)
+    implementation(libs.spring.cloud.starter.bootstrap) {
+        exclude(group = "org.springframework.boot")
+        exclude(group = "com.fasterxml.jackson.core")
+        exclude(group = "com.fasterxml.jackson.module")
+    }
+    implementation(libs.spring.cloud.starter.config) {
+        exclude(group = "org.springframework.boot")
+        exclude(group = "com.fasterxml.jackson.core")
+        exclude(group = "com.fasterxml.jackson.module")
+    }
 
     testImplementation(enforcedPlatform(libs.cucumber.bom))
     testImplementation(platform(libs.junit.bom))

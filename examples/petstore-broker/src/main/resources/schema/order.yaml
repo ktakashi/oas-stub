@@ -1,0 +1,40 @@
+openapi: "3.0.0"
+info:
+  title: Order service
+  version: 1.0.0
+servers:
+  - url: https://order.ktkashi.io/v1
+paths:
+  /order:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewOrder"
+      responses:
+        201:
+          description: Order response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+components:
+  schemas:
+    NewOrder:
+      type: object
+      required:
+        - reference
+      properties:
+        reference:
+          type: string
+    Order:
+      type: object
+      required:
+        - id
+        - reference
+      properties:
+        id:
+          type: string
+        reference:
+          type: string

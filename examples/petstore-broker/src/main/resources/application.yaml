@@ -1,0 +1,7 @@
+petstore:
+  broker:
+    services:
+      petstore:
+        url: https://prod.petstore.com
+      order:
+        url: https://prod.order.com
