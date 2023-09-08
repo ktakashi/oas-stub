@@ -31,6 +31,9 @@ jobs:
       - name: Run example app test script
         run: ./scripts/example-app-test.sh
         working-directory: examples/spring
+      - name: Starter test example
+        run: mvn package
+        working-directory: examples/petstore-broker
   snapshot-publish:
     needs: [ build ]
     if: ${{ github.ref == 'refs/heads/main' }}
