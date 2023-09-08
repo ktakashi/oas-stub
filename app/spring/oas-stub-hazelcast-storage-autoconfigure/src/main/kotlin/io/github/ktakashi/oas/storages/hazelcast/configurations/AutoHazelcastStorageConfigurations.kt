@@ -36,7 +36,7 @@ import org.springframework.context.annotation.Configuration
 
 @AutoConfiguration
 @ConditionalOnMissingBean(value = [HazelcastInstance::class])
-@ConditionalOnExpression("'hazelcast'.equals('\${oas.storage.type.session}') or 'hazelcast'.equals('\${oas.storage.type.persistent}')")
+@ConditionalOnExpression("'hazelcast'.equals('\${${OAS_STUB_STORAGE_TYPE_SESSION}}') or 'hazelcast'.equals('\${${OAS_STUB_STORAGE_TYPE_PERSISTENT}}')")
 @ConditionalOnPropertyIsEmpty("spring.hazelcast.config")
 @EnableConfigurationProperties(HazelcastStorageProperties::class)
 class AutoHazelcastConfiguration(private val properties: HazelcastStorageProperties) {
