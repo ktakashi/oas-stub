@@ -98,7 +98,7 @@ services:
 TIP: The context path `/oas` can be configured with
 `oas.stub.servlet.prefix`
 
-TIP: `/__admin/\{endpoint}` endpoints are also loaded into the
+TIP: `/\__admin/\{endpoint}` endpoints are also loaded into the
 server, so users can create/modify API definitions via the REST endpoints. The endpoints will be
 `http://localhost:${oas.stub.test.server.port}/__admin/\{endpoint}`
 
