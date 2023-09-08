@@ -108,3 +108,7 @@ server, so users can create/modify API definitions via the REST endpoints. The e
 `http://localhost:${oas.stub.test.server.port}/__admin/\{endpoint}`
 
 TIP: `/__admin` can be configured with `oas.stub.servlet.admin-prefix`.
+
+For the working example, please refer test directory of the
+https://github.com/ktakashi/oas-stub/tree/main/examples/petstore-broker[petstore-broker]
+example.
