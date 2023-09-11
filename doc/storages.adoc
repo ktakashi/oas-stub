@@ -86,6 +86,9 @@ oas.stub:
   hazelcast:
     instance:
       name: instance-name
+      credentials: # If needed otherwise remove it
+        username: username
+        password: password
       cluster-name: cluster-name
       node-ips:
         - 192.168.0.1           # IP address of the node
