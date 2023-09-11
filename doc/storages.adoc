@@ -1,5 +1,16 @@
 [#storages]
-== Other storages
+== Storages
+
+OAS stub uses 2 types of storages. One is persistent storage,
+then the other one is session storage.
+
+The persistent storage is used to store API definitions and
+API data, which can be used by plugins. This storage shall hold
+stored data as long as it's required.
+
+The session storage is used to store ephemeral data, such as
+state of transactions. The storage may evict data after certain
+period.
 
 OAS stub supports multiple storage implementations, currently
 we support the followings:
@@ -10,28 +21,113 @@ we support the followings:
 
 All the storages are located in separate modules.
 
+=== Choice of storage
+
+Persistent storage can be slow, but it shouldn't evict the
+data until it's required to do so. Usually, it's better to
+use storages like MongoDB. It's okay to use key/value storage
+if you can be patient of eviction or the storage doesn't have
+hard eviction time.
+
+Session storage is better to be fast. For this purpose, it's
+better not to use ACID unless it's extremely fast. With my
+personal experience, Hazelcast or Redis was the best options
+for this storage. If your stub application doesn't have to
+perform fast, ACID storage can also be an option.
+
+`in-memory` storage can also be used as long as the application
+doesn't have to scale out or restart periodically.
+
 === For Spring Boot users
 
 If you are using `oas-stub-starter-web` module, then `in-memory`
-storage is used by default. The belows are the auto-configuration
-modules of the other storages:
+storage is used by default but the other storage auto-configurations
+are also loaded. To enable the other storages, you need to specify
+the storage type and put the relevant libraries into your classpath.
 
-For Hazelcast storage:
+==== Hazelcast storage
+
+To enable Hazelcast storage, you need to add Hazelcast library
+into your classpath. We test with `com.hazelcast:hazelcast` of
+version `5.3.2`. It should work with other version as long as it's
+`5.x.x`.
+
 [source, xml]
 ----
 <dependency>
-    <groupId>io.github.ktakashi.oas.stub.spring</groupId>
-    <artifactId>oas-stub-hazelcast-storage-autoconfigure</artifactId>
-    <version>${oas-stub.version}</version>
+    <groupId>com.hazelcast</groupId>
+    <artifactId>hazelcast</artifactId>
+    <version>5.3.2</version>
 </dependency>
 ----
 
-For MongoDB storage:
+After you put the Hazelcast dependency, then you need to add the
+below configuration to your `application.(yaml|properties)`.
+
+[source, yaml]
+----
+oas.stub:
+  storage.type:
+    session: hazelcast    # for session storage
+    persistent: hazelcast # for persistent storage
+  hazelcast:
+    session-map: session        # Map name to be used for session storage
+    persistent-map: persistent  # Map name to be used for persistent storage
+----
+
+The hazelcast storage requires `HazelcastInstance` bean, though
+for your convenience, the auto-configuration module provides
+simple configuration items in case you simply want to run the
+stub application. Below is an example configuration:
+
+[source, yaml]
+----
+oas.stub:
+  hazelcast:
+    instance:
+      name: instance-name
+      cluster-name: cluster-name
+      node-ips:
+        - 192.168.0.1           # IP address of the node
+----
+
+If the stub application provides own `HazelcastInstance`bean,
+then the bean must configure
+`io.github.ktakashi.oas.storages.hazelcast.JsonSerializer` as
+it's one of the serializers.
+
+==== MongoDB storage
+
+To enable Hazelcast storage, you need to add MongoDB library
+into your classpath. We test with `org.mongodb:mongodb-driver-sync` of
+version `4.10.2`. It should work with other version as long as it's
+`4.x.x`.
+
+NOTE: It has to be the sync library. We don't support async or reactive.
+
 [source, xml]
 ----
 <dependency>
-    <groupId>io.github.ktakashi.oas.stub.spring</groupId>
-    <artifactId>oas-stub-mongodb-storage-autoconfigure</artifactId>
-    <version>${oas-stub.version}</version>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver-sync</artifactId>
+    <version>4.10.2</version>
 </dependency>
+----
+
+After you put the Hazelcast dependency, then you need to add the
+below configuration to your `application.(yaml|properties)`.
+
+[source, yaml]
+----
+oas.stub:
+  storage.type:
+    session: mongodb    # for session storage
+    persistent: mongodb # for persistent storage
+  mongodb:
+    session:
+      database: session-db                # DB name for session storage
+      collection: session-collection      # Collection name for session storage
+    persistent:
+      database: persistent-db             # DB name for persistent storage
+      collection: persistent-collection   # Collection name for persistent storage
 ----

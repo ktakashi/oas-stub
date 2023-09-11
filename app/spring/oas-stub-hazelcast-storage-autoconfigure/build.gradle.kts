@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.kotlin.stdlib)
     implementation(libs.jackson.databind)
+    compileOnly(libs.hazelcast)
 
     kapt(libs.spring.boot.configuration.processor)
 }

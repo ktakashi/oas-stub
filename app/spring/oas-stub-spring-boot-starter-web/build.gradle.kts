@@ -13,6 +13,8 @@ description = "OAS stub Spring Boot starter"
 dependencies {
     api(project(":lib:oas-stub-web"))
     api(project(":app:spring:oas-stub-inmemory-storage-autoconfigure"))
+    api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
+    api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
     implementation(libs.spring.boot.starter.core)
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.aop)

@@ -24,6 +24,7 @@ import io.github.ktakashi.oas.storages.hazelcast.JsonSerializer
 import java.util.Optional
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -35,6 +36,7 @@ import org.springframework.context.annotation.Configuration
 
 
 @AutoConfiguration
+@ConditionalOnClass(HazelcastInstance::class)
 @ConditionalOnMissingBean(value = [HazelcastInstance::class])
 @ConditionalOnExpression("'hazelcast'.equals('\${${OAS_STUB_STORAGE_TYPE_SESSION}}') or 'hazelcast'.equals('\${${OAS_STUB_STORAGE_TYPE_PERSISTENT}}')")
 @ConditionalOnPropertyIsEmpty("spring.hazelcast.config")
@@ -109,16 +111,58 @@ class AutoHazelcastPersistentStorageConfiguration(private val properties: Hazelc
 
 
 @ConfigurationProperties(prefix = "${OAS_STUB_STORAGE}.hazelcast")
-data class HazelcastStorageProperties(var sessionMap: String = "sessionMap",
-                                      var persistentMap: String = "persistentMap",
-                                      var typeId: Int = Int.MAX_VALUE,
-                                      @NestedConfigurationProperty var instance: HazelcastMainInstanceProperties?)
+data class HazelcastStorageProperties(
+    /**
+     * Map name for session data
+     */
+    var sessionMap: String = "sessionMap",
+    /**
+     * Map name for persistent data
+     */
+    var persistentMap: String = "persistentMap",
+    /**
+     * Serializer type ID.
+     *
+     * If the bean is not provided by this module, then
+     * it may require this.
+     */
+    var typeId: Int = Int.MAX_VALUE,
+    /**
+     * Hazelcast instance configuration.
+     *
+     * This configuration will be used if there's no bean type
+     * of [HazelcastInstance].
+     */
+    @NestedConfigurationProperty var instance: HazelcastMainInstanceProperties?
+)
 
 sealed interface HazelcastInstanceProperties {
+    /**
+     * Instance name
+     */
     val name: String?
+
+    /**
+     * Username
+     *
+     * NOTE: if you need other authentication method,
+     * provide own [HazelcastInstance] bean
+     */
     val username: String?
+
+    /**
+     * Password
+     */
     val password: String?
+
+    /**
+     * Cluster name
+     */
     val clusterName: String?
+
+    /**
+     * Node IPs
+     */
     val nodeIps: Array<String>?
 
     fun areEqual(other: HazelcastInstanceProperties): Boolean {
@@ -161,12 +205,19 @@ data class HazelcastFailoverInstanceProperties(override val name: String?,
     }
 }
 
-data class HazelcastMainInstanceProperties(override val name: String?,
-                                           override val username: String?,
-                                           override val password: String?,
-                                           override val clusterName: String?,
-                                           override val nodeIps: Array<String>?,
-                                           val failover: HazelcastFailoverInstanceProperties?): HazelcastInstanceProperties {
+data class HazelcastMainInstanceProperties(
+    override val name: String?,
+    override val username: String?,
+    override val password: String?,
+    override val clusterName: String?,
+    override val nodeIps: Array<String>?,
+    /**
+     * Failover config.
+     *
+     * This configuration supports only one failover for now.
+     */
+    val failover: HazelcastFailoverInstanceProperties?
+): HazelcastInstanceProperties {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

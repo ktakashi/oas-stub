@@ -11,8 +11,7 @@ description = "OAS stub Spring Boot application"
 
 dependencies {
     api(project(":app:spring:oas-stub-spring-boot-starter-web"))
-    api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
-    api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
+    implementation(libs.slf4j.api)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.cloud.starter.bootstrap) {
         exclude(group = "org.springframework.boot")
@@ -25,6 +24,8 @@ dependencies {
         exclude(group = "com.fasterxml.jackson.module")
     }
 
+    testImplementation(libs.hazelcast)
+    testImplementation(libs.mongodb.driver.sync)
     testImplementation(enforcedPlatform(libs.cucumber.bom))
     testImplementation(platform(libs.junit.bom))
     testImplementation("org.junit.jupiter:junit-jupiter")

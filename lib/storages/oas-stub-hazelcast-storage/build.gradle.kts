@@ -9,7 +9,7 @@ description = "OAS stub hazelcast storage"
 
 dependencies {
     api(project(":lib:oas-stub-storage-api"))
-    api(libs.hazelcast)
+    compileOnly(libs.hazelcast)
 
     implementation(libs.jackson.databind)
     implementation(libs.kotlin.stdlib)

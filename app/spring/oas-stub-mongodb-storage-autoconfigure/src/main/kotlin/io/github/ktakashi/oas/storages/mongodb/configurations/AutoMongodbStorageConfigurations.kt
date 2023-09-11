@@ -13,6 +13,7 @@ import io.github.ktakashi.oas.storages.mongodb.MongodbPersistentStorage
 import io.github.ktakashi.oas.storages.mongodb.MongodbSessionStorage
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
@@ -28,6 +29,7 @@ private const val OAS_STUB_STORAGE_MONGODB = "${OAS_STUB_STORAGE}.mongodb"
         after = [MongoAutoConfiguration::class]
 )
 @Configuration
+@ConditionalOnClass(MongoClient::class)
 @ConditionalOnBean(value = [MongoClient::class])
 @ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_SESSION ], havingValue = "mongodb")
 @EnableConfigurationProperties(MongodbStorageProperties::class)
@@ -59,8 +61,23 @@ class AutoMongodbPersistentStorageConfiguration(private val properties: MongodbS
 
 
 @ConfigurationProperties(prefix = OAS_STUB_STORAGE_MONGODB)
-data class MongodbStorageProperties(@NestedConfigurationProperty var session: MongodbConnectionProperties?,
-                                    @NestedConfigurationProperty var persistent: MongodbConnectionProperties?)
+data class MongodbStorageProperties(
+    /**
+     * Session DB connection properties
+     */
+    @NestedConfigurationProperty var session: MongodbConnectionProperties?,
+    /**
+     * Persistent DB connection properties
+     */
+    @NestedConfigurationProperty var persistent: MongodbConnectionProperties?)
 
-data class MongodbConnectionProperties(var database: String,
-                                       var collection: String)
+data class MongodbConnectionProperties(
+    /**
+     * Mongo database name
+     */
+    var database: String,
+    /**
+     * Mongo collection name
+     */
+    var collection: String
+)
