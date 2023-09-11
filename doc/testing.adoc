@@ -16,7 +16,7 @@ Module:
 </dependency>
 ----
 
-WARNING: This module works only with a server, which means your test
+WARNING: This module requires a server, which means your test
 module must not use `SpringBootTest.WebEnvironment.MOCK` or
 `SpringBootTest.WebEnvironment.NONE`.
 

@@ -17,7 +17,7 @@ class OrderPlugin implements ApiPlugin {
         if (message == null) {
             return pluginContext.responseContext
         }
-        def order = new Order("random-id", message.reference)
+        def order = new Order(pluginContext.getApiData("random-id", String.class).orElse("random-id"), message.reference)
         return pluginContext.responseContext
                 .mutate()
                 .content(objectMapper.writeValueAsBytes(order))

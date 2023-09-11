@@ -81,6 +81,11 @@ public class StepDefinitions {
         testContext.getResponse().then().body("reference", equalTo(reference));
     }
 
+    @And("I get order ID of {string}")
+    public void iGetOrderIDOfRandomUUIDInProd(String id) {
+        testContext.getResponse().then().body("id", equalTo(id));
+    }
+
     private String getApplicationUri() {
         return "http://localhost:" + localPort;
     }

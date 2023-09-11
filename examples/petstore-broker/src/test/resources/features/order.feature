@@ -6,6 +6,7 @@ Feature: Order pet
     And I buy a pet of <id>
     Then I get <status>
     And I get order reference of '<reference>'
+    And I get order ID of '*random UUID in prod*'
     Examples:
       | id | status | reference       |
       | 1  | 200    | id-1,name-Tama  |

@@ -35,12 +35,37 @@ class AutoOasStubTestConfiguration(private val properties: OasStubTestProperties
 }
 
 @ConfigurationProperties(prefix = "oas.stub.test")
-data class OasStubTestProperties(var definitions: Map<String, OasStubTestDefinition> = mapOf())
+data class OasStubTestProperties(
+    /**
+     * OAS API stub definition.
+     *
+     * The [definitions] must be a map of API name and definition.
+     * The API name will be used as an API context as well. This
+     * means, if your API name is `petstore`, then the actual path
+     * of the API stub will be `${oas.stub.servlet.prefix}/petstore`.
+     */
+    var definitions: Map<String, OasStubTestDefinition> = mapOf()
+)
 
 data class OasStubTestDefinition(
-        var specification: Resource,
-        var configurations: Map<String, OasStubTestConfiguration> = mapOf(),
-        @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders()
+    /**
+     * OAS API specification.
+     *
+     * The resource location must be understood by Spring framework.
+     * e.g. `classpath:/schema/petstore.yaml`
+     */
+    var specification: Resource,
+    /**
+     * OAS API configuration.
+     *
+     * The [configurations] must be a map of API path and configuration.
+     * The API path can be either URI template or specialized URI.
+     *
+     * If URI template is used, then it matches all the requests, otherwise
+     * it only matches the specific request.
+     */
+    var configurations: Map<String, OasStubTestConfiguration> = mapOf(),
+    @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders()
 ) {
     fun toApiDefinitions() = ApiDefinitions(
             specification = specification.inputStream.reader().readText(),
@@ -50,16 +75,38 @@ data class OasStubTestDefinition(
 }
 
 data class OasStubTestHeaders(
-        var request: SortedMap<String, List<String>> = sortedMapOf(String.CASE_INSENSITIVE_ORDER),
-        var response: SortedMap<String, List<String>> = sortedMapOf(String.CASE_INSENSITIVE_ORDER)
+    /**
+     * HTTP request headers.
+     *
+     * Keys are the header name, and values are the header value.
+     */
+    var request: SortedMap<String, List<String>> = sortedMapOf(String.CASE_INSENSITIVE_ORDER),
+    /**
+     * HTTP response headers.
+     *
+     * Keys are the header name, and values are the header value.
+     */
+    var response: SortedMap<String, List<String>> = sortedMapOf(String.CASE_INSENSITIVE_ORDER)
 ) {
    fun toApiHeaders() = ApiHeaders(request = request, response= response)
 }
 
 data class OasStubTestConfiguration(
-        @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders(),
-        @NestedConfigurationProperty var plugin: OasStubTestPlugin = OasStubTestPlugin(),
-        var data: Map<String, Any> = mapOf()
+    /**
+     * API header configuration.
+     */
+    @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders(),
+    /**
+     * API plugin configuration
+     */
+    @NestedConfigurationProperty var plugin: OasStubTestPlugin = OasStubTestPlugin(),
+    /**
+     * API data.
+     *
+     * The data is used by plugin. If the stub API uses default plugin.
+     * Then the data must be [OasStubTestResources.DefaultResponseModel]
+     */
+    var data: Map<String, Any> = mapOf()
 ) {
     fun toApiConfiguration() = ApiConfiguration(headers = headers.toApiHeaders(), plugin = plugin?.toPluginDefinition(), data = ApiData(data))
 }
@@ -92,7 +139,26 @@ class OasStubTestResources {
      * default plugin's behaviour.
      */
     data class DefaultResponseModel
-    @JvmOverloads constructor(val status: Int? = null, val headers: Map<String, List<String>>? = null, val response: String? = null) {
+    @JvmOverloads constructor(
+        /**
+         * Http status code
+         */
+        val status: Int? = null,
+        /**
+         * Response headers.
+         *
+         * Key is the header name and values are header values.
+         */
+        val headers: Map<String, List<String>>? = null,
+        /**
+         * Response content.
+         *
+         * The default plugin expects response to be String.
+         * If binary data is required, then you may need to write
+         * your own plugin.
+         */
+        val response: String? = null
+    ) {
         fun toResponseContext(original: ResponseContext): ResponseContext {
             val header = sortedMapOf<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
             header.putAll(original.headers)
@@ -119,8 +185,21 @@ class OasStubTestResources {
 
 
 data class OasStubTestPlugin(
-        var script: Resource = OasStubTestResources.DEFAULT_PLUGIN,
-        var type: PluginType = PluginType.GROOVY
+    /**
+     * Plugin script.
+     *
+     * It uses default plugin, if not specified
+     *
+     * The resource location must be understood by Spring framework.
+     * e.g. `classpath:/plugins/MyBrilliantPlugin.groovy`
+     */
+    var script: Resource = OasStubTestResources.DEFAULT_PLUGIN,
+    /**
+     * Plugin type.
+     *
+     * At this moment, we only support `GROOVY`
+     */
+    var type: PluginType = PluginType.GROOVY
 ) {
     fun toPluginDefinition() = PluginDefinition(script = script.inputStream.reader().readText(), type = type)
 }

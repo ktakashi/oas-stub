@@ -2,39 +2,41 @@ petstore:
   broker:
     services:
       petstore:
-        url: "http://localhost:${oas.stub.test.server.port}/oas/petstore"
+        url: "http://localhost:${oas.stub.test.server.port}/${oas.stub.servlet.prefix}/petstore"
       order:
-        url: "http://localhost:${oas.stub.test.server.port}/oas/order"
+        url: "http://localhost:${oas.stub.test.server.port}/${oas.stub.servlet.prefix}/order"
 
-oas:
-  stub:
-    test:
-      definitions:
-        petstore:
-          specification: 'classpath:/schema/petstore-extended.yaml'
-          configurations:
-            '[/v2/pets]':
-              data:
-                default:
-                  status: 200
-                  response: >-
-                    [
-                      {"id": 1, "name": "Tama", "tag": "cat"},
-                      {"id": 2, "name": "Pochi", "tag": "dog"}
-                    ]
-            '[/v2/pets/1]':
-              data:
-                default:
-                  response: >-
-                    {"id": 1, "name": "Tama", "tag": "cat"}
-            '[/v2/pets/2]':
-              data:
-                default:
-                  response: >-
+oas.stub:
+  servlet.prefix: /stub
+  test:
+    definitions:
+      petstore:
+        specification: 'classpath:/schema/petstore-extended.yaml'
+        configurations:
+          '[/v2/pets]':
+            data:
+              default:
+                status: 200
+                response: >-
+                  [
+                    {"id": 1, "name": "Tama", "tag": "cat"},
                     {"id": 2, "name": "Pochi", "tag": "dog"}
-        order:
-          specification: 'classpath:/schema/order.yaml'
-          configurations:
-            '[/v1/order]':
-              plugin:
-                script: 'classpath:/plugins/OrderPlugin.groovy'
+                  ]
+          '[/v2/pets/1]':
+            data:
+              default:
+                response: >-
+                  {"id": 1, "name": "Tama", "tag": "cat"}
+          '[/v2/pets/2]':
+            data:
+              default:
+                response: >-
+                  {"id": 2, "name": "Pochi", "tag": "dog"}
+      order:
+        specification: 'classpath:/schema/order.yaml'
+        configurations:
+          '[/v1/order]':
+            plugin:
+              script: 'classpath:/plugins/OrderPlugin.groovy'
+            data:
+              random-id: '*random UUID in prod*'
