@@ -67,12 +67,13 @@ below configuration to your `application.(yaml|properties)`.
 [source, yaml]
 ----
 oas.stub:
-  storage.type:
-    session: hazelcast    # for session storage
-    persistent: hazelcast # for persistent storage
-  hazelcast:
-    session-map: session        # Map name to be used for session storage
-    persistent-map: persistent  # Map name to be used for persistent storage
+  storage:
+    type:
+      session: hazelcast    # for session storage
+      persistent: hazelcast # for persistent storage
+    hazelcast:
+      session-map: session        # Map name to be used for session storage
+      persistent-map: persistent  # Map name to be used for persistent storage
 ----
 
 The hazelcast storage requires `HazelcastInstance` bean, though
@@ -83,15 +84,16 @@ stub application. Below is an example configuration:
 [source, yaml]
 ----
 oas.stub:
-  hazelcast:
-    instance:
-      name: instance-name
-      credentials: # If needed otherwise remove it
-        username: username
-        password: password
-      cluster-name: cluster-name
-      node-ips:
-        - 192.168.0.1           # IP address of the node
+  storage:
+    hazelcast:
+      instance:
+        name: instance-name
+        credentials: # If needed otherwise remove it
+          username: username
+          password: password
+        cluster-name: cluster-name
+        node-ips:
+          - 192.168.0.1           # IP address of the node
 ----
 
 If the stub application provides own `HazelcastInstance`bean,
@@ -123,14 +125,15 @@ below configuration to your `application.(yaml|properties)`.
 [source, yaml]
 ----
 oas.stub:
-  storage.type:
-    session: mongodb    # for session storage
-    persistent: mongodb # for persistent storage
-  mongodb:
-    session:
-      database: session-db                # DB name for session storage
-      collection: session-collection      # Collection name for session storage
-    persistent:
-      database: persistent-db             # DB name for persistent storage
-      collection: persistent-collection   # Collection name for persistent storage
+  storage:
+    type:
+      session: mongodb    # for session storage
+      persistent: mongodb # for persistent storage
+    mongodb:
+      session:
+        database: session-db                # DB name for session storage
+        collection: session-collection      # Collection name for session storage
+      persistent:
+        database: persistent-db             # DB name for persistent storage
+        collection: persistent-collection   # Collection name for persistent storage
 ----
