@@ -299,12 +299,8 @@ private fun readContent(request: HttpServletRequest): Optional<ByteArray> = when
         if (size > 0) {
             Optional.of(inputStream.readNBytes(size))
         } else {
-            val b = inputStream.readAllBytes()
-            if (b.isEmpty()) {
-                Optional.empty()
-            } else {
-                Optional.of(b)
-            }
+            Optional.ofNullable(inputStream.readAllBytes())
+                .filter { b -> b.isNotEmpty() }
         }
     } catch (e: IOException) {
         Optional.empty()

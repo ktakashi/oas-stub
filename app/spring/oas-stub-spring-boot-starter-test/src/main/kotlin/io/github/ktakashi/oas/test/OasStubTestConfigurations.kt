@@ -68,7 +68,7 @@ data class OasStubTestDefinition(
     @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders()
 ) {
     fun toApiDefinitions() = ApiDefinitions(
-            specification = specification.inputStream.reader().readText(),
+            specification = specification.inputStream.reader().use { it.readText() },
             configurations = configurations.entries.associate { (k, v) -> k to v.toApiConfiguration() },
             headers = headers.toApiHeaders()
     )
@@ -95,11 +95,11 @@ data class OasStubTestConfiguration(
     /**
      * API header configuration.
      */
-    @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders(),
+    @NestedConfigurationProperty var headers: OasStubTestHeaders?,
     /**
      * API plugin configuration
      */
-    @NestedConfigurationProperty var plugin: OasStubTestPlugin = OasStubTestPlugin(),
+    @NestedConfigurationProperty var plugin: OasStubTestPlugin?,
     /**
      * API data.
      *
@@ -108,7 +108,7 @@ data class OasStubTestConfiguration(
      */
     var data: Map<String, Any> = mapOf()
 ) {
-    fun toApiConfiguration() = ApiConfiguration(headers = headers.toApiHeaders(), plugin = plugin?.toPluginDefinition(), data = ApiData(data))
+    fun toApiConfiguration() = ApiConfiguration(headers = headers?.toApiHeaders(), plugin = plugin?.toPluginDefinition(), data = ApiData(data))
 }
 
 class OasStubTestResources {
@@ -123,7 +123,7 @@ class OasStubTestResources {
          * Default plugin content
          */
         @JvmField
-        val DEFAULT_PLUGIN_SCRIPT = DEFAULT_PLUGIN.inputStream.reader().readText()
+        val DEFAULT_PLUGIN_SCRIPT = DEFAULT_PLUGIN.inputStream.reader().use { it.readText() }
     }
 
     /**
@@ -201,5 +201,5 @@ data class OasStubTestPlugin(
      */
     var type: PluginType = PluginType.GROOVY
 ) {
-    fun toPluginDefinition() = PluginDefinition(script = script.inputStream.reader().readText(), type = type)
+    fun toPluginDefinition() = PluginDefinition(script = script.inputStream.reader().use { it.readText() }, type = type)
 }
