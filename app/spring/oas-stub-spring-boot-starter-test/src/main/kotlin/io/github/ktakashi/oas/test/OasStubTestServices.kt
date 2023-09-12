@@ -8,16 +8,16 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiDelay
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.ApiMetric
-import io.github.ktakashi.oas.model.ApiMetrics
 import io.github.ktakashi.oas.model.ApiOptions
 import java.util.Optional
-import java.util.function.BiPredicate
+import java.util.function.Predicate
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.io.Resource
 import org.springframework.test.context.TestContext
 import org.springframework.test.context.support.AbstractTestExecutionListener
+import org.springframework.test.context.support.TestPropertySourceUtils
 import org.springframework.test.util.TestSocketUtils
 
 /**
@@ -75,10 +75,9 @@ class OasStubTestService(private val properties: OasStubTestProperties,
     /**
      * Retrieves an [OasStubTestApiMetricsAggregator]
      */
-    fun getTestApiMetrics(name: String): OasStubTestApiMetricsAggregator<ApiMetrics> = apiObserver.getApiMetrics(name)
-        .map<OasStubTestApiMetricsAggregator<ApiMetrics>> { metrics ->
-            ApiMetricsAggregator(metrics, metrics) { metrics }
-        }.orElseGet { NullAggregator }
+    fun getTestApiMetrics(name: String): OasStubTestApiMetricsAggregator = apiObserver.getApiMetrics(name)
+        .map { metrics -> OasStubTestApiMetricsAggregator(metrics.flatMap { (_, v) -> v }) }
+        .orElseGet { OasStubTestApiMetricsAggregator(listOf()) }
 
     /**
      * Clears all the API metrics
@@ -163,37 +162,31 @@ class OasStubTestExecutionListener: AbstractTestExecutionListener() {
     }
 }
 
-sealed interface OasStubTestApiMetricsAggregator<T> {
+data class OasStubTestApiMetricsAggregator(private val metrics: List<ApiMetric>) {
     /**
-     * Returns aggregation result
+     * Get current metrics
      */
-    fun get(): T = throw IllegalStateException("No metrics")
+    fun get() = metrics
 
     /**
      * Filters the metrics
      */
-    fun filter(predicate: BiPredicate<String, ApiMetric>): OasStubTestApiMetricsAggregator<T> = throw IllegalStateException("No metrics")
+    fun filter(predicate: Predicate<ApiMetric>) = OasStubTestApiMetricsAggregator(metrics.filter { v -> predicate.test(v) })
 
     /**
-     * Returns number of requests to [path]
+     * Filter metrics by [path]
      */
-    fun countBy(path: String): OasStubTestApiMetricsAggregator<Int> = throw IllegalStateException("No metrics")
+    fun byPath(path: String) = filter { m -> m.apiPath == path }
 
     /**
-     * Returns number of response of status [status]
+     * Filter metrics by [status]
      */
-    fun countBy(status: Int): OasStubTestApiMetricsAggregator<Int> = throw IllegalStateException("No metrics")
-}
+    fun byStatus(status: Int) = filter { m -> m.httpStatus == status }
 
-data object NullAggregator: OasStubTestApiMetricsAggregator<ApiMetrics>
-
-data class ApiMetricsAggregator<T, U>
-internal constructor(val apiMetrics: ApiMetrics, private val filtered: U, private val provider: (U) -> T): OasStubTestApiMetricsAggregator<T> {
-    override fun get() = provider(filtered)
-
-    override fun countBy(path: String) = ApiMetricsAggregator(apiMetrics, apiMetrics.metrics[path]?: listOf()) { it.size }
-
-    override fun countBy(status: Int) = ApiMetricsAggregator(apiMetrics, apiMetrics.metrics.flatMap { (_, v) -> v.filter { m -> m.httpStatus == status } }) { it.size }
+    /**
+     * Returns number of API metrics
+     */
+    fun count(): Int = metrics.size
 }
 
 class OasStubTestApplicationListener: ApplicationListener<ApplicationEnvironmentPreparedEvent> {
@@ -202,11 +195,9 @@ class OasStubTestApplicationListener: ApplicationListener<ApplicationEnvironment
         val propertySource = environment.propertySources
         val serverPort = environment.getProperty("server.port", Int::class.java)
         if (serverPort != null) {
-            // let's replace the server port to random one here to deceive spring boot
-            // NB: I hope the name `Inlined Test Properties` won't change in the future...
-            if (serverPort == 0 && propertySource.contains("Inlined Test Properties")) {
+            if (serverPort == 0 && propertySource.contains(TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME)) {
                 val randomPort = TestSocketUtils.findAvailableTcpPort()
-                val source = (propertySource.get("Inlined Test Properties") as MapPropertySource).source
+                val source = (propertySource.get(TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME) as MapPropertySource).source
                 source["server.port"] = randomPort
             }
             if (!propertySource.contains(PROPERTY_SOURCE_KEY)) {

@@ -31,14 +31,15 @@ class ExampleApplicationTest(@Value("\${local.server.port}") private val localPo
                 .then()
                 .statusCode(200)
                 .body("id", equalTo(1))
-        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").countBy("/v1/pets/1").get())
+        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").byPath("/v1/pets/1").count())
 
         given().get(URI.create("http://localhost:$localPort/oas/petstore/v1/pets/2"))
                 .then()
                 .statusCode(404)
                 .body("message", equalTo("No pet found"))
-        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").countBy(200).get())
-        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").countBy(404).get())
+        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").byStatus(200).count())
+        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").byStatus(404).count())
+        assertEquals(2, oasStubTestService.getTestApiMetrics("petstore").filter { m -> m.httpMethod == "GET"}.count())
 
         val context = oasStubTestService.getTestApiContext("petstore")
                 .updateHeaders(ApiHeaders(response = sortedMapOf("Extra-Header" to listOf("extra-value"))))

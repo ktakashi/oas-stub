@@ -8,12 +8,13 @@ import java.time.OffsetDateTime
 data class ApiMetric(
     val requestTimestamp: OffsetDateTime,
     @JsonFormat(shape = Shape.STRING) val executionTime: Duration,
+    val apiPath: String,
     val httpMethod: String,
     val httpStatus: Int,
     val exception: Throwable?
 )
 
-data class ApiMetrics(val metrics: MutableMap<String, MutableList<ApiMetric>> = mutableMapOf()) {
+data class ApiMetrics(val metrics: MutableMap<String, MutableList<ApiMetric>> = mutableMapOf()): Map<String, List<ApiMetric>> by metrics {
     fun addApiMetric(path: String, metric: ApiMetric): ApiMetrics {
         metrics.compute(path) { _, v ->
             v?.apply { add(metric) } ?: mutableListOf(metric)

@@ -93,7 +93,7 @@ class OasDispatchServlet
         val start = request.getAttribute(METRICS_START_KEY) as OffsetDateTime?
         val apiContext = request.getAttribute(API_CONTEXT_KEY) as ApiContext?
         if (start != null && apiContext != null) {
-            val metric = ApiMetric(start, Duration.between(start, end), request.method, response.status, exception)
+            val metric = ApiMetric(start, Duration.between(start, end), apiContext.apiPath, request.method, response.status, exception)
             apiObserver.addApiMetric(apiContext.context, apiContext.apiPath, metric)
         }
     }
