@@ -41,10 +41,12 @@ data class ApiLatency(val interval: Long, val unit: DurationUnit = DurationUnit.
 data class ApiOptions
 @JvmOverloads constructor(val shouldValidate: Boolean? = null,
                           val latency: ApiLatency? = null,
-                          val failure: ApiFailure? = null): MergeableApiConfig<ApiOptions> {
+                          val failure: ApiFailure? = null,
+                          val shouldMonitor: Boolean? = null): MergeableApiConfig<ApiOptions> {
     override fun merge(other: ApiOptions) = ApiOptions(shouldValidate = shouldValidate ?: other.shouldValidate,
-            latency = latency ?: other.latency,
-            failure = failure ?: other.failure)
+        latency = latency ?: other.latency,
+        failure = failure ?: other.failure,
+        shouldMonitor = shouldMonitor ?: other.shouldMonitor)
 }
 
 data class ApiHeaders

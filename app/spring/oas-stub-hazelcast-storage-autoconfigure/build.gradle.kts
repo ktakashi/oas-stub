@@ -15,7 +15,7 @@ dependencies {
     api(project(":lib:storages:oas-stub-hazelcast-storage"))
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.kotlin.stdlib)
-    implementation(libs.jackson.databind)
+    implementation(libs.jackson.databind.core)
     compileOnly(libs.hazelcast)
 
     kapt(libs.spring.boot.configuration.processor)

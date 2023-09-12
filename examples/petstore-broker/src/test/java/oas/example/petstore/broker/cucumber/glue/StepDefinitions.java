@@ -26,6 +26,7 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -84,6 +85,11 @@ public class StepDefinitions {
     @And("I get order ID of {string}")
     public void iGetOrderIDOfRandomUUIDInProd(String id) {
         testContext.getResponse().then().body("id", equalTo(id));
+    }
+
+    @And("{string} API {string} is called {int} time(s)")
+    public void petstoreAPIVPetsIdIsCalledTime(String context, String api, int count) {
+        assertEquals(count, oasStubTestService.getTestApiMetrics(context).countBy(api).get());
     }
 
     private String getApplicationUri() {

@@ -9,7 +9,7 @@ description = "OAS stub mongodb storage"
 
 dependencies {
     api(project(":lib:oas-stub-storage-api"))
-    implementation(libs.jackson.databind)
+    implementation(libs.jackson.databind.core)
     implementation(libs.kotlin.stdlib)
     compileOnly(libs.mongodb.driver.sync)
 }

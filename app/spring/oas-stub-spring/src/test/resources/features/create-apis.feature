@@ -21,6 +21,10 @@ Feature: Create APIs from OAS file
     And I get http status 404
     Then I get API definition via '/delay'
     And I get http status 404
+    Then I get metrics of 'petstore'
+    And I get http status 200
+    Then I delete all metrics
+    And I get http status 204
     @v3 @petstore
     Examples:
       | schema                   | method | path             | content | contentType | status | responseContentType | response               |

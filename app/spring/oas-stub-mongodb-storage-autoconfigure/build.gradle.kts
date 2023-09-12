@@ -16,7 +16,7 @@ dependencies {
     implementation(libs.spring.web)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.kotlin.stdlib)
-    implementation(libs.jackson.databind)
+    implementation(libs.jackson.databind.core)
     compileOnly(libs.mongodb.driver.sync)
 
     kapt(libs.spring.boot.configuration.processor)

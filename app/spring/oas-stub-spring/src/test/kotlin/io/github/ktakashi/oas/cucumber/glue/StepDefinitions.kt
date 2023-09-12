@@ -66,6 +66,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @Before
     fun setup() {
         testContext = TestContext("http://localhost:$localPort", oasApplicationServletProperties.prefix, )
+        sessionStorage.clearApiMetrics()
     }
 
     @Given("this API definition {string}")
@@ -132,7 +133,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     }
 
     @And("I get API definition via {string}")
-    fun `I get API definition via {string}`(path: String) {
+    fun iGetApiDefinitionVia(path: String) {
         val adminApi = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(oasApplicationServletProperties.adminPrefix)
@@ -140,6 +141,16 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 .path(adminApi.path)
                 .query(adminApi.query)
                 .build().toUri()
+        testContext.response = given().get(uri)
+    }
+
+    @And("I get metrics of {string}")
+    fun `I get metrics via {string}`(context: String) {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+            .path(oasApplicationServletProperties.adminPrefix)
+            .pathSegment("metrics", context)
+            .build()
+            .toUri()
         testContext.response = given().get(uri)
     }
 
@@ -164,6 +175,16 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
                 .path(path)
                 .queryParam("api", api)
                 .build().toUri()
+        testContext.response = given().delete(uri)
+    }
+
+    @Then("I delete all metrics")
+    fun iDeleteAllMetrics() {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+            .path(oasApplicationServletProperties.adminPrefix)
+            .pathSegment("metrics")
+            .build()
+            .toUri()
         testContext.response = given().delete(uri)
     }
 

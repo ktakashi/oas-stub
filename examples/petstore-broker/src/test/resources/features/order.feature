@@ -7,6 +7,8 @@ Feature: Order pet
     Then I get <status>
     And I get order reference of '<reference>'
     And I get order ID of '*random UUID in prod*'
+    And 'petstore' API '/v2/pets/<id>' is called 1 time
+    And 'order' API '/v1/order' is called 1 time
     Examples:
       | id | status | reference       |
       | 1  | 200    | id-1,name-Tama  |

@@ -59,6 +59,30 @@ Feature: Update APIs
     And I get response JSON satisfies this '<response>'
     @v3 @test-api
     Examples:
-      | schema                | context  | path       | config                                   | response            | plugin                                                        |
+      | schema                | context  | path        | config                                   | response            | plugin                                                        |
       | /schema/test-api.yaml | test-api | /profiles/1 | {"profile": {"name": "OAS API stub"}}    | name=OAS API stub   | classpath:/plugins/TestApiGetProfileApiDataAwarePlugin.groovy |
       | /schema/test-api.yaml | test-api | /profiles/1 | {"profile2": {"then": "OAS API stub 2"}} | then=OAS API stub 2 | classpath:/plugins/TestApiGetProfileApiDataAwarePlugin.groovy |
+
+
+  @update @monitor
+  Scenario Outline: Update API monitor options
+    Given this API definition '<schema>'
+    When I create '<context>' API definition
+    And I update API definition with '{"shouldMonitor": false}' via '/options' of content type 'application/json'
+    Then I get http status 200
+    And I get API definition via '/options'
+    Then I get http status 200
+    And I get response JSON satisfies this 'shouldMonitor=false'
+    Then I '<method>' to '<path>' with '<content>' as '<contentType>'
+    And I get http status <status>
+    Then I get metrics of '<context>'
+    And I get http status 404
+    @v2 @uber
+    Examples:
+      | schema               | context | method | path                                                       | content | contentType | status |
+      | /schema/v2/uber.yaml | uber    | GET    | /v1/products?latitude=1.0&longitude=1.5&server_token=token |         |             | 200    |
+    @v3 @petstore-extended
+    Examples:
+      | schema                            | context  | method | path       | content                        | contentType      | status |
+      | /schema/v3/petstore-extended.yaml | petstore | POST   | /v2/pets   | {"name": "Tama", "tag": "Cat"} | application/json | 200    |
+      | /schema/v3/petstore-extended.yaml | petstore | DELETE | /v2/pets/1 |                                |                  | 204    |

@@ -17,6 +17,7 @@ import io.github.ktakashi.oas.engine.apis.ApiRequestSecurityValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestValidator
 import io.github.ktakashi.oas.engine.apis.ApiResultProvider
 import io.github.ktakashi.oas.engine.apis.DefaultApiService
+import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
 import io.github.ktakashi.oas.engine.plugins.PluginService
@@ -40,6 +41,7 @@ import io.github.ktakashi.oas.web.rests.ContextOptionsController
 import io.github.ktakashi.oas.web.rests.DataConfigurationsController
 import io.github.ktakashi.oas.web.rests.DelayConfigurationsController
 import io.github.ktakashi.oas.web.rests.HeadersConfigurationsController
+import io.github.ktakashi.oas.web.rests.MetricsController
 import io.github.ktakashi.oas.web.rests.OptionsConfigurationsController
 import io.github.ktakashi.oas.web.rests.PluginConfigurationsController
 import io.github.ktakashi.oas.web.services.ExecutorProvider
@@ -158,6 +160,10 @@ class AutoOasEngineConfiguration {
                    apiResultProvider: ApiResultProvider,
                    pluginService: PluginService): ApiExecutionService
             = DefaultApiService(storageService, parsingService(), apiPathService, apiRequestPathVariableValidator, apiResultProvider, pluginService)
+
+    @Bean
+    @ConditionalOnMissingBean
+    fun apiObserver(sessionStorage: SessionStorage) = ApiObserver(sessionStorage)
 }
 
 @AutoConfiguration(
@@ -193,6 +199,8 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
         register(DataConfigurationsController::class.java)
         register(DelayConfigurationsController::class.java)
 
+        register(MetricsController::class.java)
+
         property(ServerProperties.LOCATION_HEADER_RELATIVE_URI_RESOLUTION_DISABLED, true)
         property(OAS_APPLICATION_PATH_CONFIG, oasApplicationServletProperties.adminPrefix)
         register(OpenApiResource::class.java)
@@ -207,8 +215,11 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
 
     @Bean
     @ConditionalOnMissingBean
-    fun oasDispatchServlet(apiExecutionService: ApiExecutionService, apiDelayService: ApiDelayService, executorProvider: ExecutorProvider)
-            = OasDispatchServlet(apiExecutionService, apiDelayService, executorProvider)
+    fun oasDispatchServlet(apiExecutionService: ApiExecutionService,
+                           apiDelayService: ApiDelayService,
+                           apiObserver: ApiObserver,
+                           executorProvider: ExecutorProvider)
+            = OasDispatchServlet(apiExecutionService, apiDelayService, apiObserver, executorProvider)
 
     @Bean
     @ConditionalOnMissingBean

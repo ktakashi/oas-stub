@@ -1,13 +1,17 @@
 package io.github.ktakashi.oas.test
 
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
+import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiDelay
 import io.github.ktakashi.oas.model.ApiHeaders
+import io.github.ktakashi.oas.model.ApiMetric
+import io.github.ktakashi.oas.model.ApiMetrics
 import io.github.ktakashi.oas.model.ApiOptions
 import java.util.Optional
+import java.util.function.BiPredicate
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.core.env.MapPropertySource
@@ -18,9 +22,13 @@ import org.springframework.test.util.TestSocketUtils
 
 /**
  * Providing test utilities
+ *
+ * The service provides operations to API definition and API metrics.
+ * Both of them are cleared when a new test is executed.
  */
 class OasStubTestService(private val properties: OasStubTestProperties,
-                         private val apiRegistrationService: ApiRegistrationService) {
+                         private val apiRegistrationService: ApiRegistrationService,
+                         private val apiObserver: ApiObserver) {
     fun setup() {
         clear()
         properties.definitions.forEach { (k, v) ->
@@ -32,6 +40,7 @@ class OasStubTestService(private val properties: OasStubTestProperties,
         apiRegistrationService.getAllNames().forEach { name ->
             apiRegistrationService.deleteApiDefinitions(name)
         }
+        apiObserver.clearApiMetrics()
     }
 
     /**
@@ -52,7 +61,7 @@ class OasStubTestService(private val properties: OasStubTestProperties,
     fun createTestApiContext(name: String, script: Resource) = OasStubTestApiContext(apiRegistrationService, name, ApiDefinitions(script.inputStream.reader().readText()))
 
     /**
-     * Retrieves an OasStubTestApiContext
+     * Retrieves an [OasStubTestApiContext]
      *
      * This methods also returns ones defined in external configuration file.
      *
@@ -62,6 +71,19 @@ class OasStubTestService(private val properties: OasStubTestProperties,
     fun getTestApiContext(name: String) = apiRegistrationService.getApiDefinitions(name).map { def ->
         OasStubTestApiContext(apiRegistrationService, name, def)
     }.orElseGet { OasStubTestApiContext(apiRegistrationService, name, ApiDefinitions()) }
+
+    /**
+     * Retrieves an [OasStubTestApiMetricsAggregator]
+     */
+    fun getTestApiMetrics(name: String): OasStubTestApiMetricsAggregator<ApiMetrics> = apiObserver.getApiMetrics(name)
+        .map<OasStubTestApiMetricsAggregator<ApiMetrics>> { metrics ->
+            ApiMetricsAggregator(metrics, metrics) { metrics }
+        }.orElseGet { NullAggregator }
+
+    /**
+     * Clears all the API metrics
+     */
+    fun clearTestApiMetrics() = apiObserver.clearApiMetrics()
 }
 
 /**
@@ -139,6 +161,39 @@ class OasStubTestExecutionListener: AbstractTestExecutionListener() {
             Optional.empty()
         }
     }
+}
+
+sealed interface OasStubTestApiMetricsAggregator<T> {
+    /**
+     * Returns aggregation result
+     */
+    fun get(): T = throw IllegalStateException("No metrics")
+
+    /**
+     * Filters the metrics
+     */
+    fun filter(predicate: BiPredicate<String, ApiMetric>): OasStubTestApiMetricsAggregator<T> = throw IllegalStateException("No metrics")
+
+    /**
+     * Returns number of requests to [path]
+     */
+    fun countBy(path: String): OasStubTestApiMetricsAggregator<Int> = throw IllegalStateException("No metrics")
+
+    /**
+     * Returns number of response of status [status]
+     */
+    fun countBy(status: Int): OasStubTestApiMetricsAggregator<Int> = throw IllegalStateException("No metrics")
+}
+
+data object NullAggregator: OasStubTestApiMetricsAggregator<ApiMetrics>
+
+data class ApiMetricsAggregator<T, U>
+internal constructor(val apiMetrics: ApiMetrics, private val filtered: U, private val provider: (U) -> T): OasStubTestApiMetricsAggregator<T> {
+    override fun get() = provider(filtered)
+
+    override fun countBy(path: String) = ApiMetricsAggregator(apiMetrics, apiMetrics.metrics[path]?: listOf()) { it.size }
+
+    override fun countBy(status: Int) = ApiMetricsAggregator(apiMetrics, apiMetrics.metrics.flatMap { (_, v) -> v.filter { m -> m.httpStatus == status } }) { it.size }
 }
 
 class OasStubTestApplicationListener: ApplicationListener<ApplicationEnvironmentPreparedEvent> {
