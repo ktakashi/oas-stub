@@ -4,7 +4,7 @@
 :my-opinion: footnote:[I'm not complaining, just how it is, and it sucks...]
 :oas: footnote:[Open Application Specification]
 
-The world is getting more and more micro services oriented,
+The world is getting more and more microservices oriented,
 which is okay if you have a good environment to test. However,
 most of the time, at least for me, this wasn't the case.
 Management teams decided not to have a proper test environment

@@ -61,14 +61,14 @@ class OasStubTestService(private val properties: OasStubTestProperties,
     fun createTestApiContext(name: String, script: Resource) = OasStubTestApiContext(apiRegistrationService, name, ApiDefinitions(script.inputStream.reader().readText()))
 
     /**
-     * Retrieves an [OasStubTestApiContext]
+     * Retrieves an [OasStubTestApiContext] or create an empty one
      *
-     * This methods also returns ones defined in external configuration file.
+     * This method also returns ones defined in external configuration file.
      *
      * @param name Name of the API definition. e.g. petstore
      * @return OasStubTestApiContext
      */
-    fun getTestApiContext(name: String) = apiRegistrationService.getApiDefinitions(name).map { def ->
+    fun getTestApiContext(name: String): OasStubTestApiContext = apiRegistrationService.getApiDefinitions(name).map { def ->
         OasStubTestApiContext(apiRegistrationService, name, def)
     }.orElseGet { OasStubTestApiContext(apiRegistrationService, name, ApiDefinitions()) }
 
@@ -189,20 +189,21 @@ data class OasStubTestApiMetricsAggregator(private val metrics: List<ApiMetric>)
     fun count(): Int = metrics.size
 }
 
+private const val SERVER_PORT = "server.port"
 class OasStubTestApplicationListener: ApplicationListener<ApplicationEnvironmentPreparedEvent> {
     override fun onApplicationEvent(event: ApplicationEnvironmentPreparedEvent) {
         val environment = event.environment
         val propertySource = environment.propertySources
-        val serverPort = environment.getProperty("server.port", Int::class.java)
+        val serverPort = environment.getProperty(SERVER_PORT, Int::class.java)
         if (serverPort != null) {
             if (serverPort == 0 && propertySource.contains(TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME)) {
                 val randomPort = TestSocketUtils.findAvailableTcpPort()
-                val source = (propertySource.get(TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME) as MapPropertySource).source
-                source["server.port"] = randomPort
+                val source = (propertySource[TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME] as MapPropertySource).source
+                source[SERVER_PORT] = randomPort
             }
             if (!propertySource.contains(PROPERTY_SOURCE_KEY)) {
                 val oasServerSource = mutableMapOf<String, Any>()
-                oasServerSource["${PROPERTY_SOURCE_KEY}.server.port"] = environment.getProperty("server.port")!!
+                oasServerSource["${PROPERTY_SOURCE_KEY}.server.port"] = environment.getProperty(SERVER_PORT)!!
                 propertySource.addFirst(MapPropertySource(PROPERTY_SOURCE_KEY, oasServerSource))
             }
         }

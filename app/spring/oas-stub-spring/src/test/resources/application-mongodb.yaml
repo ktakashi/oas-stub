@@ -11,7 +11,7 @@ oas.stub:
         database: database
         collection: persistent
 
-# We don't provide own MongoClient auto-configuration, so either users need to create their own
+# We don't provide own MongoClient autoconfiguration, so either users need to create their own
 # or use the one provided by spring data
 spring:
   data:

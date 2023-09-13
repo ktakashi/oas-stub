@@ -23,7 +23,7 @@ class MetricsController
     @GET
     @Path("/{context}")
     @Produces(MediaType.APPLICATION_JSON)
-    fun get(@PathParam("context") context: String) = apiObserver.getApiMetrics(context)
+    fun get(@PathParam("context") context: String): Response = apiObserver.getApiMetrics(context)
         .map { v -> Response.ok(v).build() }
         .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 

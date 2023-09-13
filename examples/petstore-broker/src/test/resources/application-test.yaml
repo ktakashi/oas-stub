@@ -7,6 +7,9 @@ petstore:
         url: "http://localhost:${oas.stub.test.server.port}/${oas.stub.servlet.prefix}/order"
 
 oas.stub:
+  storage:
+    type:
+
   servlet.prefix: /stub
   test:
     definitions:
@@ -40,3 +43,8 @@ oas.stub:
               script: 'classpath:/plugins/OrderPlugin.groovy'
             data:
               random-id: '*random UUID in prod*'
+oas:
+  stub:
+    storage:
+      type:
+        persistent:

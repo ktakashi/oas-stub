@@ -34,6 +34,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 
 // TODO
 typealias UriTemplate = String
@@ -60,7 +61,7 @@ class ContextController @Inject constructor(apiRegistrationService: ApiRegistrat
     @ApiResponse(responseCode = "404", description = "Specified context is not found", content = [Content(schema = Schema())])
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    fun get(@PathParam("context") context: String) = getApiDefinitions(context)
+    fun get(@PathParam("context") context: String): Response = getApiDefinitions(context)
             .map { v -> Response.ok().entity(v).build() }
             .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 
@@ -74,7 +75,7 @@ class ContextController @Inject constructor(apiRegistrationService: ApiRegistrat
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    fun postFull(@PathParam("context") context: String, request: ApiDefinitions) = CompletableFuture.supplyAsync {
+    fun postFull(@PathParam("context") context: String, request: ApiDefinitions): CompletionStage<Response> = CompletableFuture.supplyAsync {
         if (apiRegistrationService.saveApiDefinitions(context, request)) {
             Response.created(URI.create("/${context}")).entity(request).build()
         } else {
@@ -88,7 +89,7 @@ class ContextController @Inject constructor(apiRegistrationService: ApiRegistrat
     @POST
     @Consumes(value = [MediaType.TEXT_PLAIN, MediaType.APPLICATION_OCTET_STREAM])
     @Produces(MediaType.APPLICATION_JSON)
-    fun post(@PathParam("context") context: String, request: String) = ApiDefinitions(request).let { apiDefinitions ->
+    fun post(@PathParam("context") context: String, request: String): Response = ApiDefinitions(request).let { apiDefinitions ->
         if (apiRegistrationService.saveApiDefinitions(context, apiDefinitions)) {
             Response.created(URI.create("/${context}")).entity(apiDefinitions).build()
         } else {
@@ -100,7 +101,7 @@ class ContextController @Inject constructor(apiRegistrationService: ApiRegistrat
     @ApiResponse(responseCode = "204", description = "The API is deleted", content = [Content(schema = Schema())])
     @ApiResponse(responseCode = "04", description = "The {context} does not exist", content = [Content(schema = Schema())])
     @DELETE
-    fun delete(@PathParam("context") context: String) = CompletableFuture.supplyAsync {
+    fun delete(@PathParam("context") context: String): CompletionStage<Response> = CompletableFuture.supplyAsync {
         if (apiRegistrationService.deleteApiDefinitions(context)) {
             Response.noContent().build()
         } else {
@@ -451,11 +452,11 @@ abstract class AbstractContextController(protected val apiRegistrationService: A
                     .map { v -> Response.ok().entity(v).build() }
                     .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 
-    protected fun putApiDefinitionsProperty(context: String, updator: (ApiDefinitions) -> ApiDefinitions) = updateApiDefinitionsProperty(context, updator)
+    protected fun putApiDefinitionsProperty(context: String, updator: (ApiDefinitions) -> ApiDefinitions): Response = updateApiDefinitionsProperty(context, updator)
             .map { def -> Response.ok().entity(def).build() }
             .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 
-    protected fun deleteApiDefinitionsProperty(context: String, updator: (ApiDefinitions) -> ApiDefinitions) = updateApiDefinitionsProperty(context, updator)
+    protected fun deleteApiDefinitionsProperty(context: String, updator: (ApiDefinitions) -> ApiDefinitions): Response = updateApiDefinitionsProperty(context, updator)
             .map { Response.noContent().build() }
             .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 
@@ -467,25 +468,25 @@ abstract class AbstractContextController(protected val apiRegistrationService: A
 
 
 abstract class AbstractSingleApiController(private val apiRegistrationService: ApiRegistrationService) {
-    protected fun <T> getConfigurationProperty(context: String, api: UriTemplate, retriever: (ApiConfiguration?) -> T) = getApiDefinitions(context)
+    protected fun <T> getConfigurationProperty(context: String, api: UriTemplate, retriever: (ApiConfiguration?) -> T): Response = getApiDefinitions(context)
             .map { def ->
-                val decodedApi = URLDecoder.decode(api.toString(), StandardCharsets.UTF_8)
+                val decodedApi = URLDecoder.decode(api, StandardCharsets.UTF_8)
                 retriever(def.configurations?.get(decodedApi))
             }
             .map { v -> Response.ok().entity(v).build() }
             .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 
-    protected fun putConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration) = updateConfigurationProperty(context, api, updator)
+    protected fun putConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration): Response = updateConfigurationProperty(context, api, updator)
             .map { def -> Response.ok().entity(def).build() }
             .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 
-    protected fun deleteConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration?) = updateConfigurationProperty(context, api, updator)
+    protected fun deleteConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration?): Response = updateConfigurationProperty(context, api, updator)
             .map { Response.noContent().build() }
             .orElseGet { Response.status(Response.Status.NOT_FOUND).build() }
 
     private fun updateConfigurationProperty(context: String, api: UriTemplate, updator: (ApiConfiguration?) -> ApiConfiguration?) = getApiDefinitions(context)
             .map { def ->
-                val decodedApi = URLDecoder.decode(api.toString(), StandardCharsets.UTF_8)
+                val decodedApi = URLDecoder.decode(api, StandardCharsets.UTF_8)
                 updator(def.configurations?.get(decodedApi))?.let { v -> def.updateConfiguration(decodedApi, v) }
             }
             .map { def -> if (apiRegistrationService.saveApiDefinitions(context, def)) def else null }

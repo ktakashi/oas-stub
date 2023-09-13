@@ -144,11 +144,11 @@ class JsonOpenApi30DataValidator
     private fun <T: Number> checkNumberRange(value: JsonNode, property: String, schema: Schema<T>): ApiValidationResult {
         val max = schema.maximum
         val min = schema.minimum
-        val v = BigDecimal(value.asText());
+        val v = BigDecimal(value.asText())
         return if (max != null && v > max) {
-            failedResult("Maximum value is $max", property);
+            failedResult("Maximum value is $max", property)
         } else if (min != null && v < min) {
-            failedResult("Minimum value is $min", property);
+            failedResult("Minimum value is $min", property)
         } else success
     }
 

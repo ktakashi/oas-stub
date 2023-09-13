@@ -77,7 +77,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 @Configuration
 class AutoOasStorageConfiguration {
     // Because of this dependency, we can't use component scan
-    // Though, spring boot official document says, don't mex with auto-configuration...
+    // Though, spring boot official document says, don't mex with autoconfiguration...
     @Bean
     @ConditionalOnMissingBean
     fun storageService(parsingService: ParsingService, persistentStorage: PersistentStorage, sessionStorage: SessionStorage) = StorageService(parsingService, persistentStorage, sessionStorage)

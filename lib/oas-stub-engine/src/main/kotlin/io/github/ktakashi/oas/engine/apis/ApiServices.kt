@@ -279,7 +279,7 @@ internal fun adjustBasePath(path: String, api: OpenAPI): Optional<String> {
     return Optional.ofNullable(maybePath)
 }
 
-private val QUERY_PARAM_PATTERN = Regex("([^&=]+)(=?)([^&]+)?");
+private val QUERY_PARAM_PATTERN = Regex("([^&=]+)(=?)([^&]+)?")
 private fun parseQueryParameters(s: String?): Map<String, List<String?>> = s?.let {
     QUERY_PARAM_PATTERN.findAll(it).map { m ->
         val n = m.groupValues[1]

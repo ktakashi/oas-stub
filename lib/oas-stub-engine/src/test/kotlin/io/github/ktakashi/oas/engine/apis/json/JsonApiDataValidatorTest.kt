@@ -19,10 +19,10 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.junit.platform.commons.util.Preconditions
 
 class JsonApiDataValidatorTest {
-    val jsonApiDataValidator = JsonOpenApi30DataValidator(ObjectMapper(), setOf())
-    val openApiV3Parser = OpenAPIV3Parser()
-    val swaggerConverter = SwaggerConverter()
-    val parserOptions = ParseOptions().also {
+    private val jsonApiDataValidator = JsonOpenApi30DataValidator(ObjectMapper(), setOf())
+    private val openApiV3Parser = OpenAPIV3Parser()
+    private val swaggerConverter = SwaggerConverter()
+    private val parserOptions = ParseOptions().also {
         it.isResolve = true
         it.isResolveFully = true
     }

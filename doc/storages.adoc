@@ -77,7 +77,7 @@ oas.stub:
 ----
 
 The hazelcast storage requires `HazelcastInstance` bean, though
-for your convenience, the auto-configuration module provides
+for your convenience, the autoconfiguration module provides
 simple configuration items in case you simply want to run the
 stub application. Below is an example configuration:
 

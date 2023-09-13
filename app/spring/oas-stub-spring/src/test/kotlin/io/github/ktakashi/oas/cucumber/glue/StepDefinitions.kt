@@ -65,7 +65,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @Before
     fun setup() {
-        testContext = TestContext("http://localhost:$localPort", oasApplicationServletProperties.prefix, )
+        testContext = TestContext("http://localhost:$localPort", oasApplicationServletProperties.prefix)
         sessionStorage.clearApiMetrics()
     }
 

@@ -11,7 +11,7 @@ we want to keep the provided API specification as intact as possible.
 
 To resolve this dilemma, OAS stub provides header configuration to
 populate extra headers before validations. The configuration can be
-done on a API path level, or global level. Below table shows the
+done on an API path level, or global level. Below table shows the
 configuration endpoints:
 
 [cols="1,1,1"]
@@ -68,7 +68,7 @@ curl -v http://localhost:8080/oas/petstore/v1/pets/1
 Now, you want to put a specific response header on `GET /v1/pets/1`
 endpoint, say `My-Favourite-Pet-ID`. The header mustn't be in any
 other endpoints, but this one. To do it, you can use
-`PUT /__admin/{context}/configurations/headers` endpoint, like this:
+`PUT /__admin/\{context}/configurations/headers` endpoint, like this:
 
 [source, shell]
 ----
@@ -102,4 +102,4 @@ curl -v http://localhost:8080/oas/petstore/v1/pets/2
 The `My-Favourite-Pet-ID` response header is only applied to the
 `/v1/pets/1` not the other endpoints.
 
-TIP: If there's global header configured, then the it'd also be populated.
+TIP: If there's global header configured, then it'd also be populated.

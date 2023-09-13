@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.controllers
 
 import io.github.ktakashi.oas.web.annotations.Delayable
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,7 +25,7 @@ class CustomController {
 
     @Delayable(context = "custom", path = "/ok3")
     @GetMapping(path = ["/ok3"])
-    fun getCompletionStage1() = CompletableFuture.completedStage(ResponseEntity.ok().body("OK"))
+    fun getCompletionStage1(): CompletionStage<ResponseEntity<*>> = CompletableFuture.completedStage(ResponseEntity.ok().body("OK"))
 
 
     @Delayable(context = "custom", path = "/ok4")

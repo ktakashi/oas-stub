@@ -24,8 +24,8 @@ abstract class MongodbStorage(private val objectMapper: ObjectMapper,
     private val pojoCodevProvider = PojoCodecProvider.builder().automatic(true).build()
     private val pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), CodecRegistries.fromProviders(pojoCodevProvider))
     private val mongoDatabase = mongoClient.getDatabase(database).withCodecRegistry(pojoCodecRegistry)
-    protected val mongoCollection: MongoCollection<MongoEntry> = mongoDatabase.getCollection(collection, MongoEntry::class.java)
-    protected val updateOptions = UpdateOptions().upsert(true)
+    private val mongoCollection: MongoCollection<MongoEntry> = mongoDatabase.getCollection(collection, MongoEntry::class.java)
+    private val updateOptions = UpdateOptions().upsert(true)
 
     protected fun <T> upsert(key: String, value: T) = objectMapper.writeValueAsString(value).let {
         mongoCollection.updateOne(eq("name", key), Updates.set("value", it), updateOptions)

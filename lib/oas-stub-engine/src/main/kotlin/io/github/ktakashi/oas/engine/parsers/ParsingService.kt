@@ -16,21 +16,18 @@ private val parseOption = ParseOptions().apply {
     isResolveFully = true
 }
 
-private enum class OasVersions(val provider: () -> SwaggerParserExtension) {
-    V3({ OpenAPIV3Parser() }), // V3 first, otherwise we'd get something weird
-    V2({ SwaggerConverter() })
-}
+private val swaggerParsers = listOf(::OpenAPIV3Parser, ::SwaggerConverter)
 
 private val logger = LoggerFactory.getLogger(ParsingService::class.java)
 
 @Named @Singleton
 class ParsingService {
     fun parse(content: String): Optional<OpenAPI> =
-        Optional.ofNullable(OasVersions.entries
+        Optional.ofNullable(swaggerParsers
                 .asSequence()
                 .map { v ->
                     try {
-                        val result = v.provider().readContents(content, null, parseOption)
+                        val result = v().readContents(content, null, parseOption)
                         if (result.messages != null && result.messages.isNotEmpty()) {
                             logger.warn("Parsing message(s): {}", result.messages)
                         }
@@ -44,5 +41,5 @@ class ParsingService {
 
     fun sanitize(content: String): Optional<String> = parse(content).map(Yaml::pretty)
 
-    fun toYaml(openAPI: OpenAPI) = Yaml.pretty(openAPI)
+    fun toYaml(openAPI: OpenAPI): String = Yaml.pretty(openAPI)
 }

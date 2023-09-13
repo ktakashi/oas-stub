@@ -1,0 +1,16 @@
+{
+  "properties": [
+    {
+      "name": "oas.stub.storage.type.session",
+      "type": "java.lang.String",
+      "description": "Session storage type.",
+      "defaultValue": "inmemory"
+    },
+    {
+      "name": "oas.stub.storage.type.persistent",
+      "type": "java.lang.String",
+      "description": "Persistent storage type.",
+      "defaultValue": "inmemory"
+    }
+  ]
+}

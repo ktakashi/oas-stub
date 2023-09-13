@@ -27,6 +27,8 @@ can look simply like this:
 
 [source, groovy]
 ----
+import io.github.ktakashi.oas.plugin.apis.ApiPlugin
+
 class PetstoreGetPetPlugin implements ApiPlugin {
     @Override
     ResponseContext customize(PluginContext pluginContext) {
@@ -52,7 +54,7 @@ curl -X PUT -H'Content-Type: application/octet-stream' \
 After that, you can call `GET /v1/pets/1`, then you'll receive the
 desired response. The plugin is only applied to `/v1/pets/1` API,
 so if you call `GET /v1/pets/2`, then you'd still receive the default
-response. To apply to all petIds, then you can use `/v1/pets/{petId}`
+response. To apply to all petIds, then you can use `/v1/pets/\{petId}`
 API path, instead of `/v1/pets/1`.
 
 TIP: `curl` doesn't encode curly braces, you need to manually encode them

@@ -93,8 +93,8 @@ internal fun configureMavenPublishingConventions(project: Project) {
                 url.set("https://github.com/ktakashi/oas-stub")
                 licenses { licence ->
                     licence.license {
-                        it.name.set("Apache License, Version 2.0");
-                        it.url.set("https://www.apache.org/licenses/LICENSE-2.0");
+                        it.name.set("Apache License, Version 2.0")
+                        it.url.set("https://www.apache.org/licenses/LICENSE-2.0")
                     }
                 }
                 developers { developer ->

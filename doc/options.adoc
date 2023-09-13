@@ -36,8 +36,8 @@ Both endpoints have the same JSON body of the following format.
 
 | shouldValidate | Specifies if OAS stub validates incoming request or not | true
 | shouldMonitor | Specifies if OAS stub store metrics of the API or not | true
-| latency | Emulates high network latency | `{"interval": 1, "unit": "SECONDS"}`
-| failure | Enforce API failure | `{"type": "protocol"}`
+| latency | Emulates high network latency | `\{"interval": 1, "unit": "SECONDS"}`
+| failure | Enforce API failure | `\{"type": "protocol"}`
 |===
 
 === Latency

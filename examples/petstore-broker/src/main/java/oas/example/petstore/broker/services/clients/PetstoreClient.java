@@ -1,6 +1,5 @@
 package oas.example.petstore.broker.services.clients;
 
-import oas.example.petstore.broker.configurations.PetstoreBrokerProperties;
 import oas.example.petstore.broker.exceptions.NoPetFoundException;
 import oas.example.petstore.broker.models.petstore.Pet;
 import oas.example.petstore.broker.services.ServiceProvider;
