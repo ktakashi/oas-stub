@@ -14,7 +14,7 @@ data class ApiMetric(
     val exception: Throwable?
 )
 
-data class ApiMetrics(val metrics: MutableMap<String, MutableList<ApiMetric>> = mutableMapOf()): Map<String, List<ApiMetric>> by metrics {
+data class ApiMetrics(val metrics: MutableMap<String, MutableList<ApiMetric>> = mutableMapOf()) {
     fun addApiMetric(path: String, metric: ApiMetric): ApiMetrics {
         metrics.compute(path) { _, v ->
             v?.apply { add(metric) } ?: mutableListOf(metric)

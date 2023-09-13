@@ -76,7 +76,7 @@ class OasStubTestService(private val properties: OasStubTestProperties,
      * Retrieves an [OasStubTestApiMetricsAggregator]
      */
     fun getTestApiMetrics(name: String): OasStubTestApiMetricsAggregator = apiObserver.getApiMetrics(name)
-        .map { metrics -> OasStubTestApiMetricsAggregator(metrics.flatMap { (_, v) -> v }) }
+        .map { metrics -> OasStubTestApiMetricsAggregator(metrics.metrics.flatMap { (_, v) -> v }) }
         .orElseGet { OasStubTestApiMetricsAggregator(listOf()) }
 
     /**

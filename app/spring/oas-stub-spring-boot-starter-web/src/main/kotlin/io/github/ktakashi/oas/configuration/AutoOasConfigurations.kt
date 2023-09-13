@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.configuration
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.controllers.GenericExceptionMapper
 import io.github.ktakashi.oas.engine.apis.API_PATH_NAME_QUALIFIER
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiContentDecider
@@ -200,6 +201,8 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
         register(DelayConfigurationsController::class.java)
 
         register(MetricsController::class.java)
+
+        register(GenericExceptionMapper::class.java)
 
         property(ServerProperties.LOCATION_HEADER_RELATIVE_URI_RESOLUTION_DISABLED, true)
         property(OAS_APPLICATION_PATH_CONFIG, oasApplicationServletProperties.adminPrefix)
