@@ -2,11 +2,12 @@
 
 This is a Users' reference manual for OAS stub.
 
-- <<introduction, Introduction>>
-- <<getting-started, Getting Started>>
-- <<plugin, Plugin>>
-- <<headers, HTTP headers>>
-- <<options, Options>>
-- <<delay, Delay>>
-- <<storages, Storages>>
-- <<testing, Testing module>>
+- <<introduction.adoc#introduction, Introduction>>
+- <<start.adoc#getting-started, Getting Started>>
+- <<metrics.adoc#metrics, API metrics>>
+- <<plugin.adoc#plugin, Plugin>>
+- <<headers.adoc#headers, HTTP headers>>
+- <<options.adoc#options, Options>>
+- <<delay.adoc#delay, Delay>>
+- <<storages.adoc#storages, Storages>>
+- <<testing.adoc#testing, Testing module>>

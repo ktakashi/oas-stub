@@ -1,0 +1,20 @@
+[#metrics]
+== API metrics
+
+In some cases, it's convenient to have some metrics for the
+registered API. For example, you may want to validate the
+number of incoming requests, and/or how many of them responded
+successfully.
+
+[cols="1,1"]
+|===
+| Endpoint                                      | Query Parameter
+
+| GET /__admin/metrics/\{context}               | N/A
+|===
+
+The endpoint returns a JSON object of API path as its key and
+metrics as its value.
+
+The metrics recording can be suppressed if the `shouldMonitor`
+option is set and its value is `true`.

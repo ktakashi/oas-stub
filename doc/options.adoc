@@ -6,10 +6,10 @@ entire APIs and single API.
 
 [cols="1,1,1"]
 |===
-| Endpoint                                      | Query Parameter | Content-Type
+| Endpoint                                       | Query Parameter | Content-Type
 
-| PUT /__admin/{context}/options                | N/A             | application/json
-| PUT /__admin/{context}/configurations/options | api={apiPath}   | application/json
+| PUT /__admin/\{context}/options                | N/A             | application/json
+| PUT /__admin/\{context}/configurations/options | api=\{apiPath}  | application/json
 |===
 
 Both endpoints have the same JSON body of the following format.
@@ -18,6 +18,7 @@ Both endpoints have the same JSON body of the following format.
 ----
 {
   "shouldValidate": true,
+  "shouldMonitor": true,
   "latency": {
     "interval": 1,
     "unit": "MILLISECONDS"
@@ -34,6 +35,7 @@ Both endpoints have the same JSON body of the following format.
 | Option | Description | Example value
 
 | shouldValidate | Specifies if OAS stub validates incoming request or not | true
+| shouldMonitor | Specifies if OAS stub store metrics of the API or not | true
 | latency | Emulates high network latency | `{"interval": 1, "unit": "SECONDS"}`
 | failure | Enforce API failure | `{"type": "protocol"}`
 |===

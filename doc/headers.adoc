@@ -16,10 +16,10 @@ configuration endpoints:
 
 [cols="1,1,1"]
 |===
-| Endpoint                                      | Query Parameter | Content-Type
+| Endpoint                                       | Query Parameter | Content-Type
 
-| PUT /__admin/{context}/headers                | N/A             | application/json
-| PUT /__admin/{context}/configurations/headers | api={apiPath}   | application/json
+| PUT /__admin/\{context}/headers                | N/A             | application/json
+| PUT /__admin/\{context}/configurations/headers | api=\{apiPath}  | application/json
 |===
 
 Both endpoints have the same JSON body of the following format.

@@ -6,10 +6,10 @@ delay configuration for both entire APIs and single API.
 
 [cols="1,1,1"]
 |===
-| Endpoint                                    | Query Parameter | Content-Type
+| Endpoint                                     | Query Parameter | Content-Type
 
-| PUT /__admin/{context}/delay                | N/A             | application/json
-| PUT /__admin/{context}/configurations/delay | api={apiPath}   | application/json
+| PUT /__admin/\{context}/delay                | N/A             | application/json
+| PUT /__admin/\{context}/configurations/delay | api=\{apiPath}  | application/json
 |===
 
 Both endpoints have the same JSON body of the following format.
