@@ -22,7 +22,9 @@ dependencies {
     implementation(libs.swagger.core.annotations.jakarta)
     implementation(libs.swagger.perser) {
         exclude(group = "io.swagger.core.v3", module = "swagger-core")
+        exclude(group = "com.google.guava")
     }
+    implementation(libs.guava)
     implementation(libs.swagger.core.jakarta)
     implementation(libs.caffeine)
     implementation(libs.groovy.core)

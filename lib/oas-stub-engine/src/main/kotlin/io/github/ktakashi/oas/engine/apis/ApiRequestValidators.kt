@@ -67,7 +67,7 @@ fun interface ApiRequestValidator {
 
 @Named @Singleton
 class ApiRequestBodyValidator
-@Inject constructor(private val validators: Set<ApiDataValidator<*>>): ApiRequestValidator {
+@Inject constructor(private val validators: Set<ApiDataValidator<Any>>): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult = when (requestContext.method) {
         "GET", "HEAD", "OPTIONS", "DELETE" -> success // nobody
         else -> {

@@ -7,6 +7,8 @@ import com.hazelcast.nio.serialization.ByteArraySerializer
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
+import jakarta.inject.Named
+import jakarta.inject.Singleton
 import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.TimeUnit
@@ -32,6 +34,7 @@ class HazelcastStorage(private val objectMapper: ObjectMapper,
     fun names(): Set<String> = map.keys
 }
 
+@Named @Singleton
 class HazelcastSessionStorage(private val hazelcastStorage: HazelcastStorage): SessionStorage {
     override fun <T> put(key: String, value: T, ttl: Duration): Boolean = hazelcastStorage.put(key, value, ttl)
 
@@ -40,6 +43,7 @@ class HazelcastSessionStorage(private val hazelcastStorage: HazelcastStorage): S
     override fun delete(key: String): Boolean = hazelcastStorage.delete(key)
 }
 
+@Named @Singleton
 class HazelcastPersistentStorage(private val hazelcastStorage: HazelcastStorage): PersistentStorage {
     override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = hazelcastStorage.get(applicationName, ApiDefinitions::class.java)
 

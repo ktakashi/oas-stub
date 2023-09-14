@@ -10,6 +10,8 @@ import com.mongodb.client.model.Updates
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
+import jakarta.inject.Named
+import jakarta.inject.Singleton
 import java.time.Duration
 import java.util.Optional
 import org.bson.codecs.configuration.CodecRegistries
@@ -40,6 +42,7 @@ abstract class MongodbStorage(private val objectMapper: ObjectMapper,
     protected fun listNames() = mongoCollection.find().map { e -> e.name }.toSet()
 }
 
+@Named @Singleton
 class MongodbSessionStorage(objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
     : MongodbStorage(objectMapper, mongoClient, database, collection), SessionStorage {
 
@@ -52,6 +55,7 @@ class MongodbSessionStorage(objectMapper: ObjectMapper, mongoClient: MongoClient
 
 }
 
+@Named @Singleton
 class MongodbPersistentStorage(objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
     : MongodbStorage(objectMapper, mongoClient, database, collection), PersistentStorage {
     override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = findOne(applicationName, ApiDefinitions::class.java)
