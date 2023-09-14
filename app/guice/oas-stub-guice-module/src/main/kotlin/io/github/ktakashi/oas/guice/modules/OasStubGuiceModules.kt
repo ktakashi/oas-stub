@@ -1,8 +1,8 @@
 package io.github.ktakashi.oas.guice.modules
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.google.inject.AbstractModule
 import com.google.inject.Key
-import com.google.inject.Scopes
 import com.google.inject.multibindings.Multibinder
 import com.google.inject.name.Names
 import com.google.inject.util.Types
@@ -46,8 +46,9 @@ import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 
 class OasStubInMemorySessionStorageModule: AbstractModule() {
     override fun configure() {
-        bind(Storage::class.java).to(InMemorySessionStorage::class.java).`in`(Scopes.SINGLETON)
-        bind(SessionStorage::class.java).to(InMemorySessionStorage::class.java).`in`(Scopes.SINGLETON)
+        val storage = InMemorySessionStorage()
+        bind(Storage::class.java).toInstance(storage)
+        bind(SessionStorage::class.java).toInstance(storage)
     }
 
 }
@@ -90,9 +91,10 @@ class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModul
 
         bind(ApiRequestPathVariableValidator::class.java)
 
-        val anyDataValidator = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(ApiDataValidator::class.java, Any::class.java))) as Multibinder<ApiDataValidator<*>>
-        anyDataValidator.addBinding().to(JsonOpenApi30DataValidator::class.java)
-        anyDataValidator.addBinding().to(JsonOpenApi31DataValidator::class.java)
+        val jsonNodeValidator = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(ApiDataValidator::class.java, JsonNode::class.java))) as Multibinder<ApiDataValidator<*>>
+        bindDataValidator(jsonNodeValidator)
+        val dataValidator = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(ApiDataValidator::class.java, Any::class.java))) as Multibinder<ApiDataValidator<*>>
+        bindDataValidator(dataValidator)
 
         val dataPopulator = Multibinder.newSetBinder(binder(), ApiDataPopulator::class.java)
         dataPopulator.addBinding().to(JsonOpenApi30DataPopulator::class.java)
@@ -106,6 +108,11 @@ class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModul
         apiRequestValidatorBinder.addBinding().to(ApiRequestParameterValidator::class.java)
         apiRequestValidatorBinder.addBinding().to(ApiRequestSecurityValidator::class.java)
         apiRequestValidatorBinder.addBinding().to(ApiRequestBodyValidator::class.java)
+    }
+
+    private fun bindDataValidator(dataValidator: Multibinder<ApiDataValidator<*>>) {
+        dataValidator.addBinding().to(JsonOpenApi30DataValidator::class.java)
+        dataValidator.addBinding().to(JsonOpenApi31DataValidator::class.java)
     }
 
 }

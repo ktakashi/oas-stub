@@ -3,13 +3,10 @@ package io.github.ktakashi.oas.storages.inmemory
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
-@Named @Singleton
 class InMemorySessionStorage: SessionStorage {
     private val storage = ConcurrentHashMap<String, Any>()
     override fun <T> put(key: String, value: T, ttl: Duration): Boolean {
@@ -28,7 +25,6 @@ class InMemorySessionStorage: SessionStorage {
     override fun delete(key: String): Boolean = storage.remove(key) != null
 }
 
-@Named @Singleton
 class InMemoryPersistentStorage: PersistentStorage {
     private val storage = ConcurrentHashMap<String, ApiDefinitions>()
     override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = Optional.ofNullable(storage[applicationName])

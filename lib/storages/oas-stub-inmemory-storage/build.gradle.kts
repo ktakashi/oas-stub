@@ -9,6 +9,5 @@ description = "OAS stub in-memory storage"
 
 dependencies {
     api(project(":lib:oas-stub-storage-api"))
-    implementation(libs.inject.api)
     implementation(libs.kotlin.stdlib)
 }

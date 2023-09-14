@@ -67,7 +67,7 @@ fun interface ApiRequestValidator {
 
 @Named @Singleton
 class ApiRequestBodyValidator
-@Inject constructor(private val validators: Set<ApiDataValidator<Any>>): ApiRequestValidator {
+@Inject constructor(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult = when (requestContext.method) {
         "GET", "HEAD", "OPTIONS", "DELETE" -> success // nobody
         else -> {
@@ -92,7 +92,7 @@ class ApiRequestBodyValidator
 
 @Named @Singleton
 class ApiRequestParameterValidator
-@Inject constructor(private val validators: Set<ApiDataValidator<Any>>): ApiRequestValidator {
+@Inject constructor(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult =
             operation.parameters
                     ?.map { p -> validate(requestContext, p) }
