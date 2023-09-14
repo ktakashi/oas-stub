@@ -92,7 +92,7 @@ class ApiRequestBodyValidator
 
 @Named @Singleton
 class ApiRequestParameterValidator
-@Inject constructor(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
+@Inject constructor(private val validators: Set<ApiDataValidator<Any>>): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult =
             operation.parameters
                     ?.map { p -> validate(requestContext, p) }

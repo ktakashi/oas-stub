@@ -103,11 +103,11 @@ class AutoOasPluginConfiguration {
 class AutoOasValidatorConfiguration {
     @Bean
     @ConditionalOnMissingBean
-    fun apiRequestParameterValidator(validators: Set<ApiDataValidator<JsonNode>>) = ApiRequestParameterValidator(validators)
+    fun apiRequestParameterValidator(validators: Set<ApiDataValidator<Any>>) = ApiRequestParameterValidator(validators)
 
     @Bean
     @ConditionalOnMissingBean
-    fun apiRequestBodyValidator(validators: Set<ApiDataValidator<JsonNode>>) = ApiRequestBodyValidator(validators)
+    fun apiRequestBodyValidator(validators: Set<ApiDataValidator<Any>>) = ApiRequestBodyValidator(validators)
 
     @Bean
     @ConditionalOnMissingBean

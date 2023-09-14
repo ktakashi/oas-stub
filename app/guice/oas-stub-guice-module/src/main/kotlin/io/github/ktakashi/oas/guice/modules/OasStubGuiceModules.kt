@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.guice.modules
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.google.inject.AbstractModule
 import com.google.inject.Key
 import com.google.inject.Scopes
@@ -82,7 +81,7 @@ class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModul
     }
 
     private fun configureValidators() {
-        val validators = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(Validator::class.java, Any::class.java))) as Multibinder<Validator<*>>
+        val validators = Multibinder.newSetBinder(binder(),Key.get(Types.newParameterizedType(Validator::class.java, Any::class.java))) as Multibinder<Validator<*>>
         validators.addBinding().to(FormatValidator::class.java)
         validators.addBinding().to(LocalDateValidator::class.java)
         validators.addBinding().to(OffsetDateValidator::class.java)
@@ -91,11 +90,9 @@ class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModul
 
         bind(ApiRequestPathVariableValidator::class.java)
 
-        val jsonNodeDataValidator = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(ApiDataValidator::class.java, JsonNode::class.java))) as Multibinder<ApiDataValidator<*>>
-        bindDataValidators(jsonNodeDataValidator)
-        // sucks...
         val anyDataValidator = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(ApiDataValidator::class.java, Any::class.java))) as Multibinder<ApiDataValidator<*>>
-        bindDataValidators(anyDataValidator)
+        anyDataValidator.addBinding().to(JsonOpenApi30DataValidator::class.java)
+        anyDataValidator.addBinding().to(JsonOpenApi31DataValidator::class.java)
 
         val dataPopulator = Multibinder.newSetBinder(binder(), ApiDataPopulator::class.java)
         dataPopulator.addBinding().to(JsonOpenApi30DataPopulator::class.java)
@@ -111,8 +108,4 @@ class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModul
         apiRequestValidatorBinder.addBinding().to(ApiRequestBodyValidator::class.java)
     }
 
-    private fun bindDataValidators(dataValidator: Multibinder<ApiDataValidator<*>>) {
-        dataValidator.addBinding().to(JsonOpenApi30DataValidator::class.java)
-        dataValidator.addBinding().to(JsonOpenApi31DataValidator::class.java)
-    }
 }
