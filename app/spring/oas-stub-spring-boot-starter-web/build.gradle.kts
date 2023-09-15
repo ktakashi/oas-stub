@@ -12,6 +12,7 @@ description = "OAS stub Spring Boot starter"
 
 dependencies {
     api(project(":lib:oas-stub-web"))
+    api(project(":app:jersey:oas-stub-jersey-resource"))
     api(project(":app:spring:oas-stub-inmemory-storage-autoconfigure"))
     api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
     api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
@@ -31,7 +32,6 @@ dependencies {
     implementation(libs.projectreactor.reactor.core)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.swagger.core.annotations.jakarta)
-    implementation(libs.swagger.core.jaxrs2.jakarta)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
 
     kapt(libs.spring.boot.configuration.processor)

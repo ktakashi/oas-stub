@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.guice.modules
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.google.inject.AbstractModule
+import com.google.inject.Injector
 import com.google.inject.Key
 import com.google.inject.Module
 import com.google.inject.multibindings.Multibinder
@@ -40,11 +41,18 @@ import io.github.ktakashi.oas.engine.validators.LocalDateValidator
 import io.github.ktakashi.oas.engine.validators.OffsetDateValidator
 import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
+import io.github.ktakashi.oas.guice.server.OasStubServer
+import io.github.ktakashi.oas.guice.services.DefaultExecutorProvider
+import io.github.ktakashi.oas.jersey.OAS_APPLICATION_PATH_CONFIG
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
+import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
 
 interface OasStubSessionStorageModule: Module
@@ -65,14 +73,17 @@ class OasStubInMemoryPersistentStorageModule: AbstractModule(), OasStubPersisten
     }
 }
 
-class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModule() {
+class OasStubGuiceEngineModule(private val configuration: OasStubGuiceConfiguration): AbstractModule() {
     override fun configure() {
+        install(configuration.sessionStorageModule)
+        install(configuration.persistentStorageModule)
+        bind(OasStubGuiceConfiguration::class.java).toInstance(configuration)
         bind(ParsingService::class.java)
         bind(StorageService::class.java)
         bind(PluginService::class.java)
         configurePluginCompiler()
         configureValidators()
-        bindConstant().annotatedWith(Names.named(API_PATH_NAME_QUALIFIER)).to(servletPrefix)
+        bindConstant().annotatedWith(Names.named(API_PATH_NAME_QUALIFIER)).to(configuration.oasStubConfiguration.servletPrefix)
         bind(ApiContentDecider::class.java)
         bind(ApiDelayService::class.java)
         bind(ApiPathService::class.java)
@@ -123,8 +134,28 @@ class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModul
 
 }
 
-class OasStubGuiceServletModule(private val servletPrefix: String): ServletModule() {
+class OasStubGuiceServletModule(private val configuration: OasStubGuiceConfiguration): ServletModule() {
     override fun configureServlets() {
-        serve("$servletPrefix/*").with(OasDispatchServlet::class.java)
+        serve("${configuration.oasStubConfiguration.servletPrefix}/*").with(OasDispatchServlet::class.java)
+    }
+}
+
+class OasStubGuiceWebModule(private val configuration: OasStubGuiceConfiguration): AbstractModule() {
+    override fun configure() {
+        install(OasStubGuiceServletModule(configuration))
+        install(OasStubGuiceEngineModule(configuration))
+
+        bind(ExecutorProvider::class.java).to(DefaultExecutorProvider::class.java)
+        bindConstant().annotatedWith(Names.named(OAS_APPLICATION_PATH_CONFIG)).to(configuration.oasStubConfiguration.adminPrefix)
+    }
+}
+
+class OasStubGuiceServerModule(private val configuration: OasStubGuiceServerConfiguration): AbstractModule() {
+    override fun configure() {
+        install(OasStubGuiceWebModule(configuration))
+        val injectorProvider = getProvider(Injector::class.java)
+        val server = OasStubServer(configuration, injectorProvider::get)
+        bind(OasStubServer::class.java).toInstance(server)
+        bind(OasStubGuiceServerConfiguration::class.java).toInstance(configuration)
     }
 }

@@ -5,8 +5,12 @@ import com.google.inject.Injector
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.storages.StorageService
-import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
-import io.github.ktakashi.oas.guice.injector.createGuiceInjector
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
+import io.github.ktakashi.oas.guice.injector.createInjector
+import io.github.ktakashi.oas.guice.injector.createServerInjector
+import io.github.ktakashi.oas.guice.injector.createWebInjector
+import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,15 +20,21 @@ import org.junit.jupiter.api.Test
 class OasStubGuiceModulesTest {
     @Test
     fun testModules() {
-        val injector = Guice.createInjector(
-            OasStubInMemoryPersistentStorageModule(),
-            OasStubInMemorySessionStorageModule(),
-            OasStubGuiceEngineModule("/oas"))
+        val configuration = OasStubGuiceServerConfiguration.builder().build()
+        val injector = Guice.createInjector(OasStubGuiceEngineModule(configuration))
 
         checkInjector(injector)
 
-        val oasInjector = createGuiceInjector(OasStubGuiceConfiguration.builder().build())
+        val oasInjector = createInjector(configuration)
         checkInjector(oasInjector)
+
+        val oasWebInjector = createWebInjector(configuration)
+        checkInjector(oasWebInjector)
+
+        val oasServerInjector = createServerInjector(configuration)
+        checkInjector(oasServerInjector)
+        val server = oasServerInjector.getInstance(OasStubServer::class.java)
+        assertNotNull(server)
     }
 
     private fun checkInjector(injector: Injector) {
