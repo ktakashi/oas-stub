@@ -16,10 +16,9 @@ fun interface ResourceConfigCustomizer {
 }
 
 class OasStubGuiceResourceConfig
-@Inject constructor(@Named(OAS_APPLICATION_PATH_CONFIG) adminPrefix: String,
-                    serviceLocator: ServiceLocator,
+@Inject constructor(serviceLocator: ServiceLocator,
                     servletContext: ServletContext)
-    : OasStubResourceConfig(adminPrefix) {
+    : OasStubResourceConfig("dummy") {
     init {
         val injector = servletContext.getAttribute(Injector::class.java.name) as Injector
         GuiceBridge.getGuiceBridge().initializeGuiceBridge(serviceLocator)
@@ -28,5 +27,6 @@ class OasStubGuiceResourceConfig
 
         val config = injector.getInstance(OasStubGuiceConfiguration::class.java)
         config.resourceConfigCustomizers.forEach { customizer -> customizer.customize(this) }
+        super.property(OAS_APPLICATION_PATH_CONFIG, config.oasStubConfiguration.adminPrefix)
     }
 }

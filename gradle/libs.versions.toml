@@ -57,6 +57,8 @@ slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.7" }
 jersey-client = { group = "org.glassfish.jersey.core", name = "jersey-client", version.ref = "jersey" }
 jersey-server = { group = "org.glassfish.jersey.core", name = "jersey-server", version.ref = "jersey" }
 jersey-container-servlet = { group = "org.glassfish.jersey.containers", name = "jersey-container-servlet", version.ref = "jersey"}
+jersey-media-json-jackson = { group = "org.glassfish.jersey.media", name = "jersey-media-json-jackson", version.ref = "jersey" }
+
 jersey-inject-hk2 = { group = "org.glassfish.jersey.inject", name = "jersey-hk2", version.ref = "jersey" }
 
 aspectj = { group  = "org.aspectj", name = "aspectjweaver", version = "1.9.20" }

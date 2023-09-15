@@ -7,6 +7,7 @@ import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
 import io.restassured.filter.log.ResponseLoggingFilter
 import io.restassured.http.ContentType
+import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -41,5 +42,10 @@ class OasStubServerTest {
             .post("http://localhost:${server.port()}/__admin/petstore")
             .then()
             .statusCode(201)
+
+        given().get("http://localhost:${server.port()}/__admin")
+            .then()
+            .statusCode(200)
+            .body("[0]", equalTo("petstore"))
     }
 }

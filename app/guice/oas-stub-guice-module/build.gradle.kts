@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.jersey.server)
     implementation(libs.jersey.container.servlet)
     implementation(libs.jersey.inject.hk2)
+    implementation(libs.jersey.media.json.jackson)
     implementation(libs.jackson.databind.core)
 
     testImplementation(platform(libs.junit.bom))
