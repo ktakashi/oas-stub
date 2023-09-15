@@ -1,9 +1,12 @@
 package io.github.ktakashi.oas.guice.modules
 
 import com.google.inject.Guice
+import com.google.inject.Injector
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
+import io.github.ktakashi.oas.guice.injector.createGuiceInjector
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,6 +21,13 @@ class OasStubGuiceModulesTest {
             OasStubInMemorySessionStorageModule(),
             OasStubGuiceEngineModule("/oas"))
 
+        checkInjector(injector)
+
+        val oasInjector = createGuiceInjector(OasStubGuiceConfiguration.builder().build())
+        checkInjector(oasInjector)
+    }
+
+    private fun checkInjector(injector: Injector) {
         val storageService = injector.getBinding(StorageService::class.java).provider.get()
         assertNotNull(storageService)
 

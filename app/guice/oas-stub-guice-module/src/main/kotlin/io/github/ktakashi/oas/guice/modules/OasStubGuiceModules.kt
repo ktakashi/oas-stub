@@ -3,8 +3,10 @@ package io.github.ktakashi.oas.guice.modules
 import com.fasterxml.jackson.databind.JsonNode
 import com.google.inject.AbstractModule
 import com.google.inject.Key
+import com.google.inject.Module
 import com.google.inject.multibindings.Multibinder
 import com.google.inject.name.Names
+import com.google.inject.servlet.ServletModule
 import com.google.inject.util.Types
 import io.github.ktakashi.oas.engine.apis.API_PATH_NAME_QUALIFIER
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
@@ -43,8 +45,12 @@ import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
+import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
 
-class OasStubInMemorySessionStorageModule: AbstractModule() {
+interface OasStubSessionStorageModule: Module
+interface OasStubPersistentStorageModule: Module
+
+class OasStubInMemorySessionStorageModule: AbstractModule(), OasStubSessionStorageModule {
     override fun configure() {
         val storage = InMemorySessionStorage()
         bind(Storage::class.java).toInstance(storage)
@@ -53,7 +59,7 @@ class OasStubInMemorySessionStorageModule: AbstractModule() {
 
 }
 
-class OasStubInMemoryPersistentStorageModule: AbstractModule() {
+class OasStubInMemoryPersistentStorageModule: AbstractModule(), OasStubPersistentStorageModule {
     override fun configure() {
         bind(PersistentStorage::class.java).to(InMemoryPersistentStorage::class.java)
     }
@@ -115,4 +121,10 @@ class OasStubGuiceEngineModule(private val servletPrefix: String): AbstractModul
         dataValidator.addBinding().to(JsonOpenApi31DataValidator::class.java)
     }
 
+}
+
+class OasStubGuiceServletModule(private val servletPrefix: String): ServletModule() {
+    override fun configureServlets() {
+        serve("$servletPrefix/*").with(OasDispatchServlet::class.java)
+    }
 }

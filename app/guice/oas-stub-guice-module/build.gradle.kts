@@ -15,6 +15,8 @@ dependencies {
     implementation(project(":lib:storages:oas-stub-inmemory-storage"))
     implementation(libs.guice.core)
     implementation(libs.guice.servlet)
+    implementation(libs.guice.bridge)
+    implementation(libs.jetty.server)
     implementation(libs.jackson.databind.core)
 
     testImplementation(platform(libs.junit.bom))

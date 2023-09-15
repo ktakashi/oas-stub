@@ -86,6 +86,8 @@ projectreactor-reactor-core = { group = "io.projectreactor", name = "reactor-cor
 
 guice-core = { group = "com.google.inject", name = "guice", version.ref="guice" }
 guice-servlet = { group = "com.google.inject.extensions", name = "guice-servlet", version.ref="guice" }
+guice-bridge = { group = "org.glassfish.hk2", name = "guice-bridge", version = "3.0.4" }
+jetty-server = { group = "org.eclipse.jetty", name = "jetty-server", version = "12.0.1" }
 
 guava = { group = "com.google.guava", name = "guava", version.ref="guava"}
 
