@@ -43,7 +43,6 @@ import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
-import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
 import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.guice.services.DefaultExecutorProvider
 import io.github.ktakashi.oas.jersey.OAS_APPLICATION_PATH_CONFIG

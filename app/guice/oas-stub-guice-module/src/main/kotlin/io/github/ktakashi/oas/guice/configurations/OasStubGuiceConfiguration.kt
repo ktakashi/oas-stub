@@ -26,6 +26,7 @@ interface OasStubGuiceConfiguration {
         fun persistentStorageModule(persistentStorageModule: OasStubPersistentStorageModule): U
 
         fun resourceConfigCustomizers(resourceConfigCustomizers: Set<ResourceConfigCustomizer>): U
+
     }
 }
 
@@ -36,10 +37,11 @@ open class OasStubGuiceWebConfiguration(override val oasStubConfiguration: OasSt
     : OasStubGuiceConfiguration {
     companion object {
         @JvmStatic
-        fun builder(): WebConfigurationBuilder = WebConfigurationBuilder()
+        fun builder() = WebConfigurationBuilder()
     }
 
-    open class WebConfigurationBuilder: OasStubGuiceConfiguration.Builder<OasStubGuiceWebConfiguration, WebConfigurationBuilder> {
+    @Suppress("UNCHECKED_CAST") // Unfortunately we need to put this :(
+    open class WebConfigurationBuilder<T: WebConfigurationBuilder<T>>: OasStubGuiceConfiguration.Builder<OasStubGuiceWebConfiguration, T> {
         var oasStubConfiguration: OasStubConfiguration = OasStubConfiguration()
             private set
         var sessionStorageModule: OasStubSessionStorageModule = OasStubInMemorySessionStorageModule()
@@ -50,21 +52,21 @@ open class OasStubGuiceWebConfiguration(override val oasStubConfiguration: OasSt
         var resourceConfigCustomizers: Set<ResourceConfigCustomizer> = setOf()
             private set
 
-        override fun oasStubConfiguration(oasStubConfiguration: OasStubConfiguration) = apply {
+        override fun oasStubConfiguration(oasStubConfiguration: OasStubConfiguration): T = apply {
             this.oasStubConfiguration = oasStubConfiguration
-        }
+        } as T
 
-        override fun sessionStorageModule(sessionStorageModule: OasStubSessionStorageModule) = apply {
+        override fun sessionStorageModule(sessionStorageModule: OasStubSessionStorageModule): T = apply {
             this.sessionStorageModule = sessionStorageModule
-        }
+        } as T
 
-        override fun persistentStorageModule(persistentStorageModule: OasStubPersistentStorageModule) = apply {
+        override fun persistentStorageModule(persistentStorageModule: OasStubPersistentStorageModule): T = apply {
             this.persistentStorageModule = persistentStorageModule
-        }
+        } as T
 
-        override fun resourceConfigCustomizers(resourceConfigCustomizers: Set<ResourceConfigCustomizer>) = apply {
+        override fun resourceConfigCustomizers(resourceConfigCustomizers: Set<ResourceConfigCustomizer>): T = apply {
             this.resourceConfigCustomizers = resourceConfigCustomizers
-        }
+        } as T
 
         open fun build() = OasStubGuiceWebConfiguration(
             oasStubConfiguration,
@@ -90,7 +92,7 @@ class OasStubGuiceServerConfiguration(val jettyServerSupplier: JettyServerSuppli
         fun builder(): ServerConfigurationBuilder = ServerConfigurationBuilder()
     }
 
-    class ServerConfigurationBuilder: WebConfigurationBuilder() {
+    class ServerConfigurationBuilder: WebConfigurationBuilder<ServerConfigurationBuilder>() {
         private var jettyServerSupplier: JettyServerSupplier = defaultJettyServerSupplier
         private var serverConnectors: List<OasStubServerConnectorConfiguration> = listOf(OasStubServerConnectorConfiguration("default"))
         private var jettyWebAppContextCustomizer: JettyWebAppContextCustomizer = JettyWebAppContextCustomizer { }
