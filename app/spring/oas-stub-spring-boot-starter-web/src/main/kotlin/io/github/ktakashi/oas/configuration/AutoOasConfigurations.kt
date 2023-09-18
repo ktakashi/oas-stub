@@ -2,7 +2,6 @@ package io.github.ktakashi.oas.configuration
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.ktakashi.oas.controllers.GenericExceptionMapper
 import io.github.ktakashi.oas.engine.apis.API_PATH_NAME_QUALIFIER
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiContentDecider
@@ -24,7 +23,7 @@ import io.github.ktakashi.oas.engine.plugins.PluginCompiler
 import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.plugins.groovy.GroovyPluginCompiler
 import io.github.ktakashi.oas.engine.storages.StorageService
-import io.github.ktakashi.oas.openapi.OAS_APPLICATION_PATH_CONFIG
+import io.github.ktakashi.oas.jersey.OasStubResourceConfig
 import io.github.ktakashi.oas.services.DefaultExecutorProvider
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -32,24 +31,9 @@ import io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemoryPersi
 import io.github.ktakashi.oas.storages.inmemory.configurations.AutoInMemorySessionStorageConfiguration
 import io.github.ktakashi.oas.web.annotations.Admin
 import io.github.ktakashi.oas.web.aspects.DelayableAspect
-import io.github.ktakashi.oas.web.rests.ApiController
-import io.github.ktakashi.oas.web.rests.ContextConfigurationsController
-import io.github.ktakashi.oas.web.rests.ContextController
-import io.github.ktakashi.oas.web.rests.ContextDataController
-import io.github.ktakashi.oas.web.rests.ContextDelayController
-import io.github.ktakashi.oas.web.rests.ContextHeadersController
-import io.github.ktakashi.oas.web.rests.ContextOptionsController
-import io.github.ktakashi.oas.web.rests.DataConfigurationsController
-import io.github.ktakashi.oas.web.rests.DelayConfigurationsController
-import io.github.ktakashi.oas.web.rests.HeadersConfigurationsController
-import io.github.ktakashi.oas.web.rests.MetricsController
-import io.github.ktakashi.oas.web.rests.OptionsConfigurationsController
-import io.github.ktakashi.oas.web.rests.PluginConfigurationsController
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
-import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource
 import org.glassfish.jersey.server.ResourceConfig
-import org.glassfish.jersey.server.ServerProperties
 import org.springdoc.core.properties.SwaggerUiConfigParameters
 import org.springdoc.core.properties.SwaggerUiConfigProperties
 import org.springdoc.webmvc.ui.SwaggerConfig
@@ -185,29 +169,7 @@ class AutoOasWebConfiguration(private val oasApplicationServletProperties: OasAp
 
     @Bean
     @ConditionalOnMissingBean
-    fun resourceConfig() = ResourceConfig().apply {
-        register(ApiController::class.java)
-        register(ContextController::class.java)
-        register(ContextOptionsController::class.java)
-        register(ContextConfigurationsController::class.java)
-        register(ContextHeadersController::class.java)
-        register(ContextDataController::class.java)
-        register(ContextDelayController::class.java)
-
-        register(PluginConfigurationsController::class.java)
-        register(HeadersConfigurationsController::class.java)
-        register(OptionsConfigurationsController::class.java)
-        register(DataConfigurationsController::class.java)
-        register(DelayConfigurationsController::class.java)
-
-        register(MetricsController::class.java)
-
-        register(GenericExceptionMapper::class.java)
-
-        property(ServerProperties.LOCATION_HEADER_RELATIVE_URI_RESOLUTION_DISABLED, true)
-        property(OAS_APPLICATION_PATH_CONFIG, oasApplicationServletProperties.adminPrefix)
-        register(OpenApiResource::class.java)
-    }
+    fun resourceConfig() = OasStubResourceConfig(oasApplicationServletProperties.adminPrefix)
 
     override fun configurePathMatch(configurer: PathMatchConfigurer) {
         super.configurePathMatch(configurer)
