@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.cucumber.glue
+package io.github.ktakashi.oas.test.cucumber
 
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.Before
@@ -6,20 +6,8 @@ import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
-import io.cucumber.spring.CucumberContextConfiguration
-import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
-import io.github.ktakashi.oas.cucumber.context.TestContext
-import io.github.ktakashi.oas.maybeContent
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
-import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_PERSISTENT
-import io.github.ktakashi.oas.storages.apis.conditions.OAS_STUB_STORAGE_TYPE_SESSION
-import io.github.ktakashi.oas.storages.hazelcast.HazelcastPersistentStorage
-import io.github.ktakashi.oas.storages.hazelcast.HazelcastSessionStorage
-import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
-import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
-import io.github.ktakashi.oas.storages.mongodb.MongodbPersistentStorage
-import io.github.ktakashi.oas.storages.mongodb.MongodbSessionStorage
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
@@ -27,7 +15,11 @@ import io.restassured.filter.log.ResponseLoggingFilter
 import io.restassured.http.ContentType
 import io.restassured.http.Header
 import io.restassured.http.Headers
+import io.restassured.response.Response
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import java.net.URI
+import java.util.function.Supplier
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
 import org.apache.http.client.ClientProtocolException
@@ -39,24 +31,27 @@ import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.web.util.UriComponentsBuilder
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@CucumberContextConfiguration
-@EnableAutoConfiguration
-@DirtiesContext
-class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int,
-                      private val persistentStorage: PersistentStorage,
-                      private val sessionStorage: SessionStorage,
-                      private val oasApplicationServletProperties: OasApplicationServletProperties,
-                      @Value("\${${OAS_STUB_STORAGE_TYPE_PERSISTENT}:inmemory}") private val persistentStorageType: String,
-                      @Value("\${${OAS_STUB_STORAGE_TYPE_SESSION}:inmemory}") private val sessionStorageType: String) {
-    private lateinit var testContext: TestContext
 
+data class TestContext(var applicationUrl: String,
+                       var prefix: String,
+                       var adminPrefix: String,
+                       var apiDefinitionPath: String = "",
+                       var apiName: String = "",
+                       var headers: MutableList<Header> = mutableListOf(),
+                       var response: Response? = null,
+                       var responseTime: Long? = null)
+
+fun interface TestContextSupplier: Supplier<TestContext>
+
+@Singleton
+class StepDefinitions
+@Inject constructor(private val persistentStorage: PersistentStorage,
+                    private val sessionStorage: SessionStorage,
+                    private val testContextSupplier: TestContextSupplier) {
+
+    private lateinit var testContext: TestContext
     companion object {
         init {
             RestAssured.filters(RequestLoggingFilter(), ResponseLoggingFilter())
@@ -65,7 +60,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     @Before
     fun setup() {
-        testContext = TestContext("http://localhost:$localPort", oasApplicationServletProperties.prefix)
+        testContext = testContextSupplier.get()
         sessionStorage.clearApiMetrics()
     }
 
@@ -99,7 +94,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
 
     private fun createAPI(context: String, configurations: String, contentType: ContentType) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix).pathSegment(context)
+                .path(testContext.adminPrefix).pathSegment(context)
                 .build().toUri()
         val response = given().contentType(contentType)
                 .body(maybeContent(configurations))
@@ -113,7 +108,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @When("I delete the API definition")
     fun `I delete {string} API definition`() {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix).pathSegment(testContext.apiName)
+                .path(testContext.adminPrefix).pathSegment(testContext.apiName)
                 .build().toUri()
         testContext.response = given().delete(uri)
     }
@@ -122,7 +117,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     fun `I update {string} API definition with {string} via {string}`(value: String, path: String, contentType: String) {
         val adminApi = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix)
+                .path(testContext.adminPrefix)
                 .pathSegment(testContext.apiName)
                 .path(adminApi.path)
                 .query(adminApi.query)
@@ -136,7 +131,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     fun iGetApiDefinitionVia(path: String) {
         val adminApi = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix)
+                .path(testContext.adminPrefix)
                 .pathSegment(testContext.apiName)
                 .path(adminApi.path)
                 .query(adminApi.query)
@@ -147,7 +142,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @And("I get metrics of {string}")
     fun `I get metrics via {string}`(context: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-            .path(oasApplicationServletProperties.adminPrefix)
+            .path(testContext.adminPrefix)
             .pathSegment("metrics", context)
             .build()
             .toUri()
@@ -157,7 +152,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @And("I update API {string} with {string} via {string} of content type {string}")
     fun `I update API {string} with {string} via {string}`(api: String, value: String, path: String, contentType: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix)
+                .path(testContext.adminPrefix)
                 .pathSegment(testContext.apiName, "configurations")
                 .path(path)
                 .queryParam("api", api)
@@ -170,7 +165,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @And("I delete API {string} via {string}")
     fun `I delete API {string} via {string}`(api: String, path: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(oasApplicationServletProperties.adminPrefix)
+                .path(testContext.adminPrefix)
                 .pathSegment(testContext.apiName, "configurations")
                 .path(path)
                 .queryParam("api", api)
@@ -181,7 +176,7 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
     @Then("I delete all metrics")
     fun iDeleteAllMetrics() {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-            .path(oasApplicationServletProperties.adminPrefix)
+            .path(testContext.adminPrefix)
             .pathSegment("metrics")
             .build()
             .toUri()
@@ -285,21 +280,21 @@ class StepDefinitions(@Value("\${local.server.port}") private val localPort: Int
         val responseTime = testContext.responseTime?: throw IllegalStateException("No response time")
         assertTrue(responseTime > durationUnit.toTimeUnit().toMillis(duration)) { "Reading entire response must take more than $duration$unit" }
     }
-
-    @Then("I have proper storages")
-    fun `I have proper storages`() {
-        println("$persistentStorageType = $persistentStorage")
-        when (persistentStorageType) {
-            "hazelcast" -> assertTrue(persistentStorage is HazelcastPersistentStorage)
-            "mongodb" -> assertTrue(persistentStorage is MongodbPersistentStorage)
-            else -> assertTrue(persistentStorage is InMemoryPersistentStorage)
-        }
-
-        println("$sessionStorageType = $sessionStorage")
-        when (sessionStorageType) {
-            "hazelcast" -> assertTrue(sessionStorage is HazelcastSessionStorage)
-            "mongodb" -> assertTrue(sessionStorage is MongodbSessionStorage)
-            else -> assertTrue(sessionStorage is InMemorySessionStorage)
-        }
-    }
 }
+
+private fun maybeContent(content: String?) = content?.let {
+    if (content.isNotEmpty()) {
+        fromClassPathOrContent(content)
+    } else null
+}
+
+private fun fromClassPathOrContent(content: String): ByteArray =
+    if (content.startsWith("classpath:")) {
+        readContent(content.substring("classpath:".length)).toByteArray()
+    } else {
+        content.toByteArray()
+    }
+
+private class Dummy
+private fun readContent(path: String) = Dummy::class.java.getResourceAsStream(path)?.reader()?.buffered()?.use { it.readText() }
+    ?: throw IllegalArgumentException("$path doesn't exist")

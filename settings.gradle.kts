@@ -34,3 +34,5 @@ include(":app:spring:oas-stub-spring")
 include(":app:guice:oas-stub-storage-guice-module-api")
 include(":app:guice:oas-stub-guice-module")
 include(":app:guice:oas-stub-hazelcast-storage-guice-module")
+
+include(":test:cucumber-test")

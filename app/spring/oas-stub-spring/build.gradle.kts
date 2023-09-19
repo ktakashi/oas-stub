@@ -24,6 +24,7 @@ dependencies {
         exclude(group = "com.fasterxml.jackson.module")
     }
 
+    testImplementation(project(":test:cucumber-test"))
     testImplementation(libs.hazelcast)
     testImplementation(libs.mongodb.driver.sync)
     testImplementation(enforcedPlatform(libs.cucumber.bom))

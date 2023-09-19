@@ -1,7 +1,6 @@
 plugins {
     `java-library`
      id(libs.plugins.kotlin.jvm.get().pluginId)
-    alias(libs.plugins.kotlin.spring)
     id("io.github.ktakashi.oas.conventions")
     id("io.github.ktakashi.oas.deployed")
 }

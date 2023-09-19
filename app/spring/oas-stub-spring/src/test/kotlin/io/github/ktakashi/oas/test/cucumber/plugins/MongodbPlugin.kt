@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.cucumber.plugins
+package io.github.ktakashi.oas.test.cucumber.plugins
 
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.transitions.Mongod

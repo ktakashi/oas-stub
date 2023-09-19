@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.cucumber.plugins
+package io.github.ktakashi.oas.test.cucumber.plugins
 
 import io.cucumber.plugin.EventListener
 import io.cucumber.plugin.event.EventPublisher
