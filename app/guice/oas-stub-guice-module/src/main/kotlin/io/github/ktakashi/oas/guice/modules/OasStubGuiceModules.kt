@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.google.inject.AbstractModule
 import com.google.inject.Injector
 import com.google.inject.Key
-import com.google.inject.Module
 import com.google.inject.multibindings.Multibinder
 import com.google.inject.name.Names
 import com.google.inject.servlet.ServletModule
@@ -45,6 +44,8 @@ import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
 import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.guice.services.DefaultExecutorProvider
+import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModule
+import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModule
 import io.github.ktakashi.oas.jersey.OAS_APPLICATION_PATH_CONFIG
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
@@ -54,8 +55,6 @@ import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
 
-interface OasStubSessionStorageModule: Module
-interface OasStubPersistentStorageModule: Module
 
 class OasStubInMemorySessionStorageModule: AbstractModule(), OasStubSessionStorageModule {
     override fun configure() {

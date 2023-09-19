@@ -6,7 +6,6 @@ import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
-import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
 import io.github.ktakashi.oas.guice.injector.createInjector
 import io.github.ktakashi.oas.guice.injector.createServerInjector
 import io.github.ktakashi.oas.guice.injector.createWebInjector

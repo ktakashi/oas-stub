@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.guice.services
 
-import io.github.ktakashi.oas.guice.configurations.OasStubConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import jakarta.annotation.PreDestroy

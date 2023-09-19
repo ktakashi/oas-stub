@@ -11,9 +11,11 @@ description = "OAS stub Guice modules"
 
 dependencies {
     implementation(project(":app:jersey:oas-stub-jersey-resource"))
+    implementation(project(":app:guice:oas-stub-storage-guice-module-api"))
     implementation(project(":lib:oas-stub-engine"))
     implementation(project(":lib:oas-stub-web"))
     implementation(project(":lib:storages:oas-stub-inmemory-storage"))
+
     implementation(libs.guice.core)
     implementation(libs.guice.servlet)
     implementation(libs.guice.bridge)
