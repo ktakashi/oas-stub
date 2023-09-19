@@ -2,8 +2,8 @@ package io.github.ktakashi.oas.guice.configurations
 
 import io.github.ktakashi.oas.guice.modules.OasStubInMemoryPersistentStorageModule
 import io.github.ktakashi.oas.guice.modules.OasStubInMemorySessionStorageModule
-import io.github.ktakashi.oas.guice.modules.OasStubPersistentStorageModule
-import io.github.ktakashi.oas.guice.modules.OasStubSessionStorageModule
+import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModule
+import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModule
 import org.eclipse.jetty.server.HttpConfiguration
 
 data class OasStubConfiguration(
