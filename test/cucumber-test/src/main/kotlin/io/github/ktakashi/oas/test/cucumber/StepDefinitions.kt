@@ -123,7 +123,7 @@ class StepDefinitions
                 .query(adminApi.query)
                 .build().toUri()
         testContext.response = given().contentType(contentType)
-                .body(maybeContent(value))
+                .body(maybeContent(value)?.let(::String))
                 .put(uri)
     }
 

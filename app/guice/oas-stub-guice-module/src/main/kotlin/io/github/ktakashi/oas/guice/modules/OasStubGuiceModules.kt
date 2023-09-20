@@ -52,6 +52,7 @@ import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
+import io.github.ktakashi.oas.web.aspects.DelayableAspect
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
 
@@ -145,6 +146,8 @@ class OasStubGuiceWebModule(private val configuration: OasStubGuiceConfiguration
 
         bind(ExecutorProvider::class.java).to(DefaultExecutorProvider::class.java)
         bindConstant().annotatedWith(Names.named(OAS_APPLICATION_PATH_CONFIG)).to(configuration.oasStubConfiguration.adminPrefix)
+
+        requestInjection(DelayableAspect::class.java)
     }
 }
 

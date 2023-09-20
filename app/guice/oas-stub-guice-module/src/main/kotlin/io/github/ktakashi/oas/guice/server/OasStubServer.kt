@@ -51,7 +51,6 @@ class OasStubServer(private val configuration: OasStubGuiceServerConfiguration,
         }
 
         val webAppContext = WebAppContext().apply {
-            configuration.jettyWebAppContextCustomizer.customize(this)
             this.server = this@OasStubServer.server
             addFilter(GuiceFilter::class.java, "/*", EnumSet.allOf(DispatcherType::class.java))
             addServlet(holder, "${configuration.oasStubConfiguration.adminPrefix}/*")
@@ -60,6 +59,7 @@ class OasStubServer(private val configuration: OasStubGuiceServerConfiguration,
             addEventListener(object: GuiceServletContextListener() {
                 override fun getInjector(): Injector = injectorSupplier.get()
             })
+            configuration.jettyWebAppContextCustomizer.customize(this)
         }
         setHandler(server, webAppContext)
     }

@@ -1,0 +1,8 @@
+<aspectj>
+    <aspects>
+        <aspect name="io.github.ktakashi.oas.web.aspects.DelayableAspect" />
+        <weaver>
+            <include within="io.github.ktakashi.oas.web.aspects.*" />
+        </weaver>
+    </aspects>
+</aspectj>
