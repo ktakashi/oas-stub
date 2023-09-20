@@ -1,6 +1,9 @@
 package io.github.ktakashi.oas.guice.modules
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.inject.AbstractModule
 import com.google.inject.Injector
 import com.google.inject.Key
@@ -42,6 +45,7 @@ import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
 import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.guice.services.DefaultExecutorProvider
 import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModule
@@ -76,6 +80,11 @@ class OasStubGuiceEngineModule(private val configuration: OasStubGuiceConfigurat
     override fun configure() {
         install(configuration.sessionStorageModule)
         install(configuration.persistentStorageModule)
+        val jacksonBuilder = JsonMapper.builder()
+            .addModules(KotlinModule.Builder().build())
+        configuration.objectMapperBuilderCustomizer.customize(jacksonBuilder)
+        bind(ObjectMapper::class.java).toInstance(jacksonBuilder.build())
+
         bind(OasStubGuiceConfiguration::class.java).toInstance(configuration)
         bind(ParsingService::class.java)
         bind(StorageService::class.java)
@@ -133,17 +142,18 @@ class OasStubGuiceEngineModule(private val configuration: OasStubGuiceConfigurat
 
 }
 
-class OasStubGuiceServletModule(private val configuration: OasStubGuiceConfiguration): ServletModule() {
+class OasStubGuiceServletModule(private val configuration: OasStubGuiceWebConfiguration): ServletModule() {
     override fun configureServlets() {
         serve("${configuration.oasStubConfiguration.servletPrefix}/*").with(OasDispatchServlet::class.java)
     }
 }
 
-class OasStubGuiceWebModule(private val configuration: OasStubGuiceConfiguration): AbstractModule() {
+class OasStubGuiceWebModule(private val configuration: OasStubGuiceWebConfiguration): AbstractModule() {
     override fun configure() {
         install(OasStubGuiceServletModule(configuration))
         install(OasStubGuiceEngineModule(configuration))
 
+        bind(OasStubGuiceWebConfiguration::class.java).toInstance(configuration)
         bind(ExecutorProvider::class.java).to(DefaultExecutorProvider::class.java)
         bindConstant().annotatedWith(Names.named(OAS_APPLICATION_PATH_CONFIG)).to(configuration.oasStubConfiguration.adminPrefix)
 

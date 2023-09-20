@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.jersey.inject.hk2)
     implementation(libs.jersey.media.json.jackson)
     implementation(libs.jackson.databind.core)
+    implementation(libs.jackson.module.kotlin)
 
     testImplementation(project(":test:cucumber-test"))
     testImplementation(project(":app:guice:oas-stub-hazelcast-storage-guice-module"))

@@ -4,7 +4,6 @@ import com.google.inject.Injector
 import io.github.ktakashi.oas.jersey.OAS_APPLICATION_PATH_CONFIG
 import io.github.ktakashi.oas.jersey.OasStubResourceConfig
 import jakarta.inject.Inject
-import jakarta.inject.Named
 import jakarta.servlet.ServletContext
 import org.glassfish.hk2.api.ServiceLocator
 import org.glassfish.jersey.server.ResourceConfig
@@ -25,7 +24,7 @@ class OasStubGuiceResourceConfig
         val guiceBridge = serviceLocator.getService(GuiceIntoHK2Bridge::class.java)
         guiceBridge.bridgeGuiceInjector(injector)
 
-        val config = injector.getInstance(OasStubGuiceConfiguration::class.java)
+        val config = injector.getInstance(OasStubGuiceWebConfiguration::class.java)
         config.resourceConfigCustomizers.forEach { customizer -> customizer.customize(this) }
         super.property(OAS_APPLICATION_PATH_CONFIG, config.oasStubConfiguration.adminPrefix)
     }
