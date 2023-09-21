@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.guice.configurations
 
+import com.fasterxml.jackson.databind.json.JsonMapper
 import io.github.ktakashi.oas.guice.modules.OasStubInMemoryPersistentStorageModule
 import io.github.ktakashi.oas.guice.modules.OasStubInMemorySessionStorageModule
 import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModule
@@ -12,36 +13,26 @@ data class OasStubConfiguration(
     val parallelism: Int = Runtime.getRuntime().availableProcessors()
 )
 
-interface OasStubGuiceConfiguration {
-    val oasStubConfiguration: OasStubConfiguration
-    val sessionStorageModule: OasStubSessionStorageModule
-    val persistentStorageModule: OasStubPersistentStorageModule
-    val resourceConfigCustomizers: Set<ResourceConfigCustomizer>
-
-    interface Builder<T: OasStubGuiceConfiguration, U: Builder<T, U>> {
-        fun oasStubConfiguration(oasStubConfiguration: OasStubConfiguration): U
-
-        fun sessionStorageModule(sessionStorageModule: OasStubSessionStorageModule): U
-
-        fun persistentStorageModule(persistentStorageModule: OasStubPersistentStorageModule): U
-
-        fun resourceConfigCustomizers(resourceConfigCustomizers: Set<ResourceConfigCustomizer>): U
-
-    }
+fun interface ObjectMapperBuilderCustomizer {
+    fun customize(jacksonBuilder: JsonMapper.Builder)
 }
 
-open class OasStubGuiceWebConfiguration(override val oasStubConfiguration: OasStubConfiguration,
-                                        override val sessionStorageModule: OasStubSessionStorageModule,
-                                        override val persistentStorageModule: OasStubPersistentStorageModule,
-                                        override val resourceConfigCustomizers: Set<ResourceConfigCustomizer>)
-    : OasStubGuiceConfiguration {
+open class OasStubGuiceConfiguration
+private constructor(val oasStubConfiguration: OasStubConfiguration,
+                    val sessionStorageModule: OasStubSessionStorageModule,
+                    val persistentStorageModule: OasStubPersistentStorageModule,
+                    val objectMapperBuilderCustomizer: ObjectMapperBuilderCustomizer) {
+
+    constructor(builder: EngineConfigurationBuilder<*>) : this(builder.oasStubConfiguration, builder.sessionStorageModule, builder.persistentStorageModule, builder.objectMapperBuilderCustomizer)
+
     companion object {
         @JvmStatic
-        fun builder() = WebConfigurationBuilder()
+        fun builder() = EngineConfigurationBuilder()
     }
+    interface Builder<T: OasStubGuiceConfiguration, U: Builder<T, U>>
 
     @Suppress("UNCHECKED_CAST") // Unfortunately we need to put this :(
-    open class WebConfigurationBuilder<T: WebConfigurationBuilder<T>>: OasStubGuiceConfiguration.Builder<OasStubGuiceWebConfiguration, T> {
+    open class EngineConfigurationBuilder<T: EngineConfigurationBuilder<T>>: Builder<OasStubGuiceConfiguration, EngineConfigurationBuilder<T>> {
         var oasStubConfiguration: OasStubConfiguration = OasStubConfiguration()
             private set
         var sessionStorageModule: OasStubSessionStorageModule = OasStubInMemorySessionStorageModule()
@@ -49,53 +40,73 @@ open class OasStubGuiceWebConfiguration(override val oasStubConfiguration: OasSt
         var persistentStorageModule: OasStubPersistentStorageModule = OasStubInMemoryPersistentStorageModule()
             private set
 
-        var resourceConfigCustomizers: Set<ResourceConfigCustomizer> = setOf()
-            private set
+        var objectMapperBuilderCustomizer: ObjectMapperBuilderCustomizer = ObjectMapperBuilderCustomizer {  }
 
-        override fun oasStubConfiguration(oasStubConfiguration: OasStubConfiguration): T = apply {
+        fun oasStubConfiguration(oasStubConfiguration: OasStubConfiguration): T = apply {
             this.oasStubConfiguration = oasStubConfiguration
         } as T
 
-        override fun sessionStorageModule(sessionStorageModule: OasStubSessionStorageModule): T = apply {
+        fun sessionStorageModule(sessionStorageModule: OasStubSessionStorageModule): T = apply {
             this.sessionStorageModule = sessionStorageModule
         } as T
 
-        override fun persistentStorageModule(persistentStorageModule: OasStubPersistentStorageModule): T = apply {
+        fun persistentStorageModule(persistentStorageModule: OasStubPersistentStorageModule): T = apply {
             this.persistentStorageModule = persistentStorageModule
         } as T
 
-        override fun resourceConfigCustomizers(resourceConfigCustomizers: Set<ResourceConfigCustomizer>): T = apply {
+        fun objectMapperBuilderCustomizer(objectMapperBuilderCustomizer: ObjectMapperBuilderCustomizer): T = apply {
+            this.objectMapperBuilderCustomizer = objectMapperBuilderCustomizer
+        } as T
+
+        open fun build() = OasStubGuiceConfiguration(this)
+    }
+
+}
+
+open class OasStubGuiceWebConfiguration
+private constructor(builder: EngineConfigurationBuilder<*>,
+                    val resourceConfigCustomizers: Set<ResourceConfigCustomizer>)
+    : OasStubGuiceConfiguration(builder) {
+    constructor(builder: WebConfigurationBuilder<*>): this(builder, builder.resourceConfigCustomizers)
+    companion object {
+        @JvmStatic
+        fun builder() = WebConfigurationBuilder()
+    }
+
+    @Suppress("UNCHECKED_CAST") // Unfortunately we need to put this :(
+    open class WebConfigurationBuilder<T: WebConfigurationBuilder<T>>: EngineConfigurationBuilder<T>() {
+        var resourceConfigCustomizers: Set<ResourceConfigCustomizer> = setOf()
+            private set
+
+        fun resourceConfigCustomizers(resourceConfigCustomizers: Set<ResourceConfigCustomizer>): T = apply {
             this.resourceConfigCustomizers = resourceConfigCustomizers
         } as T
 
-        open fun build() = OasStubGuiceWebConfiguration(
-            oasStubConfiguration,
-            sessionStorageModule,
-            persistentStorageModule,
-            resourceConfigCustomizers
-        )
+        override fun build() = OasStubGuiceWebConfiguration(this)
     }
 }
 
 data class OasStubServerConnectorConfiguration(val name: String, val host: String = "0.0.0.0", val port: Int = 0, val httpConfiguration: HttpConfiguration = HttpConfiguration())
 
-class OasStubGuiceServerConfiguration(val jettyServerSupplier: JettyServerSupplier,
+class OasStubGuiceServerConfiguration(builder: ServerConfigurationBuilder,
+                                      val jettyServerSupplier: JettyServerSupplier,
                                       val serverConnectors: List<OasStubServerConnectorConfiguration>,
-                                      val jettyWebAppContextCustomizer: JettyWebAppContextCustomizer,
-                                      oasStubConfiguration: OasStubConfiguration,
-                                      sessionStorageModule: OasStubSessionStorageModule,
-                                      persistentStorageModule: OasStubPersistentStorageModule,
-                                      resourceConfigCustomizers: Set<ResourceConfigCustomizer>)
-    : OasStubGuiceWebConfiguration(oasStubConfiguration, sessionStorageModule, persistentStorageModule, resourceConfigCustomizers) {
+                                      val jettyWebAppContextCustomizers: Set<JettyWebAppContextCustomizer>)
+    : OasStubGuiceWebConfiguration(builder) {
+    constructor(builder: ServerConfigurationBuilder): this(builder, builder.jettyServerSupplier, builder.serverConnectors, builder.jettyWebAppContextCustomizers)
+
     companion object {
         @JvmStatic
         fun builder(): ServerConfigurationBuilder = ServerConfigurationBuilder()
     }
 
     class ServerConfigurationBuilder: WebConfigurationBuilder<ServerConfigurationBuilder>() {
-        private var jettyServerSupplier: JettyServerSupplier = defaultJettyServerSupplier
-        private var serverConnectors: List<OasStubServerConnectorConfiguration> = listOf(OasStubServerConnectorConfiguration("default"))
-        private var jettyWebAppContextCustomizer: JettyWebAppContextCustomizer = JettyWebAppContextCustomizer { }
+        var jettyServerSupplier: JettyServerSupplier = defaultJettyServerSupplier
+            private set
+        var serverConnectors: List<OasStubServerConnectorConfiguration> = listOf(OasStubServerConnectorConfiguration("default"))
+            private set
+        var jettyWebAppContextCustomizers: Set<JettyWebAppContextCustomizer> = setOf()
+            private set
 
         fun jettyServerSupplier(jettyServerSupplier: JettyServerSupplier) = apply {
             this.jettyServerSupplier = jettyServerSupplier
@@ -105,18 +116,10 @@ class OasStubGuiceServerConfiguration(val jettyServerSupplier: JettyServerSuppli
             this.serverConnectors = serverConnectors
         }
 
-        fun jettyWebAppContextCustomizer(jettyWebAppContextCustomizer: JettyWebAppContextCustomizer) = apply {
-            this.jettyWebAppContextCustomizer = jettyWebAppContextCustomizer
+        fun jettyWebAppContextCustomizers(jettyWebAppContextCustomizers: Set<JettyWebAppContextCustomizer>) = apply {
+            this.jettyWebAppContextCustomizers = jettyWebAppContextCustomizers
         }
 
-        override fun build() = OasStubGuiceServerConfiguration(
-            jettyServerSupplier,
-            serverConnectors,
-            jettyWebAppContextCustomizer,
-            oasStubConfiguration,
-            sessionStorageModule,
-            persistentStorageModule,
-            resourceConfigCustomizers
-        )
+        override fun build() = OasStubGuiceServerConfiguration(this)
     }
 }

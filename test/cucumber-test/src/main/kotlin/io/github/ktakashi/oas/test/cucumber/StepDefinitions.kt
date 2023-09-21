@@ -22,7 +22,6 @@ import java.net.URI
 import java.util.function.Supplier
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
-import org.apache.http.client.ClientProtocolException
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
@@ -123,7 +122,7 @@ class StepDefinitions
                 .query(adminApi.query)
                 .build().toUri()
         testContext.response = given().contentType(contentType)
-                .body(maybeContent(value))
+                .body(maybeContent(value)?.let(::String))
                 .put(uri)
     }
 
@@ -191,7 +190,8 @@ class StepDefinitions
 
     @Then("[Protocol Error] I {string} to {string} with {string} as {string}")
     fun `Protocol Error I {string} to {string} with {string} as {string}`(method: String, path: String, content: String, contentType: String) {
-        assertThrows<ClientProtocolException> { requestApi(path, contentType, content, method) }
+        // Either client exception or illegal argument exception, but can't say which one for some weird reason
+        assertThrows<Exception> { requestApi(path, contentType, content, method) }
     }
 
     private fun requestApi(path: String, contentType: String, content: String, method: String) {

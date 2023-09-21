@@ -186,7 +186,7 @@ class DefaultApiService
 
     private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext): ResponseContext = if (requestContext.apiOptions?.failure != null) {
         when (val f = requestContext.apiOptions.failure) {
-            is ApiProtocolFailure -> DefaultResponseContext(-1)
+            is ApiProtocolFailure -> DefaultResponseContext(1000) // mustn't return out of range of [100, 500)
             is ApiHttpError -> DefaultResponseContext(f.status, headers = responseContext.headers)
             // None, won't fail then
             else -> customizeResponse(responseContext, requestContext)

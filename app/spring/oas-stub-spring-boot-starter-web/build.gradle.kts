@@ -30,7 +30,6 @@ dependencies {
     implementation(libs.xml.bind.api)
     implementation(libs.kotlin.stdlib)
     implementation(libs.projectreactor.reactor.core)
-    implementation(libs.jackson.module.kotlin)
     implementation(libs.swagger.core.annotations.jakarta)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
 
