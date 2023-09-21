@@ -91,9 +91,9 @@ data class OasStubServerConnectorConfiguration(val name: String, val host: Strin
 class OasStubGuiceServerConfiguration(builder: ServerConfigurationBuilder,
                                       val jettyServerSupplier: JettyServerSupplier,
                                       val serverConnectors: List<OasStubServerConnectorConfiguration>,
-                                      val jettyWebAppContextCustomizer: JettyWebAppContextCustomizer)
+                                      val jettyWebAppContextCustomizers: Set<JettyWebAppContextCustomizer>)
     : OasStubGuiceWebConfiguration(builder) {
-    constructor(builder: ServerConfigurationBuilder): this(builder, builder.jettyServerSupplier, builder.serverConnectors, builder.jettyWebAppContextCustomizer)
+    constructor(builder: ServerConfigurationBuilder): this(builder, builder.jettyServerSupplier, builder.serverConnectors, builder.jettyWebAppContextCustomizers)
 
     companion object {
         @JvmStatic
@@ -105,7 +105,7 @@ class OasStubGuiceServerConfiguration(builder: ServerConfigurationBuilder,
             private set
         var serverConnectors: List<OasStubServerConnectorConfiguration> = listOf(OasStubServerConnectorConfiguration("default"))
             private set
-        var jettyWebAppContextCustomizer: JettyWebAppContextCustomizer = JettyWebAppContextCustomizer { }
+        var jettyWebAppContextCustomizers: Set<JettyWebAppContextCustomizer> = setOf()
             private set
 
         fun jettyServerSupplier(jettyServerSupplier: JettyServerSupplier) = apply {
@@ -116,8 +116,8 @@ class OasStubGuiceServerConfiguration(builder: ServerConfigurationBuilder,
             this.serverConnectors = serverConnectors
         }
 
-        fun jettyWebAppContextCustomizer(jettyWebAppContextCustomizer: JettyWebAppContextCustomizer) = apply {
-            this.jettyWebAppContextCustomizer = jettyWebAppContextCustomizer
+        fun jettyWebAppContextCustomizers(jettyWebAppContextCustomizers: Set<JettyWebAppContextCustomizer>) = apply {
+            this.jettyWebAppContextCustomizers = jettyWebAppContextCustomizers
         }
 
         override fun build() = OasStubGuiceServerConfiguration(this)

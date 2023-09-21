@@ -2,20 +2,20 @@ package io.github.ktakashi.oas.guice.cucumber
 
 import com.google.inject.AbstractModule
 import com.google.inject.Injector
-import io.github.ktakashi.oas.guice.configurations.JettyWebAppContextCustomizer
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceBridgeUtil
+import io.github.ktakashi.oas.guice.configurations.OasStubServerUtil
 import io.github.ktakashi.oas.guice.cucumber.rest.CustomController
 import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.test.cucumber.TestContext
 import io.github.ktakashi.oas.test.cucumber.TestContextSupplier
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import org.eclipse.jetty.ee10.servlet.ServletHolder
+import jakarta.servlet.ServletContext
+import org.glassfish.hk2.api.ServiceLocator
 import org.glassfish.jersey.server.ResourceConfig
-import org.glassfish.jersey.servlet.ServletContainer
 
 class CucumberTestModule: AbstractModule() {
     override fun configure() {
-
         bind(TestContextSupplier::class.java).to(GuiceTestContextSupplier::class.java)
     }
 }
@@ -29,15 +29,12 @@ class GuiceTestContextSupplier
     }
 }
 
-class CustomResourceConfig: ResourceConfig() {
+class CustomResourceConfig
+@Inject constructor(serviceLocator: ServiceLocator, servletContext: ServletContext): ResourceConfig() {
     init {
-        register(CustomController::class.java)
+        val injector = OasStubGuiceBridgeUtil.initializeGuiceBridge(serviceLocator, servletContext)
+        register(injector.getInstance(CustomController::class.java))
     }
 }
 
-internal val webAppContextCustomizer = JettyWebAppContextCustomizer { webAppContext ->
-    val holder = ServletHolder(ServletContainer::class.java).apply {
-        setInitParameter("jakarta.ws.rs.Application", CustomResourceConfig::class.java.name)
-    }
-    webAppContext.addServlet(holder, "/*")
-}
+internal val webAppContextCustomizer = OasStubServerUtil.resourceConfigServletCustomizer("/*", CustomResourceConfig::class.java)

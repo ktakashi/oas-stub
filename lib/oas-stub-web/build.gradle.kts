@@ -11,7 +11,7 @@ dependencies {
     api(project(":lib:oas-stub-engine"))
     api(libs.servlet.api)
     api(libs.ws.rs.api)
-    implementation(libs.aspectjweaver)
+    implementation(libs.aspectjrt)
     implementation(libs.slf4j.api)
     implementation(libs.kotlin.stdlib)
     implementation(libs.inject.api)

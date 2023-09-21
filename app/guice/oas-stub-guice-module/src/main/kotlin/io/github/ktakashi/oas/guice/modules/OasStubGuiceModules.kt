@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.inject.AbstractModule
-import com.google.inject.Injector
+import com.google.inject.Inject
 import com.google.inject.Key
+import com.google.inject.matcher.Matchers
 import com.google.inject.multibindings.Multibinder
 import com.google.inject.name.Names
 import com.google.inject.servlet.ServletModule
@@ -44,6 +45,7 @@ import io.github.ktakashi.oas.engine.validators.OffsetDateValidator
 import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
+import io.github.ktakashi.oas.guice.configurations.OasStubGuiceResourceConfig
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
 import io.github.ktakashi.oas.guice.server.OasStubServer
@@ -56,9 +58,12 @@ import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
+import io.github.ktakashi.oas.web.annotations.Delayable
 import io.github.ktakashi.oas.web.aspects.DelayableAspect
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
+import org.aopalliance.intercept.MethodInterceptor
+import org.aopalliance.intercept.MethodInvocation
 
 
 class OasStubInMemorySessionStorageModule: AbstractModule(), OasStubSessionStorageModule {
@@ -106,6 +111,7 @@ class OasStubGuiceEngineModule(private val configuration: OasStubGuiceConfigurat
         compiler.addBinding().to(GroovyPluginCompiler::class.java)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun configureValidators() {
         val validators = Multibinder.newSetBinder(binder(),Key.get(Types.newParameterizedType(Validator::class.java, Any::class.java))) as Multibinder<Validator<*>>
         validators.addBinding().to(FormatValidator::class.java)
@@ -157,16 +163,33 @@ class OasStubGuiceWebModule(private val configuration: OasStubGuiceWebConfigurat
         bind(ExecutorProvider::class.java).to(DefaultExecutorProvider::class.java)
         bindConstant().annotatedWith(Names.named(OAS_APPLICATION_PATH_CONFIG)).to(configuration.oasStubConfiguration.adminPrefix)
 
-        requestInjection(DelayableAspect::class.java)
+        val delayableInterceptor = DelayableInterceptor()
+        requestInjection(delayableInterceptor)
+        bindInterceptor(Matchers.any(), Matchers.annotatedWith(Delayable::class.java), delayableInterceptor)
+    }
+
+    class DelayableInterceptor: MethodInterceptor {
+        @Inject
+        lateinit var apiDelayService: ApiDelayService
+        @Inject
+        lateinit var executorProvider: ExecutorProvider
+        private val delayAspect: DelayableAspect by lazy {
+            DelayableAspect(apiDelayService, executorProvider)
+        }
+        override fun invoke(invocation: MethodInvocation): Any? {
+            val start = System.currentTimeMillis()
+            return invocation.method.annotations.firstOrNull { annotation -> annotation == Delayable::class.java }?.let { annotation ->
+                delayAspect.proceedDelay(invocation.proceed(), annotation as Delayable, start)
+            } ?: invocation.proceed()
+        }
+
     }
 }
 
 class OasStubGuiceServerModule(private val configuration: OasStubGuiceServerConfiguration): AbstractModule() {
     override fun configure() {
         install(OasStubGuiceWebModule(configuration))
-        val injectorProvider = getProvider(Injector::class.java)
-        val server = OasStubServer(configuration, injectorProvider::get)
-        bind(OasStubServer::class.java).toInstance(server)
+        bind(OasStubServer::class.java)
         bind(OasStubGuiceServerConfiguration::class.java).toInstance(configuration)
     }
 }

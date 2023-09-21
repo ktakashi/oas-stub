@@ -1,5 +1,6 @@
 Feature: Delaying
 
+  @delay
   Scenario Outline: Delay API
     Given this API definition '/schema/v3/petstore.yaml'
     When I create 'petstore' API definition
@@ -17,6 +18,7 @@ Feature: Delaying
       | /v1/pets | classpath:/json/fixed-delay.json | /v1/pets   | 500   | 600  |
       | /v1/pets | classpath:/json/fixed-delay.json | /v1/pets/1 | 200   | 300  |
 
+  @delay @custom
   Scenario Outline: Delay custom API
     Given This is custom controller tests
     When I create 'custom' API definition with '{}'

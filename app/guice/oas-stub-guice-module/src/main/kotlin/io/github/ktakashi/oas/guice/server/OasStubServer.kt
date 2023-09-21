@@ -5,9 +5,11 @@ import com.google.inject.servlet.GuiceFilter
 import com.google.inject.servlet.GuiceServletContextListener
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceResourceConfig
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
+import jakarta.inject.Inject
+import jakarta.inject.Named
+import jakarta.inject.Singleton
 import jakarta.servlet.DispatcherType
 import java.util.EnumSet
-import java.util.function.Supplier
 import org.eclipse.jetty.ee10.servlet.ServletHolder
 import org.eclipse.jetty.ee10.webapp.WebAppContext
 import org.eclipse.jetty.server.Handler
@@ -17,8 +19,10 @@ import org.eclipse.jetty.server.ServerConnector
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.glassfish.jersey.servlet.ServletContainer
 
-class OasStubServer(private val configuration: OasStubGuiceServerConfiguration,
-                    private val injectorSupplier: Supplier<Injector>) {
+@Named @Singleton
+class OasStubServer
+@Inject constructor(private val configuration: OasStubGuiceServerConfiguration,
+                    private val injector: Injector) {
     private val server: Server = configuration.jettyServerSupplier.get()
 
     init {
@@ -57,9 +61,11 @@ class OasStubServer(private val configuration: OasStubGuiceServerConfiguration,
             setBaseResourceAsString("/")
             contextPath = "/"
             addEventListener(object: GuiceServletContextListener() {
-                override fun getInjector(): Injector = injectorSupplier.get()
+                override fun getInjector(): Injector = this@OasStubServer.injector
             })
-            configuration.jettyWebAppContextCustomizer.customize(this)
+            configuration.jettyWebAppContextCustomizers.forEach { customizer ->
+                customizer.customize(injector, this)
+            }
         }
         setHandler(server, webAppContext)
     }
