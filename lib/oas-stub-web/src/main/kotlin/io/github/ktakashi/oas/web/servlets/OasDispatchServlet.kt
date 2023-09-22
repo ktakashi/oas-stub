@@ -87,14 +87,18 @@ class OasDispatchServlet
     }
 
     private fun report(context: AsyncContext, exception: Throwable?) {
-        val request = context.request as HttpServletRequest
-        val response = context.response as HttpServletResponse
-        val end = OffsetDateTime.now()
-        val start = request.getAttribute(METRICS_START_KEY) as OffsetDateTime?
-        val apiContext = request.getAttribute(API_CONTEXT_KEY) as ApiContext?
-        if (start != null && apiContext != null) {
-            val metric = ApiMetric(start, Duration.between(start, end), apiContext.apiPath, request.method, response.status, exception)
-            apiObserver.addApiMetric(apiContext.context, apiContext.apiPath, metric)
+        try {
+            val request = context.request as HttpServletRequest
+            val response = context.response as HttpServletResponse
+            val end = OffsetDateTime.now()
+            val start = request.getAttribute(METRICS_START_KEY) as OffsetDateTime?
+            val apiContext = request.getAttribute(API_CONTEXT_KEY) as ApiContext?
+            if (start != null && apiContext != null) {
+                val metric = ApiMetric(start, Duration.between(start, end), apiContext.apiPath, request.method, response.status, exception)
+                apiObserver.addApiMetric(apiContext.context, apiContext.apiPath, metric)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to add metric", e)
         }
     }
 }

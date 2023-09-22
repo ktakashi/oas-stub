@@ -73,7 +73,9 @@ class AutoHazelcastConfiguration(private val properties: HazelcastStoragePropert
             is HazelcastUsernamePasswordCredentials -> if (credentials.username != null && credentials.password != null) {
                 setCredentials(UsernamePasswordCredentials(credentials.username, credentials.password))
             }
-            else -> {}
+            else -> {
+                // do nothing
+            }
         }
 
         if (instance.name != null) {

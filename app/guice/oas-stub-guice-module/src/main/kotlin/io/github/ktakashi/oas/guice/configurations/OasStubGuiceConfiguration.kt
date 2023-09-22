@@ -3,8 +3,8 @@ package io.github.ktakashi.oas.guice.configurations
 import com.fasterxml.jackson.databind.json.JsonMapper
 import io.github.ktakashi.oas.guice.modules.OasStubInMemoryPersistentStorageModule
 import io.github.ktakashi.oas.guice.modules.OasStubInMemorySessionStorageModule
-import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModule
-import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModule
+import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModuleCreator
+import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModuleCreator
 import org.eclipse.jetty.server.HttpConfiguration
 
 data class OasStubConfiguration(
@@ -19,11 +19,11 @@ fun interface ObjectMapperBuilderCustomizer {
 
 open class OasStubGuiceConfiguration
 private constructor(val oasStubConfiguration: OasStubConfiguration,
-                    val sessionStorageModule: OasStubSessionStorageModule,
-                    val persistentStorageModule: OasStubPersistentStorageModule,
+                    val sessionStorageModuleCreator: OasStubSessionStorageModuleCreator,
+                    val persistentStorageModuleCreator: OasStubPersistentStorageModuleCreator,
                     val objectMapperBuilderCustomizer: ObjectMapperBuilderCustomizer) {
 
-    constructor(builder: EngineConfigurationBuilder<*>) : this(builder.oasStubConfiguration, builder.sessionStorageModule, builder.persistentStorageModule, builder.objectMapperBuilderCustomizer)
+    constructor(builder: EngineConfigurationBuilder<*>) : this(builder.oasStubConfiguration, builder.sessionStorageModuleCreator, builder.persistentStorageModuleCreator, builder.objectMapperBuilderCustomizer)
 
     companion object {
         @JvmStatic
@@ -35,9 +35,9 @@ private constructor(val oasStubConfiguration: OasStubConfiguration,
     open class EngineConfigurationBuilder<T: EngineConfigurationBuilder<T>>: Builder<OasStubGuiceConfiguration, EngineConfigurationBuilder<T>> {
         var oasStubConfiguration: OasStubConfiguration = OasStubConfiguration()
             private set
-        var sessionStorageModule: OasStubSessionStorageModule = OasStubInMemorySessionStorageModule()
+        var sessionStorageModuleCreator: OasStubSessionStorageModuleCreator = OasStubInMemorySessionStorageModule.CREATOR
             private set
-        var persistentStorageModule: OasStubPersistentStorageModule = OasStubInMemoryPersistentStorageModule()
+        var persistentStorageModuleCreator: OasStubPersistentStorageModuleCreator = OasStubInMemoryPersistentStorageModule.CREATOR
             private set
 
         var objectMapperBuilderCustomizer: ObjectMapperBuilderCustomizer = ObjectMapperBuilderCustomizer {  }
@@ -46,12 +46,12 @@ private constructor(val oasStubConfiguration: OasStubConfiguration,
             this.oasStubConfiguration = oasStubConfiguration
         } as T
 
-        fun sessionStorageModule(sessionStorageModule: OasStubSessionStorageModule): T = apply {
-            this.sessionStorageModule = sessionStorageModule
+        fun sessionStorageModuleCreator(sessionStorageModuleCreator: OasStubSessionStorageModuleCreator): T = apply {
+            this.sessionStorageModuleCreator = sessionStorageModuleCreator
         } as T
 
-        fun persistentStorageModule(persistentStorageModule: OasStubPersistentStorageModule): T = apply {
-            this.persistentStorageModule = persistentStorageModule
+        fun persistentStorageModuleCreator(persistentStorageModuleCreator: OasStubPersistentStorageModuleCreator): T = apply {
+            this.persistentStorageModuleCreator = persistentStorageModuleCreator
         } as T
 
         fun objectMapperBuilderCustomizer(objectMapperBuilderCustomizer: ObjectMapperBuilderCustomizer): T = apply {

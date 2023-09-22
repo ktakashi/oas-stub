@@ -43,6 +43,5 @@ dependencies {
     testImplementation(libs.groovy.xml)
     testImplementation(libs.groovy.json)
     testImplementation(libs.awaitility)
-    testImplementation(libs.flapdoodle.embed.mongo)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

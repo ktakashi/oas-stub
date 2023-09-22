@@ -20,4 +20,8 @@ dependencies {
     implementation("io.cucumber:cucumber-junit-platform-engine")
     implementation(libs.rest.assured)
     runtimeOnly("org.junit.platform:junit-platform-launcher")
+
+    implementation(libs.hazelcast)
+    implementation(libs.mongodb.driver.sync)
+    implementation(libs.flapdoodle.embed.mongo)
 }

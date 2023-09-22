@@ -11,4 +11,5 @@ description = "OAS stub storage Guice modules API"
 dependencies {
     implementation(libs.guice.core)
     implementation(libs.kotlin.stdlib)
+    implementation(libs.jackson.databind.core)
 }

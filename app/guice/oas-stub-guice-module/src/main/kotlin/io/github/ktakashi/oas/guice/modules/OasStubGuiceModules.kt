@@ -3,6 +3,8 @@ package io.github.ktakashi.oas.guice.modules
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.inject.AbstractModule
 import com.google.inject.Inject
@@ -14,30 +16,23 @@ import com.google.inject.servlet.ServletModule
 import com.google.inject.util.Types
 import io.github.ktakashi.oas.engine.apis.API_PATH_NAME_QUALIFIER
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
-import io.github.ktakashi.oas.engine.apis.ApiContentDecider
 import io.github.ktakashi.oas.engine.apis.ApiDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
-import io.github.ktakashi.oas.engine.apis.ApiPathService
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.ApiRequestBodyValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestParameterValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestPathVariableValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestSecurityValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestValidator
-import io.github.ktakashi.oas.engine.apis.ApiResultProvider
 import io.github.ktakashi.oas.engine.apis.DefaultApiService
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataPopulator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataValidator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataPopulator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataValidator
-import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
-import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
-import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.plugins.groovy.GroovyPluginCompiler
-import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.engine.validators.EmailValidator
 import io.github.ktakashi.oas.engine.validators.FormatValidator
 import io.github.ktakashi.oas.engine.validators.LocalDateValidator
@@ -45,13 +40,12 @@ import io.github.ktakashi.oas.engine.validators.OffsetDateValidator
 import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
-import io.github.ktakashi.oas.guice.configurations.OasStubGuiceResourceConfig
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
 import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.guice.services.DefaultExecutorProvider
-import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModule
-import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModule
+import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModuleCreator
+import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModuleCreator
 import io.github.ktakashi.oas.jersey.OAS_APPLICATION_PATH_CONFIG
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
@@ -66,16 +60,28 @@ import org.aopalliance.intercept.MethodInterceptor
 import org.aopalliance.intercept.MethodInvocation
 
 
-class OasStubInMemorySessionStorageModule: AbstractModule(), OasStubSessionStorageModule {
+class OasStubInMemorySessionStorageModule private constructor(): AbstractModule() {
+    companion object {
+        @JvmField
+        val CREATOR = OasStubSessionStorageModuleCreator {
+            OasStubInMemorySessionStorageModule()
+        }
+    }
     override fun configure() {
         val storage = InMemorySessionStorage()
         bind(Storage::class.java).toInstance(storage)
         bind(SessionStorage::class.java).toInstance(storage)
     }
-
 }
 
-class OasStubInMemoryPersistentStorageModule: AbstractModule(), OasStubPersistentStorageModule {
+
+class OasStubInMemoryPersistentStorageModule private constructor(): AbstractModule() {
+    companion object {
+        @JvmField
+        val CREATOR = OasStubPersistentStorageModuleCreator {
+            OasStubInMemoryPersistentStorageModule()
+        }
+    }
     override fun configure() {
         bind(PersistentStorage::class.java).to(InMemoryPersistentStorage::class.java)
     }
@@ -83,27 +89,23 @@ class OasStubInMemoryPersistentStorageModule: AbstractModule(), OasStubPersisten
 
 class OasStubGuiceEngineModule(private val configuration: OasStubGuiceConfiguration): AbstractModule() {
     override fun configure() {
-        install(configuration.sessionStorageModule)
-        install(configuration.persistentStorageModule)
         val jacksonBuilder = JsonMapper.builder()
             .addModules(KotlinModule.Builder().build())
+            .addModules(JavaTimeModule())
+            .addModules(Jdk8Module())
         configuration.objectMapperBuilderCustomizer.customize(jacksonBuilder)
-        bind(ObjectMapper::class.java).toInstance(jacksonBuilder.build())
+        val objectMapper = jacksonBuilder.build()
+        bind(ObjectMapper::class.java).toInstance(objectMapper)
+
+        install(configuration.sessionStorageModuleCreator.createSessionStorage(objectMapper))
+        install(configuration.persistentStorageModuleCreator.createPersistentStorage(objectMapper))
 
         bind(OasStubGuiceConfiguration::class.java).toInstance(configuration)
-        bind(ParsingService::class.java)
-        bind(StorageService::class.java)
-        bind(PluginService::class.java)
         configurePluginCompiler()
         configureValidators()
         bindConstant().annotatedWith(Names.named(API_PATH_NAME_QUALIFIER)).to(configuration.oasStubConfiguration.servletPrefix)
-        bind(ApiContentDecider::class.java)
-        bind(ApiDelayService::class.java)
-        bind(ApiPathService::class.java)
-        bind(ApiResultProvider::class.java)
         bind(ApiExecutionService::class.java).to(DefaultApiService::class.java)
         bind(ApiRegistrationService::class.java).to(DefaultApiService::class.java)
-        bind(ApiObserver::class.java)
     }
 
     private fun configurePluginCompiler() {
