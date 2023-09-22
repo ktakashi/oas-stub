@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.guice.configurations
 
 import com.google.inject.Injector
+import io.github.ktakashi.oas.guice.services.DelayableInterceptorBinder
 import io.github.ktakashi.oas.jersey.OAS_APPLICATION_PATH_CONFIG
 import io.github.ktakashi.oas.jersey.OasStubResourceConfig
 import jakarta.inject.Inject
@@ -18,7 +19,8 @@ fun interface ResourceConfigCustomizer {
 
 object OasStubGuiceBridgeUtil {
     @JvmStatic
-    fun initializeGuiceBridge(serviceLocator: ServiceLocator, servletContext: ServletContext): Injector {
+    fun initializeGuiceBridge(resourceConfig: ResourceConfig, serviceLocator: ServiceLocator, servletContext: ServletContext): Injector {
+        resourceConfig.register(DelayableInterceptorBinder())
         val injector = servletContext.getAttribute(Injector::class.java.name) as Injector
         GuiceBridge.getGuiceBridge().initializeGuiceBridge(serviceLocator)
         val guiceBridge = serviceLocator.getService(GuiceIntoHK2Bridge::class.java)
@@ -32,7 +34,7 @@ class OasStubGuiceResourceConfig
 @Inject constructor(serviceLocator: ServiceLocator, servletContext: ServletContext)
     : OasStubResourceConfig("dummy") {
     init {
-        val injector = OasStubGuiceBridgeUtil.initializeGuiceBridge(serviceLocator, servletContext)
+        val injector = OasStubGuiceBridgeUtil.initializeGuiceBridge(this, serviceLocator, servletContext)
 
         val config = injector.getInstance(OasStubGuiceWebConfiguration::class.java)
         config.resourceConfigCustomizers.forEach { customizer -> customizer.customize(this) }

@@ -44,6 +44,7 @@ import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfigurati
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
 import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.guice.services.DefaultExecutorProvider
+import io.github.ktakashi.oas.guice.services.DelayableInterceptor
 import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModuleCreator
 import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModuleCreator
 import io.github.ktakashi.oas.jersey.OAS_APPLICATION_PATH_CONFIG
@@ -168,23 +169,7 @@ class OasStubGuiceWebModule(private val configuration: OasStubGuiceWebConfigurat
         val delayableInterceptor = DelayableInterceptor()
         requestInjection(delayableInterceptor)
         bindInterceptor(Matchers.any(), Matchers.annotatedWith(Delayable::class.java), delayableInterceptor)
-    }
-
-    class DelayableInterceptor: MethodInterceptor {
-        @Inject
-        lateinit var apiDelayService: ApiDelayService
-        @Inject
-        lateinit var executorProvider: ExecutorProvider
-        private val delayAspect: DelayableAspect by lazy {
-            DelayableAspect(apiDelayService, executorProvider)
-        }
-        override fun invoke(invocation: MethodInvocation): Any? {
-            val start = System.currentTimeMillis()
-            return invocation.method.annotations.firstOrNull { annotation -> annotation == Delayable::class.java }?.let { annotation ->
-                delayAspect.proceedDelay(invocation.proceed(), annotation as Delayable, start)
-            } ?: invocation.proceed()
-        }
-
+        bind(DelayableInterceptor::class.java).toInstance(delayableInterceptor)
     }
 }
 

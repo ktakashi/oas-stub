@@ -32,8 +32,8 @@ class GuiceTestContextSupplier
 class CustomResourceConfig
 @Inject constructor(serviceLocator: ServiceLocator, servletContext: ServletContext): ResourceConfig() {
     init {
-        val injector = OasStubGuiceBridgeUtil.initializeGuiceBridge(serviceLocator, servletContext)
-        register(injector.getInstance(CustomController::class.java))
+        OasStubGuiceBridgeUtil.initializeGuiceBridge(this, serviceLocator, servletContext)
+        register(CustomController::class.java)
     }
 }
 
