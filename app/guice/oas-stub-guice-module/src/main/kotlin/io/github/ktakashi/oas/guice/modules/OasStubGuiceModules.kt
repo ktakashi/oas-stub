@@ -176,7 +176,6 @@ class OasStubGuiceWebModule(private val configuration: OasStubGuiceWebConfigurat
 class OasStubGuiceServerModule(private val configuration: OasStubGuiceServerConfiguration): AbstractModule() {
     override fun configure() {
         install(OasStubGuiceWebModule(configuration))
-        bind(OasStubServer::class.java)
         bind(OasStubGuiceServerConfiguration::class.java).toInstance(configuration)
     }
 }
