@@ -13,11 +13,38 @@ import org.glassfish.jersey.server.ResourceConfig
 import org.jvnet.hk2.guice.bridge.api.GuiceBridge
 import org.jvnet.hk2.guice.bridge.api.GuiceIntoHK2Bridge
 
+/**
+ * OAS Stub admin resource customizer interface.
+ *
+ * This customizer can be used to customize admin endpoints
+ * and/or add custom admin endpoints.
+ */
 fun interface ResourceConfigCustomizer {
     fun customize(resourceConfig: ResourceConfig)
 }
 
+/**
+ * Guice bridge utility
+ */
 object OasStubGuiceBridgeUtil {
+    /**
+     * Setup Guice bridge.
+     *
+     * This method sets up default interceptors such as [Delayable] annotation interceptor.
+     *
+     * This example shows how to set up custom endpoint(s)
+     *
+     * ```kotlin
+     * class CustomResourceConfig
+     * @Inject constructor(serviceLocator: ServiceLocator, servletContext: ServletContext): ResourceConfig() {
+     *     init {
+     *         OasStubGuiceBridgeUtil.initializeGuiceBridge(this, serviceLocator, servletContext)
+     *         // Register custom resources here
+     *         register(CustomController::class.java)
+     *     }
+     * }
+     * ```
+     */
     @JvmStatic
     fun initializeGuiceBridge(resourceConfig: ResourceConfig, serviceLocator: ServiceLocator, servletContext: ServletContext): Injector {
         resourceConfig.register(DelayableInterceptorBinder())

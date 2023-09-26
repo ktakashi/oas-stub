@@ -19,6 +19,13 @@ import org.eclipse.jetty.server.ServerConnector
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.glassfish.jersey.servlet.ServletContainer
 
+/**
+ * OAS Stub server.
+ *
+ * The server uses Jetty as its underlying server implementation.
+ *
+ * This server must be created via [OasStubGuiceInjectors.createServerInjector]
+ */
 @Named @Singleton
 class OasStubServer
 @Inject constructor(private val configuration: OasStubGuiceServerConfiguration,
@@ -29,14 +36,25 @@ class OasStubServer
         configure()
     }
 
+    /**
+     * Starts the server.
+     */
     fun start() {
         server.start()
     }
 
+    /**
+     * Stop the server
+     */
     fun stop() {
         server.stop()
     }
 
+    /**
+     * Returns the port number of this server.
+     *
+     * @param n specifies the connector index, default `0`
+     */
     @JvmOverloads
     fun port(n: Int = 0): Int = (server.connectors[n] as ServerConnector).localPort
 

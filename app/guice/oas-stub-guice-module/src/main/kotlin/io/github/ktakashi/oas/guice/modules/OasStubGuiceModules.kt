@@ -7,7 +7,6 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.inject.AbstractModule
-import com.google.inject.Inject
 import com.google.inject.Key
 import com.google.inject.matcher.Matchers
 import com.google.inject.multibindings.Multibinder
@@ -18,7 +17,6 @@ import io.github.ktakashi.oas.engine.apis.API_PATH_NAME_QUALIFIER
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiDataValidator
-import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.ApiRequestBodyValidator
@@ -42,7 +40,6 @@ import io.github.ktakashi.oas.engine.validators.Validator
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceWebConfiguration
-import io.github.ktakashi.oas.guice.server.OasStubServer
 import io.github.ktakashi.oas.guice.services.DefaultExecutorProvider
 import io.github.ktakashi.oas.guice.services.DelayableInterceptor
 import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModuleCreator
@@ -54,11 +51,8 @@ import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 import io.github.ktakashi.oas.web.annotations.Delayable
-import io.github.ktakashi.oas.web.aspects.DelayableAspect
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import io.github.ktakashi.oas.web.servlets.OasDispatchServlet
-import org.aopalliance.intercept.MethodInterceptor
-import org.aopalliance.intercept.MethodInvocation
 
 
 class OasStubInMemorySessionStorageModule private constructor(): AbstractModule() {
