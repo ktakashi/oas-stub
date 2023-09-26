@@ -10,6 +10,10 @@ plugins {
 group = "$group.spring"
 description = "OAS stub Spring Boot starter"
 
+tasks.dokkaHtml {
+    dependsOn(tasks.findByName("kaptKotlin"))
+}
+
 dependencies {
     api(project(":lib:oas-stub-web"))
     api(project(":app:jersey:oas-stub-jersey-resource"))

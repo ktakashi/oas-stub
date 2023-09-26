@@ -10,6 +10,10 @@ plugins {
 group = "$group.spring"
 description = "OAS stub mongodb storage starter"
 
+tasks.dokkaHtml {
+    dependsOn(tasks.findByName("kaptKotlin"))
+}
+
 dependencies {
     api(project(":app:spring:oas-stub-storage-autoconfigure-api"))
     api(project(":lib:storages:oas-stub-mongodb-storage"))
