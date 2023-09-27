@@ -73,9 +73,11 @@ mongodb-driver-sync = { group = "org.mongodb", name = "mongodb-driver-sync", ver
 # Below here, should only be used in the modules located under app/spring directory (except test libraries)
 # Spring
 # spring-boot library contains spring-core and spring-context, so we list only difficult things here
+spring-core = { group = "org.springframework", name = "spring-core", version.ref = "spring" }
 spring-web = { group = "org.springframework", name = "spring-web", version.ref = "spring" }
 
 # Spring Boot
+spring-boot-core = { group = "org.springframework.boot", name = "spring-boot", version.ref = "spring-boot" }
 spring-boot-starter-core = { group = "org.springframework.boot", name = "spring-boot-starter", version.ref = "spring-boot" }
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-starter-aop = { group = "org.springframework.boot", name = "spring-boot-starter-aop", version.ref = "spring-boot" }
