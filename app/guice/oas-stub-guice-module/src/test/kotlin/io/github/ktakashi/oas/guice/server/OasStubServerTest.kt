@@ -11,6 +11,8 @@ import io.restassured.http.ContentType
 import org.eclipse.jetty.server.Server
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -67,5 +69,14 @@ class OasStubServerTest {
             .statusCode(200)
             .body("response-id", equalTo(10001))
             .body("message", equalTo("Hello"))
+    }
+
+    @Test
+    fun stopAndStart() {
+        assertTrue(server.isRunning)
+        server.stop()
+        assertFalse(server.isRunning)
+        server.start()
+        assertTrue(server.isRunning)
     }
 }

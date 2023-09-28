@@ -51,6 +51,12 @@ class OasStubServer
     }
 
     /**
+     * Check if the server is running
+     */
+    val isRunning
+        get() = server.isRunning
+
+    /**
      * Returns the port number of this server.
      *
      * @param n specifies the connector index, default `0`
@@ -74,11 +80,13 @@ class OasStubServer
 
         val webAppContext = WebAppContext().apply {
             this.server = this@OasStubServer.server
-            addFilter(GuiceFilter::class.java, "/*", EnumSet.allOf(DispatcherType::class.java))
+            // To avoid static injection and context destruction, we retrieve single instance from injector
+            val guiceFilter = injector.getInstance(GuiceFilter::class.java)
+            addFilter(guiceFilter, "/*", EnumSet.allOf(DispatcherType::class.java))
             addServlet(holder, "${configuration.oasStubConfiguration.adminPrefix}/*")
             setBaseResourceAsString("/")
             contextPath = "/"
-            addEventListener(object: GuiceServletContextListener() {
+            addEventListener(object : GuiceServletContextListener() {
                 override fun getInjector(): Injector = this@OasStubServer.injector
             })
             configuration.jettyWebAppContextCustomizers.forEach { customizer ->
