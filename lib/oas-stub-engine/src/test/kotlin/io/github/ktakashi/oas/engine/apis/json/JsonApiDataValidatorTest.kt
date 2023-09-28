@@ -49,6 +49,7 @@ class JsonApiDataValidatorTest {
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 internal class VarargsAggregator : ArgumentsAggregator {
     @Throws(ArgumentsAggregationException::class)
     override fun aggregateArguments(accessor: ArgumentsAccessor, context: ParameterContext): Any {

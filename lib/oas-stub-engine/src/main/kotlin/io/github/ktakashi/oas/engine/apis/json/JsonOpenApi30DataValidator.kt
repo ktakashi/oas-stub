@@ -97,6 +97,7 @@ class JsonOpenApi30DataValidator
         } else failedResult("Not an object '$value'", property)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun checkProperty(e: Map.Entry<String, JsonNode>, property: String, props: Map<String, Schema<Any>>, additionalProperties: Any?): ApiValidationResult {
         val p = "$property.${e.key}"
         var schema = props[e.key]
@@ -129,6 +130,7 @@ class JsonOpenApi30DataValidator
         }
     }
 
+    @Suppress("UNUSED")
     private fun checkBoolean(value: JsonNode, property: String, schema: BooleanSchema): ApiValidationResult = if (value.isBoolean) {
         success
     } else failedResult("Not a boolean '$value'", property)

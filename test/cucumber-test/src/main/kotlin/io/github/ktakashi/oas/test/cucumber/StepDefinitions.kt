@@ -45,6 +45,7 @@ data class TestContext(var applicationUrl: String,
 fun interface TestContextSupplier: Supplier<TestContext>
 
 @Singleton
+@Suppress("UNCHECKED_CAST")
 class StepDefinitions
 @Inject constructor(private val persistentStorage: PersistentStorage,
                     private val sessionStorage: SessionStorage,

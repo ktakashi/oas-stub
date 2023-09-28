@@ -9,6 +9,7 @@ import jakarta.inject.Singleton
 
 @Named @Singleton
 class GroovyPluginCompiler: PluginCompiler(PluginType.GROOVY) {
+    @Suppress("UNCHECKED_CAST")
     override fun compileScript(script: String): Class<ApiPlugin> {
         GroovyClassLoader().use {
             val clazz = it.parseClass(script)
