@@ -97,7 +97,7 @@ class StepDefinitions
                 .path(testContext.adminPrefix).pathSegment(context)
                 .build().toUri()
         val response = given().contentType(contentType)
-                .body(maybeContent(configurations))
+                .body(maybeContent(configurations)?.let(::String))
                 .post(uri)
         testContext.apiName = context
         testContext.response = response
@@ -158,7 +158,7 @@ class StepDefinitions
                 .queryParam("api", api)
                 .build().toUri()
         testContext.response = given().contentType(contentType)
-                .body(maybeContent(value))
+                .body(maybeContent(value)?.let(::String))
                 .put(uri)
     }
 
@@ -211,7 +211,7 @@ class StepDefinitions
             }
         }.headers(Headers(testContext.headers))
 
-        val body = maybeContent(content)
+        val body = maybeContent(content)?.let(::String)
         testContext.response = when (method.uppercase()) {
             "GET" -> spec.get(uri)
             "POST" -> spec.apply { body?.let { spec.body(body) } }.post(uri)
