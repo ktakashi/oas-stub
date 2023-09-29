@@ -6,7 +6,10 @@ plugins {
 gradleEnterprise {
     if (System.getenv("CI") != null) {
         buildScan {
-            publishAlways()
+            publishOnFailure()
+            capture {
+                isTestLogging = true
+            }
             termsOfServiceUrl = "https://gradle.com/terms-of-service"
             termsOfServiceAgree = "yes"
         }

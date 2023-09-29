@@ -12,10 +12,12 @@ import jakarta.servlet.DispatcherType
 import java.util.EnumSet
 import org.eclipse.jetty.ee10.servlet.ServletHolder
 import org.eclipse.jetty.ee10.webapp.WebAppContext
+import org.eclipse.jetty.http.HttpVersion
 import org.eclipse.jetty.server.Handler
 import org.eclipse.jetty.server.HttpConnectionFactory
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.ServerConnector
+import org.eclipse.jetty.server.SslConnectionFactory
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.glassfish.jersey.servlet.ServletContainer
 
@@ -66,11 +68,15 @@ class OasStubServer
 
     private fun configure() {
         configuration.serverConnectors.forEach { config ->
-            val connector = ServerConnector(server).apply {
+            val connectionFactories = if (config.httpConfiguration.securePort > 0) {
+                arrayOf(SslConnectionFactory(config.sslContextFactorySupplier.get(), HttpVersion.HTTP_1_1.asString()), HttpConnectionFactory(config.httpConfiguration))
+            } else {
+                arrayOf(HttpConnectionFactory(config.httpConfiguration))
+            }
+            val connector = ServerConnector(server, *connectionFactories).apply {
                 name = config.name
                 host = config.host
                 port = config.port
-                connectionFactories = listOf(HttpConnectionFactory(config.httpConfiguration))
             }
             server.addConnector(connector)
         }

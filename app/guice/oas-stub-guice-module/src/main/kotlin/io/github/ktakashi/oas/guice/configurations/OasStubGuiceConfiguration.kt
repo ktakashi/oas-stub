@@ -5,7 +5,9 @@ import io.github.ktakashi.oas.guice.modules.OasStubInMemoryPersistentStorageModu
 import io.github.ktakashi.oas.guice.modules.OasStubInMemorySessionStorageModule
 import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModuleCreator
 import io.github.ktakashi.oas.guice.storages.apis.OasStubSessionStorageModuleCreator
+import java.util.function.Supplier
 import org.eclipse.jetty.server.HttpConfiguration
+import org.eclipse.jetty.util.ssl.SslContextFactory
 
 /**
  * OAS Stub configuration.
@@ -190,7 +192,22 @@ data class OasStubServerConnectorConfiguration(
     /**
      * [HttpConfiguration]
      */
-    val httpConfiguration: HttpConfiguration = HttpConfiguration())
+    val httpConfiguration: HttpConfiguration = HttpConfiguration(),
+    /**
+     * [SslContextFactory.Server] supplier.
+     *
+     * This is relevant only SSL connector. i.e. [httpConfiguration.securePort] > 0
+     */
+    val sslContextFactorySupplier: SslContextFactorySupplier = DEFAULT_SSL_CONTEXT_SUPPLIER) {
+    fun interface SslContextFactorySupplier: Supplier<SslContextFactory.Server>
+
+    companion object {
+        @JvmField
+        val DEFAULT_SSL_CONTEXT_SUPPLIER = SslContextFactorySupplier {
+            SslContextFactory.Server()
+        }
+    }
+}
 
 /**
  * OAS Stub server configuration.
