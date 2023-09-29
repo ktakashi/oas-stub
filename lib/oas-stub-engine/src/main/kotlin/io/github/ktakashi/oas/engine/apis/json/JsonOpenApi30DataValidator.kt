@@ -130,7 +130,7 @@ class JsonOpenApi30DataValidator
         }
     }
 
-    @Suppress("UNUSED")
+    @Suppress("UNUSED_PARAMETER")
     private fun checkBoolean(value: JsonNode, property: String, schema: BooleanSchema): ApiValidationResult = if (value.isBoolean) {
         success
     } else failedResult("Not a boolean '$value'", property)

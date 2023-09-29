@@ -7,10 +7,7 @@ import org.springframework.core.env.MapPropertySource
 import org.springframework.test.context.TestContext
 import org.springframework.test.context.support.AbstractTestExecutionListener
 import org.springframework.test.context.support.TestPropertySourceUtils
-import org.springframework.test.util.TestSocketUtils
 
-
-private const val PROPERTY_SOURCE_KEY = "oas.stub.test"
 
 class OasStubTestExecutionListener: AbstractTestExecutionListener() {
 
@@ -47,15 +44,23 @@ class OasStubTestApplicationListener: ApplicationListener<ApplicationEnvironment
         val propertySource = environment.propertySources
         val serverPort = environment.getProperty(SERVER_PORT, Int::class.java)
         if (serverPort != null) {
+            /*
+             * This might not be a good idea as it hijacks the port allocation.
+             * (I can't think of any harmful situation though, only limiting the range).
+             */
             if (serverPort == 0 && propertySource.contains(TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME)) {
-                val randomPort = TestSocketUtils.findAvailableTcpPort()
+                val randomPort = findAvailableTcpPort(25000, 27500)
                 val source = (propertySource[TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME] as MapPropertySource).source
                 source[SERVER_PORT] = randomPort
             }
-            if (!propertySource.contains(PROPERTY_SOURCE_KEY)) {
+            if (!propertySource.contains(OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX)) {
                 val oasServerSource = mutableMapOf<String, Any>()
-                oasServerSource["${PROPERTY_SOURCE_KEY}.server.port"] = environment.getProperty(SERVER_PORT)!!
-                propertySource.addFirst(MapPropertySource(PROPERTY_SOURCE_KEY, oasServerSource))
+                oasServerSource["${OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX}.server.port"] = environment.getProperty(SERVER_PORT)!!
+                propertySource.addFirst(
+                    MapPropertySource(
+                        OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX,
+                        oasServerSource
+                    ))
             }
         }
     }

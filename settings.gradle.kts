@@ -23,7 +23,14 @@ include(":lib:storages:oas-stub-mongodb-storage")
 include(":lib:oas-stub-plugin")
 include(":lib:oas-stub-engine")
 include(":lib:oas-stub-web")
+
 include(":app:jersey:oas-stub-jersey-resource")
+
+include(":app:guice:oas-stub-storage-guice-module-api")
+include(":app:guice:oas-stub-guice-module")
+include(":app:guice:oas-stub-hazelcast-storage-guice-module")
+
+
 include(":app:spring:oas-stub-storage-autoconfigure-api")
 include(":app:spring:oas-stub-inmemory-storage-autoconfigure")
 include(":app:spring:oas-stub-mongodb-storage-autoconfigure")
@@ -31,9 +38,7 @@ include(":app:spring:oas-stub-hazelcast-storage-autoconfigure")
 include(":app:spring:oas-stub-spring-boot-starter-web")
 include(":app:spring:oas-stub-spring-test-api")
 include(":app:spring:oas-stub-spring-boot-starter-test")
+include(":app:spring:oas-stub-spring-stub-server")
 include(":app:spring:oas-stub-spring")
-include(":app:guice:oas-stub-storage-guice-module-api")
-include(":app:guice:oas-stub-guice-module")
-include(":app:guice:oas-stub-hazelcast-storage-guice-module")
 
 include(":test:cucumber-test")

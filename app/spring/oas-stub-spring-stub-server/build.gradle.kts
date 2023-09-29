@@ -7,20 +7,22 @@ plugins {
 }
 
 group = "$group.spring"
-description = "OAS stub for testing"
+description = "OAS stub Guice server for test"
 
 dependencies {
-    api(project(":app:spring:oas-stub-spring-boot-starter-web"))
+    api(project(":app:guice:oas-stub-guice-module"))
     api(project(":app:spring:oas-stub-spring-test-api"))
-    api(libs.spring.boot.starter.test)
-    implementation(libs.spring.boot.autoconfigure)
+    api(libs.spring.boot.starter.core)
     implementation(libs.spring.boot.test.autoconfigure)
+    implementation(libs.kotlin.stdlib)
     implementation(libs.annotation.api)
+    implementation(libs.spring.test)
 
     testImplementation(enforcedPlatform(libs.cucumber.bom))
     testImplementation(platform(libs.junit.bom))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
+    testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.web)
     testImplementation(libs.rest.assured) {
         exclude(group = "org.apache.groovy")

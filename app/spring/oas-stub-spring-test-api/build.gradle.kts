@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.spring.core)
     implementation(libs.spring.boot.core)
     implementation(libs.annotation.api)
+    compileOnly(libs.jackson.annotations)
 
     kapt(libs.spring.boot.configuration.processor)
 }

@@ -15,7 +15,7 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 
 
-@ConfigurationProperties(prefix = "oas.stub.test")
+@ConfigurationProperties(prefix = OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX)
 data class OasStubTestProperties(
     /**
      * OAS API stub definition.
@@ -26,7 +26,11 @@ data class OasStubTestProperties(
      * of the API stub will be `${oas.stub.servlet.prefix}/petstore`.
      */
     var definitions: Map<String, OasStubTestDefinition> = mapOf()
-)
+) {
+    companion object {
+        const val OAS_STUB_TEST_PROPERTY_PREFIX = "oas.stub.test"
+    }
+}
 
 data class OasStubTestDefinition(
     /**

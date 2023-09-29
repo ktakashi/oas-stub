@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationListener=io.github.ktakashi.oas.test.server.OasStubServerApplicationListener
+org.springframework.test.context.TestExecutionListener=io.github.ktakashi.oas.test.server.OasStubServerTestExecutionListener

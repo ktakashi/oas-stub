@@ -1,13 +1,12 @@
 package io.github.ktakashi.oas.model
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import java.time.Duration
 import java.time.OffsetDateTime
 
 data class ApiMetric(
     val requestTimestamp: OffsetDateTime,
-    @JsonFormat(shape = Shape.STRING) val executionTime: Duration,
+    @JsonFormat(shape = JsonFormat.Shape.STRING) val executionTime: Duration,
     val apiPath: String,
     val httpMethod: String,
     val httpStatus: Int,

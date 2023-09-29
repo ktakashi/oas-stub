@@ -75,6 +75,7 @@ mongodb-driver-sync = { group = "org.mongodb", name = "mongodb-driver-sync", ver
 # spring-boot library contains spring-core and spring-context, so we list only difficult things here
 spring-core = { group = "org.springframework", name = "spring-core", version.ref = "spring" }
 spring-web = { group = "org.springframework", name = "spring-web", version.ref = "spring" }
+spring-test = { group = "org.springframework", name = "spring-test", version.ref = "spring" }
 
 # Spring Boot
 spring-boot-core = { group = "org.springframework.boot", name = "spring-boot", version.ref = "spring-boot" }
