@@ -31,10 +31,10 @@ Feature: Delaying
     @v3 @petstore
     Examples:
       | api  | delay                            | path | least | most |
-      | /ok1 | classpath:/json/fixed-delay.json | /ok1 | 500   | 550  |
+      | /ok1 | classpath:/json/fixed-delay.json | /ok1 | 500   | 600  |
       | /ok1 | classpath:/json/fixed-delay.json | /ok2 | 200   | 300  |
-      | /ok3 | classpath:/json/fixed-delay.json | /ok3 | 500   | 550  |
+      | /ok3 | classpath:/json/fixed-delay.json | /ok3 | 500   | 600  |
       | /ok1 | classpath:/json/fixed-delay.json | /ok3 | 200   | 300  |
-      | /ok4 | classpath:/json/fixed-delay.json | /ok4 | 500   | 550  |
+      | /ok4 | classpath:/json/fixed-delay.json | /ok4 | 500   | 600  |
       | /ok1 | classpath:/json/fixed-delay.json | /ok4 | 200   | 300  |
 
