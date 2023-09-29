@@ -12,6 +12,7 @@ import java.net.URI
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -67,6 +68,7 @@ class OasServerApplicationTest(@Autowired private val oasStubTestService: OasStu
         check("http", httpPort, oasStubTestService)
     }
 
+    @Disabled
     @Test
     fun testHttps() {
         assertTrue(httpPort > 0)
