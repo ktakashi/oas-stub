@@ -158,7 +158,7 @@ class StepDefinitions
                 .queryParam("api", api)
                 .build().toUri()
         testContext.response = given().contentType(contentType)
-                .body(maybeContent(value)?.let(::String))
+                .body(maybeContent(value))
                 .put(uri)
     }
 
