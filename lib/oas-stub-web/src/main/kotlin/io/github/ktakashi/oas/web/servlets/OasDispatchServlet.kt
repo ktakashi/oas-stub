@@ -78,6 +78,7 @@ class OasDispatchServlet
         val response = asyncContext.response as HttpServletResponse
         return apiDelayService.delayFuture(apiContext, CompletableFuture.supplyAsync({ apiExecutionService.executeApi(apiContext, req, response) }, executor))
                 .thenApply { responseContext ->
+                    logger.debug("Response -> {}", responseContext)
                     responseContext.emitResponse(response)
                     asyncContext
                 }
