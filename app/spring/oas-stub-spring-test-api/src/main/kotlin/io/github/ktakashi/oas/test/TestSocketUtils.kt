@@ -2,6 +2,7 @@
 package io.github.ktakashi.oas.test
 
 import java.net.InetAddress
+import java.net.ServerSocket
 import javax.net.ServerSocketFactory
 import kotlin.random.Random
 
@@ -9,6 +10,8 @@ const val DEFAULT_MIN_PORT_RANGE = 10000
 const val DEFAULT_MAX_PORT_RANGE = 65535
 
 private val random = Random(System.nanoTime())
+
+fun randomTcpPort() = ServerSocket(0).use { it.localPort }
 
 @JvmOverloads
 fun findAvailableTcpPort(min: Int = DEFAULT_MIN_PORT_RANGE, max: Int = DEFAULT_MAX_PORT_RANGE): Int = findAvailablePort(::isTcpPortAvailable, min, max)

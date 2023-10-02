@@ -59,14 +59,16 @@ class OasDispatchServlet
                         CompletableFuture.completedFuture(asyncContext)
                     }
                 }
-            }, executor).exceptionally { e ->
+            }, executor)
+            .exceptionally { e ->
                 logger.error("Execution error: {}", e.message, e)
                 if (!listener.isCompleted) {
                     res.status = 500
                     res.outputStream.write(e.message?.toByteArray() ?: byteArrayOf())
                 }
                 asyncContext
-            }.whenComplete { context, e ->
+            }
+            .whenComplete { context, e ->
                 report(context, e)
                 context.complete()
             }

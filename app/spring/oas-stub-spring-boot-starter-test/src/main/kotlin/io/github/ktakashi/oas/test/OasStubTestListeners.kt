@@ -49,7 +49,7 @@ class OasStubTestApplicationListener: ApplicationListener<ApplicationEnvironment
              * (I can't think of any harmful situation though, only limiting the range).
              */
             if (serverPort == 0 && propertySource.contains(TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME)) {
-                val randomPort = findAvailableTcpPort(25000, 27500)
+                val randomPort = randomTcpPort()
                 val source = (propertySource[TestPropertySourceUtils.INLINED_PROPERTIES_PROPERTY_SOURCE_NAME] as MapPropertySource).source
                 source[SERVER_PORT] = randomPort
             }
