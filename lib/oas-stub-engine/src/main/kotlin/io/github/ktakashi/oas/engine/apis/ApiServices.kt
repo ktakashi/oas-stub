@@ -330,10 +330,13 @@ internal data class DefaultResponseContext(override val status: Int,
                                            override val contentType: Optional<String> = Optional.empty(),
                                            override val headers: Map<String, List<String>> = mapOf()): ResponseContext {
     override fun emitResponse(response: HttpServletResponse) {
-        content.ifPresent { v -> response.outputStream.write(v) }
-        contentType.ifPresent { t -> response.contentType = t }
-        headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
         response.status = this.status
+        headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
+        contentType.ifPresent { t -> response.contentType = t }
+        content.ifPresent { v ->
+            response.outputStream.write(v)
+            response.outputStream.flush()
+        }
     }
 
     override fun mutate() = DefaultResponseContextBuilder(status, content, contentType, headers)
