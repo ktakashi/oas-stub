@@ -1,14 +1,12 @@
 package io.github.ktakashi.oas.guice
 
 import io.cucumber.junit.platform.engine.Constants
-import org.junit.jupiter.api.Disabled
 import org.junit.platform.suite.api.ConfigurationParameter
 import org.junit.platform.suite.api.IncludeEngines
 import org.junit.platform.suite.api.SelectClasspathResource
 import org.junit.platform.suite.api.Suite
 
-@Disabled
-@Suite
+//@Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
 @ConfigurationParameter(key = Constants.PLUGIN_PUBLISH_ENABLED_PROPERTY_NAME, value = "true")
