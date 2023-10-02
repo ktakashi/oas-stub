@@ -77,6 +77,7 @@ class OasStubServer
                 name = config.name
                 host = config.host
                 port = config.port
+                isReusePort = true
             }
             server.addConnector(connector)
         }
