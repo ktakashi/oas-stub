@@ -68,8 +68,11 @@ class OasDispatchServlet
                 }
                 asyncContext
             }
-            .whenComplete { context, e ->
+            .handleAsync({ context, e ->
                 report(context, e)
+                context
+            }, executor)
+            .whenComplete { context, _ ->
                 context.complete()
             }
     }
@@ -77,11 +80,11 @@ class OasDispatchServlet
     private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletionStage<AsyncContext> {
         val response = asyncContext.response as HttpServletResponse
         return apiDelayService.delayFuture(apiContext, CompletableFuture.supplyAsync({ apiExecutionService.executeApi(apiContext, req, response) }, executor))
-                .thenApply { responseContext ->
+                .thenApplyAsync({ responseContext ->
                     logger.debug("Response -> {}", responseContext)
                     responseContext.emitResponse(response)
                     asyncContext
-                }
+                }, executor)
     }
 
     private fun setAttributes(req: HttpServletRequest, now: OffsetDateTime, context: ApiContext) {

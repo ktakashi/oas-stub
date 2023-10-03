@@ -340,6 +340,9 @@ internal data class DefaultResponseContext(override val status: Int,
     }
 
     override fun mutate() = DefaultResponseContextBuilder(status, content, contentType, headers)
+    override fun toString(): String {
+        return "DefaultResponseContext(status=$status, content=${content.map { "{size=${it.size}}" }}, contentType=$contentType, headers=$headers)"
+    }
 
     internal data class DefaultResponseContextBuilder(private val status: Int,
                                                       private val content: Optional<ByteArray>,
@@ -352,6 +355,7 @@ internal data class DefaultResponseContext(override val status: Int,
 
         override fun build() = DefaultResponseContext(status, content, contentType, headers)
     }
+
 }
 
 internal data class HighLatencyResponseContext(override val status: Int,
