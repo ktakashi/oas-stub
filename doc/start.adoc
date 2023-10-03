@@ -15,7 +15,7 @@ OAS stub provides two flavours of the DI implementations. One is
 Spring Boot{spring-boot} the other one is Guice{guice}. Below sections
 describe how to use them.
 
-=== Spring Boot{spring-boot}
+=== Spring Boot
 
 To start with Spring Boot implementation, you need to add the
 `oas-stub-spring-boot-starter-web` artifact into your `pom.xml`
