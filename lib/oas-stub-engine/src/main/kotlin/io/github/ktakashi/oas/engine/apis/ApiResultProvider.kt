@@ -27,7 +27,6 @@ class ApiResultProvider
     }
 
     private fun toResponseContext(requestContext: ApiContextAwareRequestContext, status: Int, content: Content): ResponseContext {
-        logger.debug("Request {}: Content -> {}", requestContext.apiPath, content)
         if (content.isEmpty()) {
             return DefaultResponseContext(status = status)
         }
@@ -35,34 +34,29 @@ class ApiResultProvider
                 .map { mediaType ->
                     content[mediaType]?.schema?.let { schema ->
                         val data = populate(mediaType, schema)
-                        DefaultResponseContext(status = status, content = Optional.of(data), contentType = Optional.of(mediaType))
+                        DefaultResponseContext(status = status, content = Optional.ofNullable(data), contentType = Optional.of(mediaType))
                     }
                 }.orElseGet {
                     DefaultResponseContext(status = HttpStatus.SC_INTERNAL_SERVER_ERROR)
                 }
     }
 
-    private fun populate(mediaType: String, schema: Schema<*>): ByteArray = MediaType.valueOf(mediaType).let { mt ->
-        populators.firstOrNull { p -> p.supports(mt) && p.supports(schema) }
-                ?.populate(schema)
-                ?: anyPopulators.firstOrNull { p -> p.supports(schema) }
-                        ?.populate(schema)
-                ?: byteArrayOf()
+    private fun populate(mediaType: String, schema: Schema<*>): ByteArray? = MediaType.valueOf(mediaType).let { mt ->
+        logger.debug("populators: {}, anyPopulators: {}", populators, anyPopulators)
+        populators.firstOrNull { p -> p.supports(mt) && p.supports(schema) }?.populate(schema)
+            ?: anyPopulators.firstOrNull { p -> p.supports(schema) }?.populate(schema)
     }
 }
 
-private fun getMostExpectedMedia(content: Content, request: RequestContext): Optional<String> {
-    return getAccept(request).map { m -> "${m.type}/${m.subtype}" }
-            .filter { m -> content.containsKey(m) }
-            .or {
-                if (content.containsKey(MediaType.APPLICATION_JSON)) {
-                    Optional.of(MediaType.APPLICATION_JSON)
-                } else {
-                    Optional.ofNullable(content.keys.firstOrNull())
-                }
-            }
-
-}
+private fun getMostExpectedMedia(content: Content, request: RequestContext): Optional<String> = getAccept(request).map { m -> "${m.type}/${m.subtype}" }
+    .filter { m -> content.containsKey(m) }
+    .or {
+        if (content.containsKey(MediaType.APPLICATION_JSON)) {
+            Optional.of(MediaType.APPLICATION_JSON)
+        } else {
+            Optional.ofNullable(content.keys.firstOrNull())
+        }
+    }
 
 fun getAccept(request: RequestContext): Optional<MediaType> = request.headers["Accept"]?.let { v ->
     if (v.isEmpty()) {
