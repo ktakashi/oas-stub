@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.example.test
 
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiHeaders
+import io.github.ktakashi.oas.test.AutoConfigureOasStub
 import io.github.ktakashi.oas.test.OasStubTestResources
 import io.github.ktakashi.oas.test.OasStubTestService
 import io.restassured.RestAssured
@@ -14,13 +15,12 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@EnableAutoConfiguration
+@AutoConfigureOasStub
 class ExampleApplicationTest(@Value("\${local.server.port}") private val localPort: Int,
                              @Autowired private val oasStubTestService: OasStubTestService) {
     @Test
