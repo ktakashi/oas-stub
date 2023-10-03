@@ -24,6 +24,12 @@ class ApiContentDecider
 @Inject constructor(private val validators: Set<ApiRequestValidator>,
                     private val objectMapper: ObjectMapper) {
     fun decideContent(requestContext: ApiContextAwareRequestContext, operation: Operation): ContentDecision {
+        val r = decideContentImpl(requestContext, operation)
+        logger.debug("Request {}: decision -> {}", requestContext.apiPath, r)
+        return r
+    }
+
+    private fun decideContentImpl(requestContext: ApiContextAwareRequestContext, operation: Operation): ContentDecision {
         val result = validate(requestContext, operation)
         if (!result.isValid) {
             logger.info("Validation failed: {}", result)

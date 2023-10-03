@@ -11,6 +11,9 @@ import jakarta.inject.Singleton
 import jakarta.ws.rs.core.MediaType
 import java.util.Optional
 import org.apache.http.HttpStatus
+import org.slf4j.LoggerFactory
+
+private val logger = LoggerFactory.getLogger(ApiResultProvider::class.java)
 
 @Named @Singleton
 class ApiResultProvider
@@ -24,6 +27,7 @@ class ApiResultProvider
     }
 
     private fun toResponseContext(requestContext: ApiContextAwareRequestContext, status: Int, content: Content): ResponseContext {
+        logger.debug("Request {}: Content -> {}", requestContext.apiPath, content)
         if (content.isEmpty()) {
             return DefaultResponseContext(status = status)
         }
