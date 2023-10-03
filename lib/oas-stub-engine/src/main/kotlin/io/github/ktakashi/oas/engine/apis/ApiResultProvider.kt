@@ -42,7 +42,7 @@ class ApiResultProvider
     }
 
     private fun populate(mediaType: String, schema: Schema<*>): ByteArray? = MediaType.valueOf(mediaType).let { mt ->
-        logger.debug("populators: {}, anyPopulators: {}", populators, anyPopulators)
+        logger.debug("MediaType: {}, Schema spec: {}, populators: {}, anyPopulators: {}", mt, schema.specVersion, populators, anyPopulators)
         populators.firstOrNull { p -> p.supports(mt) && p.supports(schema) }?.populate(schema)
             ?: anyPopulators.firstOrNull { p -> p.supports(schema) }?.populate(schema)
     }

@@ -11,7 +11,7 @@ import jakarta.inject.Singleton
 
 @Named @Singleton
 class JsonOpenApi31DataPopulator
-@Inject constructor(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V30) {
+@Inject constructor(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V31) {
     // TODO implement it
     override fun populate(schema: Schema<*>): ByteArray = byteArrayOf()
 
