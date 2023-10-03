@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.test.server
 
+import io.github.ktakashi.oas.test.OAS_STUB_SERVER_BEAN_NAME
 import io.github.ktakashi.oas.test.findAvailableTcpPort
 import org.springframework.boot.context.event.ApplicationPreparedEvent
 import org.springframework.context.ApplicationListener
@@ -89,9 +90,9 @@ class OasStubServerTestExecutionListener: AbstractTestExecutionListener() {
     private fun oasStubServerConfiguration(testContext: TestContext) = testContext.applicationContext.getBean(OasStubServerConfiguration::class.java)
 
     private fun isTarget(testContext: TestContext) =
-        applicationContextBroken(testContext) || annotationMissing(testContext) || configurationMissing(testContext)
+        !(applicationContextBroken(testContext) || annotationMissing(testContext) || configurationMissing(testContext))
 
-    private fun configurationMissing(testContext: TestContext) = !testContext.applicationContext.containsBean(OasStubServerConfiguration::class.java.name)
+    private fun configurationMissing(testContext: TestContext) = !testContext.applicationContext.containsBean(OAS_STUB_SERVICER_CONFIGURATION_BEAN_NAME)
 
     private fun annotationMissing(testContext: TestContext) = !TestContextAnnotationUtils.hasAnnotation(testContext.testClass, AutoConfigureOasStubServer::class.java)
 

@@ -8,6 +8,19 @@ We also assume, you are using Java 17 or later. OAS stub is built
 atop Java 17 toolchain, so if you are using Java 11, then you need
 to upgrade the JDK version.
 
+:spring-boot: footnote:[https://spring.io/projects/spring-boot]
+:guice: footnote:[https://github.com/google/guice]
+
+OAS stub provides two flavours of the DI implementations. One is
+Spring Boot{spring-boot} the other one is Guice{guice}. Below sections
+describe how to use them.
+
+=== Spring Boot{spring-boot}
+
+To start with Spring Boot implementation, you need to add the
+`oas-stub-spring-boot-starter-web` artifact into your `pom.xml`
+like below.
+
 [source,xml]
 ----
 <dependency>
@@ -17,22 +30,13 @@ to upgrade the JDK version.
 </dependency>
 ----
 
-:spring-boot: footnote:[https://spring.io/projects/spring-boot]
-:todo-list: footnote:[We are planning to make pure JEE web application by using Guice]
-:for-now: footnote:[For now, please check `oas-stub-engine` and `oas-stub-spring` to grab how to do it]
-
-To make our lives easier, we assume that you are using
-Spring Boot{spring-boot}. If you are using other DI library
-or prefer not to use Spring Boot, then you need to do it by
-your self.{todo-list}{for-now}
-
-After you added the dependency on your Spring Boot application,
-then you need to add `OasApplication` to be loaded into your
-application context. Below example shows how to do it:
+Adding the above dependency enables autoconfiguration of the
+OAS stub. The rest of the work you need to do is executing the
+application, like the below example. (`import` clauses are omitted)
 
 [source, java]
 ----
-package oas.example;
+package oas.example.spring;
 
 @SpringBootApplication
 public class ExampleApplication {
@@ -45,7 +49,7 @@ public class ExampleApplication {
 To build a standalone jar file, you need to add the below `<build>`
 section to your `pom.xml`.
 
-[source, xml]
+[source,xml]
 ----
 <build>
     <finalName>oas-stub-example</finalName>
@@ -62,7 +66,7 @@ section to your `pom.xml`.
             </executions>
             <configuration>
                 <classifier>dist</classifier>
-                <mainClass>oas.example.ExampleApplication</mainClass>
+                <mainClass>oas.example.spring.ExampleApplication</mainClass>
             </configuration>
         </plugin>
     </plugins>
@@ -106,3 +110,81 @@ curl http://localhost:8080/oas/petstore/v1/pets
 Then you'll receive a JSON array with default value.
 
 TIP: The request against the API is validated unless specified not to do by you.
+
+=== Guice
+
+To start with Guice implementation, you need to add the
+`oas-stub-guice-module` artifact into your `pom.xml`
+like below.
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.github.ktakashi.oas.stub.guice</groupId>
+    <artifactId>oas-stub-guice-module</artifactId>
+    <version>${oas-stub.version}</version>
+</dependency>
+----
+
+The below example is the minimum implementation of the OAS stub
+server on top of Guice. (`import` clauses are omitted)
+
+[source, java]
+----
+package oas.example.guice;
+
+public class Main {
+    public static void main(String[] args) {
+        var configuration = OasStubGuiceServerConfiguration
+                .builder()
+                .build();
+        var injector = OasStubGuiceInjectors.createServerInjector(configuration);
+        var server = injector.getInstance(OasStubServer.class);
+        server.start();
+    }
+}
+----
+
+If you want to make an executable jar, then you need to build
+a fat jar.
+
+The running server provides the same endpoint as the Spring Boot
+version. You can use the same `curl` commands to upload the OAS
+specification and others.
+
+=== Which one to use
+
+Both implementation have pros and cons. Here you can find some
+of them.
+
+.Spring Boot
+****
+.Pros
+
+* Easy to add custom endpoints
+* Easy to configure other components, such as `ObjectMapper`
+
+.Cons
+
+* Mixing up beans with other application
+* Using the same port
+* Slow start up
+****
+
+.Guice
+****
+.Pros
+
+* Standalone server
+* Beans won't be mixed between other DI, e.g. Spring Boot application
+
+.Cons
+
+* Needs a bit more effort to make custom endpoints
+* Limited configuration of other components
+****
+
+In my personal opinion, Guice server is suitable for testing during
+build, and Spring Boot is suitable for deployment.
+
+

@@ -9,6 +9,8 @@ import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfigurati
 import io.github.ktakashi.oas.guice.configurations.OasStubServerConnectorConfiguration
 import io.github.ktakashi.oas.guice.injector.createServerInjector
 import io.github.ktakashi.oas.guice.server.OasStubServer
+import io.github.ktakashi.oas.test.OAS_STUB_SERVER_BEAN_NAME
+import io.github.ktakashi.oas.test.OAS_STUB_TEST_SERVICE_BEAN_NAME
 import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestService
 import jakarta.annotation.PostConstruct
@@ -21,10 +23,9 @@ import org.springframework.context.SmartLifecycle
 import org.springframework.context.annotation.Configuration
 
 internal const val OAS_STUB_SERVER_PROPERTY_PREFIX = "${OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX}.server"
-internal const val OAS_STUB_SERVER_BEAN_NAME = "oasStubServerBean"
-internal const val OAS_STUB_TEST_SERVICE_BEAN_NAME = "oasStubTestServiceBean"
+internal const val OAS_STUB_SERVICER_CONFIGURATION_BEAN_NAME = "oasStubServerConfiguration"
 
-@Configuration
+@Configuration(OAS_STUB_SERVICER_CONFIGURATION_BEAN_NAME)
 @EnableConfigurationProperties(value = [OasStubServerProperties::class, OasStubTestProperties::class])
 class OasStubServerConfiguration(internal val serverProperties: OasStubServerProperties,
                                  private val testProperties: OasStubTestProperties,

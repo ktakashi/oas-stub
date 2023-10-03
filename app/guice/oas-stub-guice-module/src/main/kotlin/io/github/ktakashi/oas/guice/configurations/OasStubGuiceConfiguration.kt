@@ -174,7 +174,8 @@ private constructor(builder: OasStubGuiceConfigurationBuilder<*>,
 /**
  * Server connector configuration
  */
-data class OasStubServerConnectorConfiguration(
+data class OasStubServerConnectorConfiguration
+@JvmOverloads constructor(
     /**
      * Name of the connector
      */
@@ -188,7 +189,7 @@ data class OasStubServerConnectorConfiguration(
      *
      * `0` means random available port
      */
-    val port: Int = 0,
+    val port: Int = 8080,
     /**
      * [HttpConfiguration]
      */
@@ -199,6 +200,8 @@ data class OasStubServerConnectorConfiguration(
      * This is relevant only SSL connector. i.e. [httpConfiguration.securePort] > 0
      */
     val sslContextFactorySupplier: SslContextFactorySupplier = DEFAULT_SSL_CONTEXT_SUPPLIER) {
+
+    constructor(builder: OasStubServerConnectorConfigurationBuilder): this(builder.name, builder.host, builder.port, builder.httpConfiguration, builder.sslContextFactorySupplier)
     fun interface SslContextFactorySupplier: Supplier<SslContextFactory.Server>
 
     companion object {
@@ -206,6 +209,21 @@ data class OasStubServerConnectorConfiguration(
         val DEFAULT_SSL_CONTEXT_SUPPLIER = SslContextFactorySupplier {
             SslContextFactory.Server()
         }
+        @JvmStatic
+        fun builder(name: String) = OasStubServerConnectorConfigurationBuilder(name)
+    }
+
+    class OasStubServerConnectorConfigurationBuilder(internal val name: String) {
+        internal var host: String = "0.0.0.0"
+        internal var port: Int = 8080
+        internal var httpConfiguration: HttpConfiguration = HttpConfiguration()
+        internal var sslContextFactorySupplier: SslContextFactorySupplier = DEFAULT_SSL_CONTEXT_SUPPLIER
+
+        fun host(host: String) = apply { this.host = host }
+        fun port(port: Int) = apply { this.port = port }
+        fun httpConfiguration(httpConfiguration: HttpConfiguration) = apply { this.httpConfiguration = httpConfiguration }
+        fun sslContextFactorySupplier(sslContextFactorySupplier: SslContextFactorySupplier) = apply { this.sslContextFactorySupplier = sslContextFactorySupplier}
+        fun build() = OasStubServerConnectorConfiguration(this)
     }
 }
 

@@ -1,0 +1,6 @@
+oas:
+  stub:
+    test:
+      server:
+        servletPrefix: /stub
+        shared: false

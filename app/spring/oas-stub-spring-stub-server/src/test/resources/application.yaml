@@ -1,6 +1,8 @@
 oas:
   stub:
     test:
+      server:
+        reset-configuration-after-each-test: true
       definitions:
         petstore:
           specification: 'classpath:/schema/petstore.yaml'

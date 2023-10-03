@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    kotlin("kapt")
     id(libs.plugins.kotlin.jvm.get().pluginId)
     alias(libs.plugins.kotlin.spring)
     id("io.github.ktakashi.oas.conventions")
@@ -17,6 +18,8 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.annotation.api)
     implementation(libs.spring.test)
+
+    kapt(libs.spring.boot.configuration.processor)
 
     testImplementation(enforcedPlatform(libs.cucumber.bom))
     testImplementation(platform(libs.junit.bom))

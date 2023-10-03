@@ -13,6 +13,7 @@ import com.hazelcast.core.HazelcastInstance
 import io.cucumber.guice.CucumberModules
 import io.cucumber.guice.InjectorSource
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
+import io.github.ktakashi.oas.guice.configurations.OasStubServerConnectorConfiguration
 import io.github.ktakashi.oas.guice.cucumber.CucumberTestModule
 import io.github.ktakashi.oas.guice.cucumber.webAppContextCustomizer
 import io.github.ktakashi.oas.guice.injector.createServerInjector
@@ -27,6 +28,7 @@ class HazelcastInjectorSource: InjectorSource {
                 .sessionStorageModuleCreator(OasStubHazelcastSessionStorageModule.createModuleCreator(hazelcastInstance, "session"))
                 .persistentStorageModuleCreator(OasStubHazelcastPersistentStorageModule.createModuleCreator(hazelcastInstance, "persistent"))
                 .jettyWebAppContextCustomizers(setOf(webAppContextCustomizer))
+                .serverConnectors(listOf(OasStubServerConnectorConfiguration.builder("http").port(0).build()))
                 .build(),
             CucumberTestModule(),
             CucumberModules.createScenarioModule())

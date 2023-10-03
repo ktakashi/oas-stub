@@ -3,9 +3,12 @@
 
 If you are using `spring-boot-starter-test` module, and considering
 to use OAS stub for testing, you can easily integrate your tests
-with `oas-stub-spring-boot-starter-test` module.
+with `oas-stub-spring-boot-starter-test` or `oas-stub-spring-stub-server`
+module.
 
-Module:
+=== `oas-stub-spring-boot-starter-test` module
+
+.Module
 [source, xml]
 ----
 <dependency>
@@ -16,9 +19,12 @@ Module:
 </dependency>
 ----
 
-WARNING: This module requires a server, which means your test
+[WARNING]
+====
+This module requires a server, which means your test
 module must not use `SpringBootTest.WebEnvironment.MOCK` or
 `SpringBootTest.WebEnvironment.NONE`.
+====
 
 === Basic usage
 
@@ -31,10 +37,13 @@ this:
 package ors.example;
 // imports...
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@EnableAutoConfiguration
+@AutoConfigureOasStub
 class ExampleApplicationTest {
     @Value("${local.server.port}")
     private int localPort;
+
+    @Autowired
+    private OasStubTestService oasStubTestService;
 
     @Test
     void test() {
@@ -47,6 +56,68 @@ TIP: `@EnableAutoConfiguration` is required to make it work.
 This is because `oas-stub-spring-boot-starter-test` is based
 on `oas-stub-spring-boot-web` and this module is a bundle of
 autoconfiguration modules.
+
+`OasStubTestService` is a convenient service for testing, which
+provides API creation and validation methods. For more detail,
+see the Javadoc.
+
+=== `oas-stub-spring-stub-server` module
+
+.Module
+[source, xml]
+----
+<dependency>
+    <groupId>io.github.ktakashi.oas.stub.spring</groupId>
+    <artifactId>oas-stub-spring-stub-server</artifactId>
+    <version>${oas-stub.version}</version>
+    <scope>test</scope>
+</dependency>
+----
+
+[NOTE]
+====
+The `oas-stub-spring-stub-server` requires Jetty version of `12`, this
+means the default Spring Boot dependency doesn't work due to the significant
+API changes on Jetty 12.
+====
+
+[WARNING]
+====
+If your application doesn't use bundled Jetty, such as embedded Jetty server,
+then you just need to update the Jetty version. Otherwise, this module doesn't
+work.
+====
+
+After you added the dependency, then you need to add `@AutoConfigureOasStubServer`
+annotation to your Spring Boot test.
+
+[source, java]
+----
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureOasStubServer
+class ExampleApplicationTest {
+    @Value("${local.server.port}")
+    private int localPort;
+
+    @Autowired
+    private OasStubTestService oasStubTestService;
+
+    @Test
+    void test() {
+        // HTTP access `http://localhost:${localPort}`
+    }
+}
+----
+
+[WARNING]
+====
+If you, for some reason, put both modules into the classpath, then the
+Spring Boot will process the listeners defined in both modules. This
+causes OAS stub server start up failure. To avoid it, you need to put
+`oas.stub.test.server.shared` configuration to `true`.
+====
+
+=== Configurations
 
 After you set up the basic test application, then you need to
 add the `oas.stub.test` configuration to your configuration
@@ -112,3 +183,15 @@ TIP: `/__admin` can be configured with `oas.stub.servlet.admin-prefix`.
 For the working example, please refer test directory of the
 https://github.com/ktakashi/oas-stub/tree/main/examples/petstore-broker[petstore-broker]
 example.
+
+=== Which testing module to use?
+
+Most of the case, you should use `oas-stub-spring-stub-server` module
+for testing. Using this module allow users not to share the port between
+the testing application and stub server.
+
+If you need custom stub endpoints, then `oas-stub-spring-boot-starter-test`
+might be the easiest solution. But be aware that, this module requires
+embedded tomcat provided by Spring Boot, which means, if your application
+is desired to be run on Netty, then the module may not work properly or
+you need to change the setup during testing.

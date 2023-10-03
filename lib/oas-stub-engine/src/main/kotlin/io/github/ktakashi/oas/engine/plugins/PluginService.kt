@@ -17,6 +17,7 @@ import jakarta.inject.Named
 import jakarta.inject.Singleton
 import java.time.Duration
 import java.util.Optional
+import kotlin.math.log
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger(PluginService::class.java)
@@ -34,6 +35,7 @@ class PluginService
             })
     fun applyPlugin(requestContext: RequestContext, responseContext: ResponseContext): ResponseContext =
             storageService.getPluginDefinition(requestContext.applicationName, requestContext.apiPath).map { plugin ->
+                logger.debug("Applying plugin -> {}", plugin)
                 try {
                     val compiled = pluginCache[plugin]
                     val apiData: Optional<Map<String, Any>> = storageService.getApiDefinitions(requestContext.applicationName)

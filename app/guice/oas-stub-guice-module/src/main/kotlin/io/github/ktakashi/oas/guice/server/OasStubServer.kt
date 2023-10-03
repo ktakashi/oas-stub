@@ -87,6 +87,8 @@ class OasStubServer
 
         val webAppContext = WebAppContext().apply {
             this.server = this@OasStubServer.server
+            setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
+
             // To avoid static injection and context destruction, we retrieve single instance from injector
             val guiceFilter = injector.getInstance(GuiceFilter::class.java)
             addFilter(guiceFilter, "/*", EnumSet.allOf(DispatcherType::class.java))

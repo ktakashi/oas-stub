@@ -7,9 +7,6 @@ petstore:
         url: "http://localhost:${oas.stub.test.server.port}/${oas.stub.servlet.prefix}/order"
 
 oas.stub:
-  storage:
-    type:
-
   servlet.prefix: /stub
   test:
     definitions:

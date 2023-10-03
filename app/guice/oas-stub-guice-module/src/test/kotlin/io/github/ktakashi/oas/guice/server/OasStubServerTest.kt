@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.guice.server
 
 import io.github.ktakashi.oas.guice.configurations.OasStubConfiguration
 import io.github.ktakashi.oas.guice.configurations.OasStubGuiceServerConfiguration
+import io.github.ktakashi.oas.guice.configurations.OasStubServerConnectorConfiguration
 import io.github.ktakashi.oas.guice.injector.createServerInjector
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
@@ -25,6 +26,7 @@ class OasStubServerTest {
             val configuration = OasStubGuiceServerConfiguration.builder()
                 .oasStubConfiguration(OasStubConfiguration())
                 .jettyServerSupplier(::Server)
+                .serverConnectors(listOf(OasStubServerConnectorConfiguration.builder("http").port(0).build()))
                 .build()
             val oasServerInjector = createServerInjector(configuration)
             server = oasServerInjector.getInstance(OasStubServer::class.java)

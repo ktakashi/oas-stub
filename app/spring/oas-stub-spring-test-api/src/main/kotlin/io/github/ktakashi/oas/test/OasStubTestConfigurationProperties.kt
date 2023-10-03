@@ -1,3 +1,4 @@
+@file:JvmName("OasStubTestConfigurations")
 package io.github.ktakashi.oas.test
 
 import io.github.ktakashi.oas.model.ApiConfiguration
@@ -14,6 +15,9 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 
+const val OAS_STUB_SERVER_BEAN_NAME = "oasStubServer"
+const val OAS_STUB_TEST_SERVICE_BEAN_NAME = "oasStubTestService"
+
 
 @ConfigurationProperties(prefix = OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX)
 data class OasStubTestProperties(
@@ -25,14 +29,15 @@ data class OasStubTestProperties(
      * means, if your API name is `petstore`, then the actual path
      * of the API stub will be `${oas.stub.servlet.prefix}/petstore`.
      */
-    var definitions: Map<String, OasStubTestDefinition> = mapOf()
+    var definitions: Map<String, OasStubTestDefinitionProperties> = mapOf()
 ) {
     companion object {
         const val OAS_STUB_TEST_PROPERTY_PREFIX = "oas.stub.test"
     }
 }
 
-data class OasStubTestDefinition(
+data class OasStubTestDefinitionProperties
+@JvmOverloads constructor(
     /**
      * OAS API specification.
      *
@@ -49,8 +54,8 @@ data class OasStubTestDefinition(
      * If URI template is used, then it matches all the requests, otherwise
      * it only matches the specific request.
      */
-    var configurations: Map<String, OasStubTestConfiguration> = mapOf(),
-    @NestedConfigurationProperty var headers: OasStubTestHeaders = OasStubTestHeaders()
+    var configurations: Map<String, OasStubTestConfigurationProperties> = mapOf(),
+    @NestedConfigurationProperty var headers: OasStubTestHeadersProperties = OasStubTestHeadersProperties()
 ) {
     fun toApiDefinitions() = ApiDefinitions(
         specification = specification.inputStream.reader().use { it.readText() },
@@ -59,7 +64,8 @@ data class OasStubTestDefinition(
     )
 }
 
-data class OasStubTestHeaders(
+data class OasStubTestHeadersProperties
+@JvmOverloads constructor(
     /**
      * HTTP request headers.
      *
@@ -76,11 +82,12 @@ data class OasStubTestHeaders(
     fun toApiHeaders() = ApiHeaders(request = request, response= response)
 }
 
-data class OasStubTestConfiguration(
+data class OasStubTestConfigurationProperties
+@JvmOverloads constructor(
     /**
      * API header configuration.
      */
-    @NestedConfigurationProperty var headers: OasStubTestHeaders?,
+    @NestedConfigurationProperty var headers: OasStubTestHeadersProperties?,
     /**
      * API plugin configuration
      */

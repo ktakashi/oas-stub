@@ -1,4 +1,4 @@
-package oas.example.petstore.broker.cucumber.glue;
+package oas.example.petstore.broker.cucumber.glue.base;
 
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -14,6 +14,8 @@ import io.github.ktakashi.oas.test.OasStubTestService;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import oas.example.petstore.broker.cucumber.context.TestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,10 +30,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@CucumberContextConfiguration
-@EnableAutoConfiguration // This is needed to enable OAS stub
+@Singleton
 public class StepDefinitions {
     static {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
@@ -39,7 +38,7 @@ public class StepDefinitions {
     private final Integer localPort;
     private final TestContext testContext = new TestContext();
 
-    @Autowired
+    @Inject
     private OasStubTestService oasStubTestService;
 
     public StepDefinitions(@Value("${local.server.port}") Integer localPort) {
