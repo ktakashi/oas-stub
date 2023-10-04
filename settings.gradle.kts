@@ -45,3 +45,5 @@ include(":app:spring:oas-stub-spring-stub-server")
 include(":app:spring:oas-stub-spring")
 
 include(":test:cucumber-test")
+
+include(":bom:oas-stub-bom")

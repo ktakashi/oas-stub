@@ -26,6 +26,13 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.github.ktakashi.oas.stub</groupId>
+                <artifactId>oas-stub-bom</artifactId>
+                <version>${oas.stub.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
                 <version>${cucumber.version}</version>
@@ -61,13 +68,11 @@
         <dependency>
             <groupId>io.github.ktakashi.oas.stub.spring</groupId>
             <artifactId>oas-stub-spring-boot-starter-test</artifactId>
-            <version>${oas.stub.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.github.ktakashi.oas.stub.spring</groupId>
             <artifactId>oas-stub-spring-stub-server</artifactId>
-            <version>${oas.stub.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

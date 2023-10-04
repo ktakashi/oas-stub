@@ -86,7 +86,9 @@ internal fun configureMavenPublishingConventions(project: Project) {
             }
         }
         publishing.publications.withType(MavenPublication::class.java).all { publication ->
-            publication.artifact(project.tasks.getByName("dokkaJavadocJar"))
+            project.plugins.withId("org.jetbrains.kotlin.jvm") {
+                publication.artifact(project.tasks.getByName("dokkaJavadocJar"))
+            }
             publication.pom.apply {
                 name.set(project.provider(project::getName))
                 description.set(project.provider(project::getDescription))
