@@ -20,6 +20,7 @@ paths:
 components:
   schemas:
     Object:
+      type: object
       required:
         - id
       properties:
@@ -28,17 +29,16 @@ components:
           format: uuid
         values:
           $ref: "#/components/schemas/Array"
+        extra:
+          type:
+            - string
+            - 'null'
     Array:
-      maximum: 2
-      minimum: 1
+      type: array
+      maxItems: 2
+      minItems: 1
       items:
         anyOf:
-          - type: string
-            format: email
-          - type: string
-            format: date
-          - type: string
-            format: date-time
           - type: string
             enum:
               - OK
