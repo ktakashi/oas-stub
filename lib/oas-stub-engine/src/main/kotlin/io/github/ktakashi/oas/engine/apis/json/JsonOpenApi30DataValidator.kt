@@ -43,14 +43,10 @@ class JsonOpenApi30DataValidator
             schema.anyOf != null -> schema.anyOf.firstOrNull { s -> checkSchema(value, rootProperty, s).isValid }
                     ?.let { success }
                     ?: failedResult("$value must satisfy at least one of ${toPrettyString(schema.anyOf)}", rootProperty)
-            schema.oneOf != null -> schema.anyOf.filter { s -> checkSchema(value, rootProperty, s).isValid }
-                    .let { v ->
-                        if (v.size == 1) {
-                            success
-                        } else {
-                            failedResult("$value must satisfy only one of ${toPrettyString(schema.oneOf)}, but satisfied ${v.size}", rootProperty)
-                        }
-                    }
+            schema.oneOf != null -> when (val size = schema.oneOf.filter { s -> checkSchema(value, rootProperty, s).isValid }.size) {
+                1 -> success
+                else -> failedResult("$value must satisfy only one of ${toPrettyString(schema.oneOf)}, but satisfied $size", rootProperty)
+            }
             schema.allOf != null -> if (schema.allOf.all { s -> checkSchema(value, rootProperty, s).isValid }) {
                 success
             } else failedResult("$value must satisfy all of ${toPrettyString(schema.allOf)}", rootProperty)
