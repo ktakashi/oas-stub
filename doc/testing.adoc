@@ -52,10 +52,7 @@ class ExampleApplicationTest {
 }
 ----
 
-TIP: `@EnableAutoConfiguration` is required to make it work.
-This is because `oas-stub-spring-boot-starter-test` is based
-on `oas-stub-spring-boot-web` and this module is a bundle of
-autoconfiguration modules.
+`@AutoConfigureOasStub` annotation enables OAS stub on your application.
 
 `OasStubTestService` is a convenient service for testing, which
 provides API creation and validation methods. For more detail,
@@ -195,3 +192,7 @@ might be the easiest solution. But be aware that, this module requires
 embedded tomcat provided by Spring Boot, which means, if your application
 is desired to be run on Netty, then the module may not work properly or
 you need to change the setup during testing.
+
+If your application is using Jetty related components provided by Spring
+Boot, then you may not be able to use `oas-stub-spring-stub-server` as
+mentioned above section.
