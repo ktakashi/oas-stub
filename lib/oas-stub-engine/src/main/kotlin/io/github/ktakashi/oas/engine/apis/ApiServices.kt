@@ -161,15 +161,15 @@ class DefaultApiService
             return emitResponse(requestContext, makeErrorResponse(HttpStatus.SC_METHOD_NOT_ALLOWED))
         }
         val responseContext = if (requestContext.skipValidation) {
-            apiResultProvider.provideResult(operation.get(), requestContext)
+            apiResultProvider.provideResult(pathItem.get(), operation.get(), requestContext)
         } else {
             adjustedPath.flatMap { v ->
                 findMatchingPath(v, apiContext.openApi.paths.keys)
-                        .flatMap { p -> apiRequestPathVariableValidator.validate(v, p, operation.get()) }
+                        .flatMap { p -> apiRequestPathVariableValidator.validate(v, p, pathItem.get(), operation.get()) }
                         .map<ResponseContext> { p ->
                             DefaultResponseContext(status = p.first, content = p.second, contentType = Optional.of(APPLICATION_PROBLEM_JSON))
                         }
-            }.orElseGet { apiResultProvider.provideResult(operation.get(), requestContext) }
+            }.orElseGet { apiResultProvider.provideResult(pathItem.get(), operation.get(), requestContext) }
         }
         return emitResponse(requestContext, responseContext)
     }
@@ -225,11 +225,11 @@ class DefaultApiService
 class ApiRequestPathVariableValidator
 @Inject constructor(private val requestParameterValidator: ApiRequestParameterValidator,
                     private val objectMapper: ObjectMapper) {
-    fun validate(path: String, template: String, operation: Operation): Optional<Pair<Int, Optional<ByteArray>>> {
+    fun validate(path: String, template: String, pathItem: PathItem, operation: Operation): Optional<Pair<Int, Optional<ByteArray>>> {
         val uriTemplate = UriTemplate(template)
         val matcher = uriTemplate.pattern.match(path)
         val result = uriTemplate.templateVariables.flatMapIndexed { i, name ->
-            operation.parameters.map { parameter ->
+            getParameter(operation, pathItem).map { parameter ->
                 when (parameter.`in`) {
                     "path" ->
                         if (parameter.name == name) {
@@ -246,6 +246,10 @@ class ApiRequestPathVariableValidator
         val body = result.toJsonProblemDetails(HttpStatus.SC_BAD_REQUEST, objectMapper)
         return Optional.of(HttpStatus.SC_BAD_REQUEST to body)
     }
+
+    private fun getParameter(operation: Operation, pathItem: PathItem) = operation.parameters
+        ?: pathItem.parameters
+        ?: listOf()
 }
 
 private fun makeErrorResponse(status: Int): ResponseContext = DefaultResponseContext(status = status)

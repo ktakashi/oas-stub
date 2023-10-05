@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.engine.apis
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Content
 import jakarta.inject.Inject
 import jakarta.inject.Named
@@ -23,14 +24,14 @@ private val contentType = Optional.of(APPLICATION_PROBLEM_JSON)
 class ApiContentDecider
 @Inject constructor(private val validators: Set<ApiRequestValidator>,
                     private val objectMapper: ObjectMapper) {
-    fun decideContent(requestContext: ApiContextAwareRequestContext, operation: Operation): ContentDecision {
-        val r = decideContentImpl(requestContext, operation)
+    fun decideContent(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ContentDecision {
+        val r = decideContentImpl(requestContext, path, operation)
         logger.debug("Request {}: decision -> {}", requestContext.apiPath, r)
         return r
     }
 
-    private fun decideContentImpl(requestContext: ApiContextAwareRequestContext, operation: Operation): ContentDecision {
-        val result = validate(requestContext, operation)
+    private fun decideContentImpl(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ContentDecision {
+        val result = validate(requestContext, path, operation)
         if (!result.isValid) {
             logger.info("Validation failed: {}", result)
         }
@@ -57,11 +58,11 @@ class ApiContentDecider
                 contentType = contentType))
     }
 
-    private fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult {
+    private fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult {
         if (requestContext.skipValidation) {
             return success
         }
-        return validators.map { v -> v.validate(requestContext, operation) }
+        return validators.map { v -> v.validate(requestContext, path, operation) }
                 .fold(success) { a, b -> a.merge(b) }
     }
 }

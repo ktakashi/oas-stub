@@ -61,6 +61,12 @@ Feature: Create APIs from OAS file
       | /schema/v2/uber.yaml | GET    | /v1/products?latitude=1.0&longitude=1.5&server_token=token |         |             | 200    | application/json    | [0].product_id=string |
       | /schema/v2/uber.yaml | GET    | /v1/products?latitude=1.0&longitude=1.5                    |         |             | 401    | application/json    | message=string        |
       | /schema/v2/uber.yaml | GET    | /v1/me                                                     |         |             | 200    | application/json    | first_name=string     |
+    @v3_1 @test-api
+    Examples:
+      | schema                | method | path              | content | contentType | status | responseContentType | response   |
+      | /schema/test-api.yaml | GET    | /examples         |         |             | 200    | application/json    | attr=email |
+      | /schema/test-api.yaml | GET    | /examples/objects |         |             | 200    | application/json    | attr=uuid  |
+
 
   @deletion
   Scenario Outline: Delete Stub APIs
@@ -73,5 +79,5 @@ Feature: Create APIs from OAS file
     And I get http status 404
     @v3 @petstore
     Examples:
-      | schema                   | method | path             |
-      | /schema/v3/petstore.yaml | GET    | /v1/pets         |
+      | schema                   | method | path     |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets |

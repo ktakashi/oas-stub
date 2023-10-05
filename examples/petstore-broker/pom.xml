@@ -162,7 +162,7 @@
                 </executions>
                 <configuration>
                     <classifier>dist</classifier>
-                    <mainClass>oas.example.ExampleApplication</mainClass>
+                    <mainClass>oas.example.petstore.broker.PetstoreBrokerApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import io.github.ktakashi.oas.engine.apis.json.guessType
 import io.swagger.v3.oas.models.Operation
-import io.swagger.v3.oas.models.SpecVersion
+import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.security.SecurityScheme
@@ -63,13 +63,16 @@ internal fun failedResult(message: String, property: String? = null, type: ApiVa
         ApiValidationResult(type, listOf(ValidationDetail(message, Optional.ofNullable(property))))
 
 fun interface ApiRequestValidator {
-    fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult
+    fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult
+
 }
+
+private fun getParameter(operation: Operation, path: PathItem) = operation.parameters ?: path.parameters
 
 @Named @Singleton
 class ApiRequestBodyValidator
 @Inject constructor(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
-    override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult = when (requestContext.method) {
+    override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult = when (requestContext.method) {
         "GET", "HEAD", "OPTIONS", "DELETE" -> success // nobody
         else -> {
             val content = requestContext.content
@@ -94,8 +97,8 @@ class ApiRequestBodyValidator
 @Named @Singleton
 class ApiRequestParameterValidator
 @Inject constructor(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
-    override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult =
-            operation.parameters
+    override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult =
+            getParameter(operation, path)
                     ?.map { p -> validate(requestContext, p) }
                     ?.fold(success) { a, b -> a.merge(b) }
                     ?: success
@@ -147,7 +150,7 @@ private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
 @Named @Singleton
 class ApiRequestSecurityValidator
 @Inject constructor(): ApiRequestValidator {
-    override fun validate(requestContext: ApiContextAwareRequestContext, operation: Operation): ApiValidationResult =
+    override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult =
             operation.security?.map { requirement ->
                 requirement.keys.mapNotNull { key -> requestContext.apiContext.openApi.components.securitySchemes?.get(key) }
                         .map { securitySchema -> validate(requestContext, securitySchema) }

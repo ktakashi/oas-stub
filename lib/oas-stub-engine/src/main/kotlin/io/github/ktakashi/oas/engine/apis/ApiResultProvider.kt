@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.engine.apis
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Content
 import io.swagger.v3.oas.models.media.Schema
 import jakarta.inject.Inject
@@ -20,7 +21,7 @@ class ApiResultProvider
 @Inject constructor(private val contentDecider: ApiContentDecider,
                     private val populators: Set<ApiDataPopulator>,
                     private val anyPopulators: Set<ApiAnyDataPopulator>) {
-    fun provideResult(operation: Operation, requestContext: ApiContextAwareRequestContext): ResponseContext = when (val decision = contentDecider.decideContent(requestContext, operation)) {
+    fun provideResult(path: PathItem, operation: Operation, requestContext: ApiContextAwareRequestContext): ResponseContext = when (val decision = contentDecider.decideContent(requestContext, path, operation)) {
         is ContentFound -> decision.content.map { content -> toResponseContext(requestContext, decision.status, content) }
                 .orElseGet { DefaultResponseContext(status = decision.status) }
         is ContentNotFound -> decision.responseContext
@@ -48,20 +49,18 @@ class ApiResultProvider
     }
 }
 
-private fun getMostExpectedMedia(content: Content, request: RequestContext): Optional<String> = getAccept(request).map { m -> "${m.type}/${m.subtype}" }
-    .filter { m -> content.containsKey(m) }
-    .or {
-        if (content.containsKey(MediaType.APPLICATION_JSON)) {
-            Optional.of(MediaType.APPLICATION_JSON)
-        } else {
-            Optional.ofNullable(content.keys.firstOrNull())
-        }
+private fun getMostExpectedMedia(content: Content, request: RequestContext): Optional<String> = getAccepts(request)
+    .map { m -> "${m.type}/${m.subtype}" }
+    .firstOrNull { m -> content.containsKey(m) }
+    ?.let { m -> Optional.of(m) }
+    ?: if (content.containsKey(MediaType.APPLICATION_JSON)) {
+        Optional.of(MediaType.APPLICATION_JSON)
+    } else {
+        Optional.ofNullable(content.keys.firstOrNull())
     }
 
-fun getAccept(request: RequestContext): Optional<MediaType> = request.headers["Accept"]?.let { v ->
-    if (v.isEmpty()) {
-        Optional.empty()
-    } else {
-        Optional.of(MediaType.valueOf(v[0]))
-    }
-} ?: Optional.empty()
+private val DELIMITER = Regex("\\s*,\\s*")
+fun getAccepts(request: RequestContext): List<MediaType> = request.headers["Accept"]
+    ?.flatMap { value -> value.split(DELIMITER) }
+    ?.map { v -> MediaType.valueOf(v) }
+    ?: listOf()

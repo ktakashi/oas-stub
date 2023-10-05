@@ -18,35 +18,53 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.math.min
+import org.slf4j.LoggerFactory
 
-typealias NodePopulator = (Schema<*>) -> JsonNode
+internal typealias NodePopulator = (Schema<*>) -> JsonNode
+
+private val logger = LoggerFactory.getLogger("io.github.ktakashi.oas.engine.apis.json.PopulatorUtils")
 
 @Suppress("kotlin:S6518") // impossible to make it
 internal fun populateObjectNode(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
-    objectMapper.readTree(v)
+    if (v is String) {
+        objectMapper.readTree(v)
+    } else {
+        objectMapper.valueToTree(v)
+    }
 } ?: ObjectNode(objectMapper.nodeFactory).also { me ->
     schema.properties?.forEach { (k, v) -> me.set<JsonNode>(k, populateNode(v)) }
 }
 
 internal fun populateArrayNode(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
-    objectMapper.readTree(v)
+    if (v is String) {
+        objectMapper.readTree(v)
+    } else {
+        objectMapper.valueToTree(v)
+    }
 } ?: handleArray(schema, objectMapper, populateNode)
 
-internal fun populateBooleanNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> BooleanNode.valueOf(v.toBoolean()) }
+internal fun populateBooleanNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> BooleanNode.valueOf(v.toString().toBoolean()) }
     ?: BooleanNode.valueOf(true)
 
-internal fun populateIntNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> IntNode.valueOf(NumberInput.parseInt(v)) }
+internal fun populateIntNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> IntNode.valueOf(NumberInput.parseInt(v.toString())) }
     ?: handleRange(schema)
 
-internal fun populateDoubleNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> DoubleNode.valueOf(NumberInput.parseDouble(v)) }
+internal fun populateDoubleNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> DoubleNode.valueOf(NumberInput.parseDouble(v.toString())) }
     ?: handleRange(schema)
 
-internal fun populateTextNode(schema: Schema<*>): JsonNode = handleExample(schema, TextNode::valueOf)
+internal fun populateTextNode(schema: Schema<*>): JsonNode = handleExample(schema) { v ->  TextNode.valueOf(v.toString()) }
     ?: handleText(schema)
 
-private fun handleExample(schema: Schema<*>, generator: (s: String) -> JsonNode) = schema.example?.let {
-    generator(it.toString())
+private fun handleExample(schema: Schema<*>, generator: (Any) -> JsonNode) = getExample(schema)?.let {
+    try {
+        generator(it)
+    } catch (e: Exception) {
+        logger.debug("Failed to deserialize example: $it", e)
+        null
+    }
 }
+
+private fun getExample(schema: Schema<*>) = schema.examples?.get(0) ?: schema.example
 
 private fun handleArray(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): ArrayNode {
     fun getCount(schema: Schema<*>): Int = schema.minItems

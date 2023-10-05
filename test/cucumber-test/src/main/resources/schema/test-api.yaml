@@ -1,9 +1,10 @@
-openapi: "3.0.0"
+openapi: "3.1.0"
 info:
   version: 1.0.0
   title: My test API
   license:
     name: MIT
+    url: https://opensource.org/licenses/MIT
 paths:
   /profiles:
     parameters:
@@ -49,7 +50,33 @@ paths:
                 $ref: "#/components/schemas/Profile"
         400:
           $ref: "#/components/responses/400ErrorResponse"
-
+  /examples:
+    get:
+      responses:
+        200:
+          description: Example value
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attr:
+                    type: string
+                  value:
+                    type: string
+                    format: email
+                examples:
+                  - attr: "email"
+                    value: ktakashi@ymail.com
+  /examples/objects:
+    get:
+      responses:
+        200:
+          description: Example value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleObject"
 components:
   parameters:
     Request-ID:
@@ -86,3 +113,15 @@ components:
             - validation-error
             - unique-constraint-error
             - internal-error
+    ExampleObject:
+      type: object
+      properties:
+        attr:
+          type: string
+        value:
+          type: string
+      examples:
+        - attr: "uuid"
+          value: 4395c48d-091f-4602-8998-9cfed505e400
+        - attr: "email"
+          value: ktakashi@ymail.com
