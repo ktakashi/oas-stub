@@ -41,6 +41,14 @@ Feature: Create APIs from OAS file
       | /schema/v3/petstore-extended.yaml | POST   | /v2/pets      | {"name": "Pochi", "tag": 1}    | application/json | 400    | application/json         | message=string    |
       | /schema/v3/petstore-extended.yaml | DELETE | /v2/pets/1    |                                |                  | 204    | <null>                   | <null>            |
       | /schema/v3/petstore-extended.yaml | DELETE | /v2/pets/tama |                                |                  | 400    | application/problem+json | errors[0].name=id |
+    @v3_1 @petstore
+    Examples:
+      | schema                     | method | path             | content | contentType | status | responseContentType | response               |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets         |         |             | 200    | application/json    | $.size().toString()=10 |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets/1       |         |             | 200    | application/json    | id.toString()=0        |
+      | /schema/v3_1/petstore.yaml | POST   | /v1/pets         |         |             | 201    | <null>              | <null>                 |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets?limit=1 |         |             | 200    | application/json    | $.size().toString()=10 |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code.toString()=0      |
     @v2 @petstore
     Examples:
       | schema                   | method | path       | content | contentType | status | responseContentType | response              |

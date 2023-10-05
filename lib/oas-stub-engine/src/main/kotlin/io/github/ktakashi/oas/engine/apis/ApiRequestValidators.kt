@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import io.github.ktakashi.oas.engine.apis.json.guessType
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.Schema
@@ -128,21 +129,17 @@ class ApiRequestParameterValidator
 }
 
 private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
-    when (schema.specVersion) {
-        SpecVersion.V30 -> when (schema.type) {
-            "integer" -> try {
-                JsonNodeFactory.instance.numberNode(BigInteger(s))
-            } catch (e: Exception) {
-                JsonNodeFactory.instance.textNode(s)
-            }
-            "number" -> try {
-                JsonNodeFactory.instance.numberNode(BigDecimal(s))
-            } catch (e: Exception) {
-                JsonNodeFactory.instance.textNode(s)
-            }
-            else -> JsonNodeFactory.instance.textNode(s)
+    when (guessType(schema)) {
+        "integer" -> try {
+            JsonNodeFactory.instance.numberNode(BigInteger(s))
+        } catch (e: Exception) {
+            JsonNodeFactory.instance.textNode(s)
         }
-        // TODO OAS 3.1.x
+        "number" -> try {
+            JsonNodeFactory.instance.numberNode(BigDecimal(s))
+        } catch (e: Exception) {
+            JsonNodeFactory.instance.textNode(s)
+        }
         else -> JsonNodeFactory.instance.textNode(s)
     }
 } ?: JsonNodeFactory.instance.nullNode()
