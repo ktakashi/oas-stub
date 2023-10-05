@@ -95,12 +95,8 @@ class JsonOpenApi31DataValidator
         failedResult("Not an object '$value'", property)
     }
 
-    private fun hasType(type: String, schema: JsonSchema) = checkType(type, schema) || checkTypes(type, schema)
+    private fun hasType(type: String, schema: JsonSchema) = checkTypes(type, schema) || guessType(schema) == type
 
     private fun checkTypes(type: String, schema: JsonSchema): Boolean = schema.types?.contains(type) ?: false
-
-    private fun checkType(type: String, schema: JsonSchema): Boolean = schema.type?.let {
-        it == type
-    } ?: false
 
 }

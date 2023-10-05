@@ -17,6 +17,7 @@ import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
+import io.swagger.v3.oas.models.SpecVersion
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -134,8 +135,13 @@ class DefaultApiService
                         }
                     } ?: true
                 }
-                .map { openApi -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi)) }
-                .map { def -> storageService.saveApiDefinitions(name, def) }
+                .map { openApi ->
+                    when (openApi.specVersion) {
+                        // V31 isn't one-to-one mapping, so keep the original one
+                        SpecVersion.V31 -> apiDefinitions
+                        else -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi))
+                    }
+                }.map { def -> storageService.saveApiDefinitions(name, def) }
                 .orElse(false)
     } ?: storageService.saveApiDefinitions(name, apiDefinitions)
     override fun deleteApiDefinitions(name: String): Boolean = storageService.deleteApiDefinitions(name)
