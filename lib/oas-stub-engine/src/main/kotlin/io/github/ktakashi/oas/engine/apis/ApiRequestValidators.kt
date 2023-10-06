@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import io.github.ktakashi.oas.engine.apis.json.guessType
 import io.github.ktakashi.oas.engine.paths.findMatchingPath
+import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import jakarta.inject.Inject
 import jakarta.inject.Named
@@ -153,7 +155,7 @@ private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
 class ApiRequestSecurityValidator
 @Inject constructor(): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult =
-            operation.security?.map { requirement ->
+            getSecurityRequirements(operation, requestContext.apiContext.openApi)?.map { requirement ->
                 requirement.keys.mapNotNull { key -> requestContext.apiContext.openApi.components.securitySchemes?.get(key) }
                         .map { securitySchema -> validate(requestContext, securitySchema) }
                         .fold(success) { a, b -> a.merge(b) }
@@ -162,8 +164,9 @@ class ApiRequestSecurityValidator
     private fun validate(requestContext: ApiContextAwareRequestContext, securityScheme: SecurityScheme): ApiValidationResult =
             when (securityScheme.type) {
                 SecurityScheme.Type.APIKEY -> validateApiKey(requestContext, securityScheme)
+                SecurityScheme.Type.HTTP -> validateHttp(requestContext, securityScheme)
                 // TODO support them
-                SecurityScheme.Type.HTTP, SecurityScheme.Type.OAUTH2, SecurityScheme.Type.OPENIDCONNECT -> success
+                SecurityScheme.Type.OAUTH2, SecurityScheme.Type.OPENIDCONNECT -> success
                 // Hmmmm, this is a bit problematic
                 SecurityScheme.Type.MUTUALTLS -> success
                 else -> success // in case of null
@@ -177,8 +180,27 @@ class ApiRequestSecurityValidator
                 else -> success
             }
 
+    private fun validateHttp(requestContext: ApiContextAwareRequestContext, securityScheme: SecurityScheme): ApiValidationResult =
+        when (securityScheme.scheme) {
+            // Only two of them from the https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml
+            "basic", "Basic" -> checkAuthorization(requestContext.headers, "Basic")
+            "bearer", "Bearer" -> checkAuthorization(requestContext.headers, "Bearer")
+            else -> success
+        }
+
+    private fun checkAuthorization( headers: Map<String, List<String>>, key: String): ApiValidationResult =
+        if (headers["Authorization"]?.firstOrNull { v -> v.startsWith(key) } != null) {
+            success
+        } else {
+            failedResult("'Authorization: $key' header must exist", key, ApiValidationResultType.SECURITY)
+        }
+
+
     private fun <T> check(map: Map<String, T>, key: String, name: String) =
             if (map.containsKey(key)) success else failedResult("$name '$key' must exist", key, ApiValidationResultType.SECURITY)
+
+    // TODO maybe we should merge?
+    private fun getSecurityRequirements(operation: Operation, openApi: OpenAPI): List<SecurityRequirement>? = operation.security ?: openApi.security
 }
 
 

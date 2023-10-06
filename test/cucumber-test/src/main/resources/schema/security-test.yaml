@@ -1,0 +1,84 @@
+openapi: "3.1.0"
+info:
+  version: 1.0.0
+  title: My test API
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    OpenID:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: Grands read access
+            write: Grants write access
+            admin: Grants access to admin operations
+  responses:
+    DefaultResponse:
+      description: Response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+            examples:
+              - code: OK
+                message: Authorized
+security:
+  - ApiKeyAuth: []
+paths:
+  /basic:
+    get:
+      security:
+        - BasicAuth: []
+      responses:
+        default:
+          $ref: "#/components/responses/DefaultResponse"
+  /bearer:
+    get:
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          $ref: "#/components/responses/DefaultResponse"
+  /apikey:
+    get:
+      responses:
+        default:
+          $ref: "#/components/responses/DefaultResponse"
+  /openid:
+    get:
+      security:
+        - OpenID: []
+      responses:
+        default:
+          $ref: "#/components/responses/DefaultResponse"
+  /oauth2:
+    get:
+      security:
+        - OAuth2: []
+      responses:
+        default:
+          $ref: "#/components/responses/DefaultResponse"
