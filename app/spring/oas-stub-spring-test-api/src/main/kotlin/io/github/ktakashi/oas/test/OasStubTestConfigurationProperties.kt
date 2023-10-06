@@ -57,11 +57,11 @@ data class OasStubTestDefinitionProperties
     var configurations: Map<String, OasStubTestConfigurationProperties> = mapOf(),
     @NestedConfigurationProperty var headers: OasStubTestHeadersProperties = OasStubTestHeadersProperties()
 ) {
-    fun toApiDefinitions() = ApiDefinitions(
-        specification = specification.inputStream.reader().use { it.readText() },
-        configurations = configurations.entries.associate { (k, v) -> k to v.toApiConfiguration() },
-        headers = headers.toApiHeaders()
-    )
+    fun toApiDefinitions() = ApiDefinitions.builder()
+        .specification(specification.inputStream.reader().use { it.readText() })
+        .configurations(configurations.entries.associate { (k, v) -> k to v.toApiConfiguration() })
+        .headers(headers.toApiHeaders())
+        .build()
 }
 
 data class OasStubTestHeadersProperties
@@ -100,7 +100,11 @@ data class OasStubTestConfigurationProperties
      */
     var data: Map<String, Any> = mapOf()
 ) {
-    fun toApiConfiguration() = ApiConfiguration(headers = headers?.toApiHeaders(), plugin = plugin.toPluginDefinition(), data = ApiData(data))
+    fun toApiConfiguration() = ApiConfiguration.builder()
+        .headers(headers?.toApiHeaders())
+        .plugin(plugin.toPluginDefinition())
+        .data(ApiData(data))
+        .build()
 }
 
 class OasStubTestResources {
