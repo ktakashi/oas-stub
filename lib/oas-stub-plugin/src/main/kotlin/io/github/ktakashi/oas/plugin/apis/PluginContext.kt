@@ -1,5 +1,7 @@
 package io.github.ktakashi.oas.plugin.apis
 
+import com.fasterxml.jackson.databind.ObjectReader
+import com.fasterxml.jackson.databind.ObjectWriter
 import java.util.Optional
 
 /**
@@ -25,4 +27,18 @@ interface PluginContext {
      * Returns session storage.
      */
     val sessionStorage: Storage
+
+    /**
+     * Default [ObjectReader]
+     *
+     * This is derived the stub application [ObjectMapper]
+     */
+    val objectReader: ObjectReader
+
+    /**
+     * Default [ObjectWriter]
+     *
+     * This is derived the stub application [ObjectMapper]
+     */
+    val objectWriter: ObjectWriter
 }

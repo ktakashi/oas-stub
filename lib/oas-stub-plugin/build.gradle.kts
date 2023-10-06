@@ -10,4 +10,5 @@ description = "OAS stub plugin APIs"
 dependencies {
     implementation(libs.kotlin.stdlib)
     api(libs.servlet.api)
+    api(libs.jackson.databind.core)
 }

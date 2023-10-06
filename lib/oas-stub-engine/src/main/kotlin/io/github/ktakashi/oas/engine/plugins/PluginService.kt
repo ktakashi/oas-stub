@@ -1,6 +1,8 @@
 package io.github.ktakashi.oas.engine.plugins
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectReader
+import com.fasterxml.jackson.databind.ObjectWriter
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
@@ -17,7 +19,6 @@ import jakarta.inject.Named
 import jakarta.inject.Singleton
 import java.time.Duration
 import java.util.Optional
-import kotlin.math.log
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger(PluginService::class.java)
@@ -60,6 +61,12 @@ data class PluginContextData(override val requestContext: RequestContext,
                              override val sessionStorage: Storage,
                              private val apiData: Map<String, Any>,
                              private val objectMapper: ObjectMapper) :PluginContext {
+    override val objectReader: ObjectReader
+        get() = objectMapper.reader()
+
+    override val objectWriter: ObjectWriter
+        get() = objectMapper.writer()
+
     override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T & Any> =
             Optional.ofNullable(apiData[label]?.let { v ->
                 clazz.cast(when (v) {
