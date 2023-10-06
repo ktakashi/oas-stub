@@ -35,12 +35,12 @@ Feature: Create APIs from OAS file
       | /schema/v3/petstore.yaml | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code.toString()=0      |
     @v3 @petstore-extended
     Examples:
-      | schema                            | method | path          | content                        | contentType      | status | responseContentType      | response          |
-      | /schema/v3/petstore-extended.yaml | POST   | /v2/pets      | {"name": "Tama", "tag": "Cat"} | application/json | 200    | application/json         | name=string       |
-      | /schema/v3/petstore-extended.yaml | POST   | /v2/pets      | {"tag": "Cat"}                 | application/json | 400    | application/json         | message=string    |
-      | /schema/v3/petstore-extended.yaml | POST   | /v2/pets      | {"name": "Pochi", "tag": 1}    | application/json | 400    | application/json         | message=string    |
-      | /schema/v3/petstore-extended.yaml | DELETE | /v2/pets/1    |                                |                  | 204    | <null>                   | <null>            |
-      | /schema/v3/petstore-extended.yaml | DELETE | /v2/pets/tama |                                |                  | 400    | application/problem+json | errors[0].name=id |
+      | schema                            | method | path          | content                        | contentType      | status | responseContentType | response       |
+      | /schema/v3/petstore-extended.yaml | POST   | /v2/pets      | {"name": "Tama", "tag": "Cat"} | application/json | 200    | application/json    | name=string    |
+      | /schema/v3/petstore-extended.yaml | POST   | /v2/pets      | {"tag": "Cat"}                 | application/json | 400    | application/json    | message=string |
+      | /schema/v3/petstore-extended.yaml | POST   | /v2/pets      | {"name": "Pochi", "tag": 1}    | application/json | 400    | application/json    | message=string |
+      | /schema/v3/petstore-extended.yaml | DELETE | /v2/pets/1    |                                |                  | 204    | <null>              | <null>         |
+      | /schema/v3/petstore-extended.yaml | DELETE | /v2/pets/tama |                                |                  | 400    | application/json    | message=string |
     @v3_1 @petstore
     Examples:
       | schema                     | method | path             | content | contentType | status | responseContentType | response               |

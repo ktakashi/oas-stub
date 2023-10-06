@@ -117,8 +117,6 @@ class OasStubGuiceEngineModule(private val configuration: OasStubGuiceConfigurat
         validators.addBinding().to(UUIDValidator::class.java)
         validators.addBinding().to(EmailValidator::class.java)
 
-        bind(ApiRequestPathVariableValidator::class.java)
-
         val jsonNodeValidator = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(ApiDataValidator::class.java, JsonNode::class.java))) as Multibinder<ApiDataValidator<*>>
         bindDataValidator(jsonNodeValidator)
         val dataValidator = Multibinder.newSetBinder(binder(), Key.get(Types.newParameterizedType(ApiDataValidator::class.java, Any::class.java))) as Multibinder<ApiDataValidator<*>>
@@ -136,6 +134,7 @@ class OasStubGuiceEngineModule(private val configuration: OasStubGuiceConfigurat
         apiRequestValidatorBinder.addBinding().to(ApiRequestParameterValidator::class.java)
         apiRequestValidatorBinder.addBinding().to(ApiRequestSecurityValidator::class.java)
         apiRequestValidatorBinder.addBinding().to(ApiRequestBodyValidator::class.java)
+        apiRequestValidatorBinder.addBinding().to(ApiRequestPathVariableValidator::class.java)
     }
 
     private fun bindDataValidator(dataValidator: Multibinder<ApiDataValidator<*>>) {

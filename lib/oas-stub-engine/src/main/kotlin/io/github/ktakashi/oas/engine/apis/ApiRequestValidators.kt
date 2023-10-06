@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import io.github.ktakashi.oas.engine.apis.json.guessType
+import io.github.ktakashi.oas.engine.paths.findMatchingPath
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Schema
@@ -17,6 +18,7 @@ import jakarta.ws.rs.core.MediaType
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.Optional
+import org.glassfish.jersey.uri.UriTemplate
 
 data class ValidationDetail(val message: String, val property: Optional<String> = Optional.empty())
 enum class ApiValidationResultType {
@@ -177,4 +179,39 @@ class ApiRequestSecurityValidator
 
     private fun <T> check(map: Map<String, T>, key: String, name: String) =
             if (map.containsKey(key)) success else failedResult("$name '$key' must exist", key, ApiValidationResultType.SECURITY)
+}
+
+
+@Named @Singleton
+class ApiRequestPathVariableValidator
+@Inject constructor(private val requestParameterValidator: ApiRequestParameterValidator): ApiRequestValidator {
+
+    override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult {
+        val apiContext = requestContext.apiContext
+        val adjustedPath = adjustBasePath(requestContext.apiPath, apiContext.openApi)
+        return adjustedPath.flatMap { v ->
+            findMatchingPath(v, apiContext.openApi.paths.keys)
+                .map { p -> validate(v, p, path, operation) }
+        }.orElse(success)
+    }
+    private fun validate(path: String, template: String, pathItem: PathItem, operation: Operation): ApiValidationResult {
+        val uriTemplate = UriTemplate(template)
+        val matcher = uriTemplate.pattern.match(path)
+        return uriTemplate.templateVariables.flatMapIndexed { i, name ->
+            getParameter(operation, pathItem).map { parameter ->
+                when (parameter.`in`) {
+                    "path" ->
+                        if (parameter.name == name) {
+                            val value = matcher.group(i + 1)
+                            requestParameterValidator.validateParameterList(parameter, listOf(value))
+                        } else success
+                    else -> success
+                }
+            }
+        }.fold(success) { a, b -> a.merge(b) }
+    }
+
+    private fun getParameter(operation: Operation, pathItem: PathItem) = operation.parameters
+        ?: pathItem.parameters
+        ?: listOf()
 }

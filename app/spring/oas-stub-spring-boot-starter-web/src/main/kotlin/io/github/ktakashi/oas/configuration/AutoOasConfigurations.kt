@@ -99,8 +99,8 @@ class AutoOasValidatorConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    fun apiRequestPathVariableValidator(requestParameterValidator: ApiRequestParameterValidator, objectMapper: ObjectMapper)
-            = ApiRequestPathVariableValidator(requestParameterValidator, objectMapper)
+    fun apiRequestPathVariableValidator(requestParameterValidator: ApiRequestParameterValidator)
+            = ApiRequestPathVariableValidator(requestParameterValidator)
 }
 
 @AutoConfiguration(after = [AutoOasPluginConfiguration::class])
@@ -141,10 +141,9 @@ class AutoOasEngineConfiguration {
     @ConditionalOnMissingBean
     fun apiService(storageService: StorageService,
                    apiPathService: ApiPathService,
-                   apiRequestPathVariableValidator: ApiRequestPathVariableValidator,
                    apiResultProvider: ApiResultProvider,
                    pluginService: PluginService): ApiExecutionService
-            = DefaultApiService(storageService, parsingService(), apiPathService, apiRequestPathVariableValidator, apiResultProvider, pluginService)
+            = DefaultApiService(storageService, parsingService(), apiPathService, apiResultProvider, pluginService)
 
     @Bean
     @ConditionalOnMissingBean
