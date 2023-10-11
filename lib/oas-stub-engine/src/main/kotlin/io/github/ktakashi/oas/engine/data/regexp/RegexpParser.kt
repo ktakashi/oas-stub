@@ -2,11 +2,14 @@ package io.github.ktakashi.oas.engine.data.regexp
 
 import io.github.ktakashi.peg.Parser
 import io.github.ktakashi.peg.SuccessResult
+import io.github.ktakashi.peg.any
 import io.github.ktakashi.peg.bind
+import io.github.ktakashi.peg.debug
 import io.github.ktakashi.peg.defer
 import io.github.ktakashi.peg.eq
 import io.github.ktakashi.peg.many
 import io.github.ktakashi.peg.or
+import io.github.ktakashi.peg.peek
 import io.github.ktakashi.peg.result
 import io.github.ktakashi.peg.satisfy
 import io.github.ktakashi.peg.seq
@@ -37,7 +40,13 @@ data class RegexpAlter(val regexps: List<RegexpNode>): RegexpNode {
         @JvmField
         val EMPTY = RegexpAlter()
         @JvmStatic
-        fun of(vararg regexp: RegexpNode) = RegexpAlter(regexp.toList())
+        fun of(vararg regexp: RegexpNode) = regexp.toList().filter { v -> v != RegexpNullSeq }.let {
+            when (it.size) {
+                0 -> RegexpNullSeq
+                1 -> it[0]
+                else -> RegexpAlter(it)
+            }
+        }
     }
     operator fun plus(regexp: RegexpNode) = RegexpAlter(regexps + regexp)
     fun unshift(regexp: RegexpNode) = RegexpAlter(listOf(regexp) + regexps)
@@ -48,7 +57,13 @@ data class RegexpSequence(val regexps: List<RegexpNode>): RegexpNode {
         @JvmField
         val EMPTY = RegexpSequence(listOf())
         @JvmStatic
-        fun of(vararg regexp: RegexpNode) = RegexpSequence(regexp.toList())
+        fun of(vararg regexp: RegexpNode) = regexp.toList().filter { v -> v != RegexpNullSeq }.let {
+            when (it.size) {
+                0 -> RegexpNullSeq
+                1 -> it[0]
+                else -> RegexpSequence(it)
+            }
+        }
     }
     operator fun plus(regexp: RegexpNode) = RegexpSequence(regexps + regexp)
     fun unshift(regexp: RegexpNode) = RegexpSequence(listOf(regexp) + regexps)
@@ -100,7 +115,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(seq(eq('('), eq('?'), eq('!')), defer { disjunction }, eq(')')) { _, n, _ -> result(RegexpNegativeLookAhead(n)) }
     )
 
-    private val decimalDigits = bind(many(satisfy { c: Char -> Character.isDigit(c)})) { digits ->
+    private val decimalDigits = bind(many(satisfy { c: Char -> Character.isDigit(c) })) { digits ->
         result(digits.joinToString("").toInt())
     }
 
@@ -128,11 +143,54 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         seq(eq('\\'), eq('D'), result(REGEXP_NON_DIGIT_SET))
     )
 
-    private val classRanges: Parser<Char, RegexpNode> = TODO()
+    private val classAtomNoDash = or(
+        bind(satisfy { c: Char -> "\\]-".indexOf(c) < 0 }) { c -> result(RegexpPatternChar(c)) },
+        characterClassEscape,
+        bind(eq('\\'), satisfy { c: Char -> "fnrtv".indexOf(c) >= 0 }) { _, c ->
+            result(RegexpPatternChar(when (c) {
+                'f' -> '\u000c'
+                'n' -> '\n'
+                'r' -> '\r'
+                't' -> '\t'
+                else -> '\u000b' // vtab
+            }))
+        },
+        bind(eq('\\'), ::any) { _, c: Char -> result(RegexpPatternChar(c)) }
+    )
+
+    private val classAtom = or(
+        seq(eq('-'), result(RegexpPatternChar('-'))),
+        classAtomNoDash
+    )
+
+    private val classRanges: Parser<Char, RegexpNode> by lazy {
+        or(
+            bind(classAtom, eq('-'), classAtom, defer { classRanges }) { s, _, e, n ->
+                result(when (s) {
+                    is RegexpPatternChar -> when (e) {
+                        is RegexpPatternChar -> RegexpAlter.of(RegexpCharSet(s.char, e.char), n)
+                        // [a-\d] or so? not sure how it should be handled, but let's do some
+                        // meaningful interpretation. (a- inf) | \d
+                        else -> RegexpAlter.of(RegexpCharSet(s.char, Char.MAX_VALUE), e, n)
+                    }
+                    // [\w-whatever] case, '-' will be treated as a char
+                    else -> RegexpAlter.of(s, RegexpPatternChar('-'), e, n)
+                })
+            },
+            bind(classAtom, defer { classRanges }) { a, r ->
+                result(if (r is RegexpAlter) {
+                    r.unshift(a)
+                } else {
+                    RegexpAlter.of(a, r)
+                })
+            },
+            seq(peek(eq(']')), result(RegexpNullSeq))
+        )
+    }
 
     private val characterClass = or(
         bind(seq(eq('['), eq('^')), classRanges, eq(']')) { _, range, _ -> result(RegexpComplement(range)) },
-        bind(seq(eq('['), eq('^')), classRanges, eq(']')) { _, range, _ -> result(range) }
+        bind(eq('['), classRanges, eq(']')) { _, range, _ -> result(range) }
     )
 
     private val atom = or(
@@ -142,7 +200,8 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(eq('('), defer { disjunction }, eq(')')) { _, ex, _ -> result(ex) }, // capture, but we ignore, for now?
         bind(seq(eq('('), eq('?'), eq(':')), defer { disjunction }, eq(')')) { _, ex, _ -> result(ex) },
 
-        bind(satisfy { c: Char -> REGEXP_SPECIAL_CHARACTERS.indexOf(c) < 0 }) { c -> result(RegexpPatternChar(c)) }
+        bind(satisfy { c: Char -> REGEXP_SPECIAL_CHARACTERS.indexOf(c) < 0 }) { c -> result(RegexpPatternChar(c)) },
+        bind(eq('\\'), ::any) { _, c: Char -> result(RegexpPatternChar(c)) }
     )
 
     private val term: Parser<Char, RegexpNode> = or(

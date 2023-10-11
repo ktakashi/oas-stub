@@ -21,6 +21,16 @@ class RegexpParserTest {
         "a{2}/rep(char(a), 2, 2)",
         "a{1,}/rep(char(a), 1)",
         "a{1,2}/rep(char(a), 1, 2)",
+        "[abc]/alt(char(a), char(b), char(c))",
+        "[a-z]/cset(a, z)",
+        "[a-z\\d]/alt(cset(a, z), cset(0, 9))",
+        "[\\q]/char(q)",
+        "[\\n]/char(\\n)",
+        "[\\t]/char(\\t)",
+        "[\\v]/char(\\v)",
+        "[\\f]/char(\\f)",
+        "[a-\\dz]/alt(cset(a), cset(0, 9), char(z)))",
+        "\\?/char(?)"
     ], delimiter = '/')
     fun parsePattern(pattern: String, ast: String) {
         val result = parser.parse(pattern)
@@ -60,11 +70,22 @@ private fun constructAst(ast: String): RegexpNode {
         var start = 0
         val r = mutableListOf<String>()
         do {
-            val (ast, index) = parseContent1(content, start)
-            r.add(ast)
+            val (ast1, index) = parseContent1(content, start)
+            r.add(ast1)
             start = index + 2
         } while (start < content.length)
         return r
+    }
+    fun handleChar(s: String) = when (val c = s[0]) {
+        '\\' -> when (val c1 = s[1]) {
+            'f' -> '\u000c'
+            'n' -> '\n'
+            'r' -> '\r'
+            't' -> '\t'
+            'v' -> '\u000b'
+            else -> c1
+        }
+        else -> c
     }
     // format of test ast
     // name(value, ...)
@@ -75,9 +96,13 @@ private fun constructAst(ast: String): RegexpNode {
         "seq" -> RegexpSequence(parseContent(content).map { constructAst(it) })
         "alt" -> RegexpAlter(parseContent(content).map { constructAst(it) })
         "cset" -> content.split(",").map { it.trim() }.let {
-            RegexpCharSet(it[0][0], it[1][0])
+            if (it.size == 1) {
+                RegexpCharSet(handleChar(it[0]), Char.MAX_VALUE)
+            } else {
+                RegexpCharSet(handleChar(it[0]), handleChar(it[1]))
+            }
         }
-        "char" -> RegexpPatternChar(content[0])
+        "char" -> RegexpPatternChar(handleChar(content))
         "comp" -> RegexpComplement(constructAst(content))
         "any" -> RegexpAny
         "start" -> RegexpStartAnchor
