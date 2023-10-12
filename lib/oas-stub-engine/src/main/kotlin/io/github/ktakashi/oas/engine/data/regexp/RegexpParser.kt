@@ -4,10 +4,10 @@ import io.github.ktakashi.peg.Parser
 import io.github.ktakashi.peg.SuccessResult
 import io.github.ktakashi.peg.any
 import io.github.ktakashi.peg.bind
-import io.github.ktakashi.peg.debug
 import io.github.ktakashi.peg.defer
 import io.github.ktakashi.peg.eq
 import io.github.ktakashi.peg.many
+import io.github.ktakashi.peg.repeat
 import io.github.ktakashi.peg.or
 import io.github.ktakashi.peg.peek
 import io.github.ktakashi.peg.result
@@ -16,64 +16,6 @@ import io.github.ktakashi.peg.seq
 import java.text.ParseException
 import java.util.EnumSet
 
-sealed interface RegexpNode
-
-sealed interface RegexpNodeContainer: RegexpNode {
-    val regexp: RegexpNode
-}
-sealed interface RegexpRange: RegexpNode {
-    val min: Int
-    val max: Int
-}
-
-data object RegexpNullSeq: RegexpNode
-data object RegexpStartAnchor: RegexpNode
-data object RegexpEndAnchor: RegexpNode
-data object RegexpWordBoundary: RegexpNode
-data object RegexpNonWordBoundary: RegexpNode
-data object RegexpAny: RegexpNode
-data class RegexpPatternChar(val char: Char): RegexpNode
-data class RegexpCharSet(val min: Char, val max: Char): RegexpNode
-data class RegexpAlter(val regexps: List<RegexpNode>): RegexpNode {
-    constructor(): this(listOf())
-    companion object {
-        @JvmField
-        val EMPTY = RegexpAlter()
-        @JvmStatic
-        fun of(vararg regexp: RegexpNode) = regexp.toList().filter { v -> v != RegexpNullSeq }.let {
-            when (it.size) {
-                0 -> RegexpNullSeq
-                1 -> it[0]
-                else -> RegexpAlter(it)
-            }
-        }
-    }
-    operator fun plus(regexp: RegexpNode) = RegexpAlter(regexps + regexp)
-    fun unshift(regexp: RegexpNode) = RegexpAlter(listOf(regexp) + regexps)
-}
-
-data class RegexpSequence(val regexps: List<RegexpNode>): RegexpNode {
-    companion object {
-        @JvmField
-        val EMPTY = RegexpSequence(listOf())
-        @JvmStatic
-        fun of(vararg regexp: RegexpNode) = regexp.toList().filter { v -> v != RegexpNullSeq }.let {
-            when (it.size) {
-                0 -> RegexpNullSeq
-                1 -> it[0]
-                else -> RegexpSequence(it)
-            }
-        }
-    }
-    operator fun plus(regexp: RegexpNode) = RegexpSequence(regexps + regexp)
-    fun unshift(regexp: RegexpNode) = RegexpSequence(listOf(regexp) + regexps)
-}
-
-data class RegexpComplement(override val regexp: RegexpNode): RegexpNodeContainer
-data class RegexpLookAhead(override val regexp: RegexpNode): RegexpNodeContainer
-data class RegexpNegativeLookAhead(override val regexp: RegexpNode): RegexpNodeContainer
-data class RegexpRepetition(override val regexp: RegexpNode, override val min: Int, override val max: Int): RegexpNodeContainer, RegexpRange
-data class RegexpNonGreedyRepetition(override val regexp: RegexpNode, override val min: Int, override val max: Int): RegexpNodeContainer, RegexpRange
 
 // Maybe for future?
 enum class RegexpParserOption {
@@ -90,9 +32,18 @@ private val REGEXP_DIGIT_SET = RegexpCharSet('0', '9')
 private val REGEXP_NON_DIGIT_SET = RegexpComplement(REGEXP_DIGIT_SET)
 private val REGEXP_WORD_SET = regexpAlt(RegexpCharSet('a', 'z'), RegexpCharSet('A', 'Z'), REGEXP_DIGIT_SET, RegexpPatternChar('_'))
 private val REGEXP_NON_WORD_SET = RegexpComplement(REGEXP_WORD_SET)
-// space, \t, \r, \n and \f = \u000C
-private val REGEXP_SPACE_SET = regexpAlt(RegexpPatternChar(' '), RegexpPatternChar('\t'), RegexpPatternChar('\r'), RegexpPatternChar('\n'), RegexpPatternChar('\u000C'))
+// space, \t, \r, \n \v = \u000B and \f = \u000C
+private val REGEXP_SPACE_SET = regexpAlt(RegexpPatternChar(' '),
+    // should be make this range of \u0009 - \u000C?
+    RegexpPatternChar('\t'),
+    RegexpPatternChar('\n'),
+    RegexpPatternChar('\u000B'),
+    RegexpPatternChar('\u000C'),
+    RegexpPatternChar('\r')
+)
 private val REGEXP_NON_SPACE_SET = RegexpComplement(REGEXP_SPACE_SET)
+
+private const val ALPHABETS = "abcdefghijklmnopqrstuvwxyz"
 
 // BNF:
 //  - https://www.cs.sfu.ca/~cameron/Teaching/384/99-3/regexp-plg.html
@@ -115,7 +66,9 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(seq(eq('('), eq('?'), eq('!')), defer { disjunction }, eq(')')) { _, n, _ -> result(RegexpNegativeLookAhead(n)) }
     )
 
-    private val decimalDigits = bind(many(satisfy { c: Char -> Character.isDigit(c) })) { digits ->
+    private val hexDigit = satisfy { c: Char -> Character.digit(c, 16) != -1 }
+    private val decimalDigit = satisfy { c: Char -> c.isDigit() }
+    private val decimalDigits = bind(many(decimalDigit)) { digits ->
         result(digits.joinToString("").toInt())
     }
 
@@ -129,8 +82,8 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
     )
 
     private val quantifier: Parser<Char, Pair<Quantifier, Boolean>> = or(
-        bind(quantifierPrefix) { q -> result(q to false) },
-        bind(quantifierPrefix, eq('?')) { q, _ -> result(q to true) }
+        bind(quantifierPrefix, eq('?')) { q, _ -> result(q to true) },
+        bind(quantifierPrefix) { q -> result(q to false) }
     )
 
     // Slightly defers from the ECMA specification for our convenience
@@ -143,18 +96,53 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         seq(eq('\\'), eq('D'), result(REGEXP_NON_DIGIT_SET))
     )
 
+    private val controlEscape: Parser<Char, RegexpNode> = bind(eq('\\'), satisfy { c: Char -> "fnrtv".indexOf(c) >= 0 }) { _, c ->
+        result(RegexpPatternChar(when (c) {
+            'f' -> '\u000c'
+            'n' -> '\n'
+            'r' -> '\r'
+            't' -> '\t'
+            else -> '\u000b' // vtab
+        }))
+    }
+
+    private val characterEscape = or(
+        controlEscape,
+        bind(seq(eq('\\'), eq('c')), satisfy { c: Char -> ALPHABETS.indexOf(c.lowercaseChar()) >= 0 }) { _, c ->
+            result(RegexpPatternChar((ALPHABETS.indexOf(c.lowercaseChar()) + 1).toChar()))
+        },
+        bind(seq(eq('\\'), eq('x')), repeat(hexDigit, 2)) { _, hs ->
+            // (hi << 4) | lo
+            val v = hs.map { Character.digit(it, 16) }.fold(0) { acc, d ->
+                (acc shl 4) or d
+            }
+            result(RegexpPatternChar(v.toChar()))
+        },
+        bind(seq(eq('\\'), eq('u')), repeat(hexDigit, 4)) { _, hs ->
+            // (u3 << 12) | (u2 << 8) | (u1 << 4) | u0
+            val v = hs.map { Character.digit(it, 16) }.fold(0) { acc, d ->
+                (acc shl 4) or d
+            }
+            result(RegexpPatternChar(v.toChar()))
+        }
+    )
+
+    private val decimalEscape = or(
+        bind(seq(eq('\\'), eq('0')), many(decimalDigit)) { _, ds ->
+            result(when {
+                ds.isEmpty() -> RegexpPatternChar('\u0000')
+                else -> RegexpPatternChar(ds.joinToString("").toInt().toChar()) // decimal or octal? got for decimal as ECMA says for now
+            })
+        },
+        bind(eq('\\'), decimalDigit) { _, d -> result(RegexpBackreference(Character.digit(d, 10))) }
+    )
+
     private val classAtomNoDash = or(
         bind(satisfy { c: Char -> "\\]-".indexOf(c) < 0 }) { c -> result(RegexpPatternChar(c)) },
         characterClassEscape,
-        bind(eq('\\'), satisfy { c: Char -> "fnrtv".indexOf(c) >= 0 }) { _, c ->
-            result(RegexpPatternChar(when (c) {
-                'f' -> '\u000c'
-                'n' -> '\n'
-                'r' -> '\r'
-                't' -> '\t'
-                else -> '\u000b' // vtab
-            }))
-        },
+        characterEscape,
+        decimalEscape,
+        seq(eq('\\'), eq('b'), result(RegexpPatternChar('\b'))),
         bind(eq('\\'), ::any) { _, c: Char -> result(RegexpPatternChar(c)) }
     )
 
@@ -195,9 +183,12 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
 
     private val atom = or(
         seq(eq('.'), result(RegexpAny)),
+
         characterClassEscape,
+        characterEscape,
         characterClass,
-        bind(eq('('), defer { disjunction }, eq(')')) { _, ex, _ -> result(ex) }, // capture, but we ignore, for now?
+        decimalEscape,
+        bind(eq('('), defer { disjunction }, eq(')')) { _, ex, _ -> result(RegexpCapture(ex)) },
         bind(seq(eq('('), eq('?'), eq(':')), defer { disjunction }, eq(')')) { _, ex, _ -> result(ex) },
 
         bind(satisfy { c: Char -> REGEXP_SPECIAL_CHARACTERS.indexOf(c) < 0 }) { c -> result(RegexpPatternChar(c)) },

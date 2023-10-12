@@ -24,13 +24,35 @@ class RegexpParserTest {
         "[abc]/alt(char(a), char(b), char(c))",
         "[a-z]/cset(a, z)",
         "[a-z\\d]/alt(cset(a, z), cset(0, 9))",
+        "a+?/ngrep(char(a), 1)",
         "[\\q]/char(q)",
         "[\\n]/char(\\n)",
         "[\\t]/char(\\t)",
         "[\\v]/char(\\v)",
         "[\\f]/char(\\f)",
+        "\\n/char(\\n)",
+        "\\t/char(\\t)",
+        "\\v/char(\\v)",
+        "\\f/char(\\f)",
         "[a-\\dz]/alt(cset(a), cset(0, 9), char(z)))",
-        "\\?/char(?)"
+        "\\?/char(?)",
+        "[\\cA]/char(\\x01)",
+        "[\\ca]/char(\\x01)",
+        "[\\cJ]/char(\\n)",
+        "[\\cj]/char(\\n)",
+        "\\cA/char(\\x01)",
+        "\\ca/char(\\x01)",
+        "\\cJ/char(\\n)",
+        "\\cj/char(\\n)",
+        "\\x61/char(a)",
+        "\\u0061/char(a)",
+        "[\\b]/char(\\x08)",
+        "\\0/char(\\x00)",
+        "\\1/backref(1)",
+        "\\01/char(\\x01)",
+        "(a)/cap(char(a))",
+        "(?=a)/lookahead(char(a))",
+        "(?!a)/nlookahead(char(a))",
     ], delimiter = '/')
     fun parsePattern(pattern: String, ast: String) {
         val result = parser.parse(pattern)
@@ -44,7 +66,7 @@ private fun constructAst(ast: String): RegexpNode {
         val index = ast.indexOf('(')
         val name = ast.substring(0, index)
         val rindex = ast.lastIndexOf(')')
-        return name to ast.substring(index + 1, rindex)
+        return name.trim() to ast.substring(index + 1, rindex)
     }
     fun parseContent1(content: String, start: Int = 0): Pair<String, Int> {
         fun search(start: Int): Int {
@@ -83,6 +105,7 @@ private fun constructAst(ast: String): RegexpNode {
             'r' -> '\r'
             't' -> '\t'
             'v' -> '\u000b'
+            'x' -> s.substring(2).toInt(16).toChar()
             else -> c1
         }
         else -> c
@@ -92,7 +115,7 @@ private fun constructAst(ast: String): RegexpNode {
     // where name = type, value is constructor argument
     // e.g. seq(cset(0, 9), alt(cset(a, z), cset(A, Z), cset(0, 9), char(_))) == \d\w
     val (name, content) = parseNameAndContent(ast)
-    return when (name.trim()) {
+    return when (name) {
         "seq" -> RegexpSequence(parseContent(content).map { constructAst(it) })
         "alt" -> RegexpAlter(parseContent(content).map { constructAst(it) })
         "cset" -> content.split(",").map { it.trim() }.let {
@@ -107,9 +130,20 @@ private fun constructAst(ast: String): RegexpNode {
         "any" -> RegexpAny
         "start" -> RegexpStartAnchor
         "end" -> RegexpEndAnchor
-        "rep" -> parseContent1(content).let { (ast, rx) ->
+        "rep", "ngrep" -> parseContent1(content).let { (ast, rx) ->
             val n = content.substring(rx + 1).split(",")
-            RegexpRepetition(constructAst(ast), n[0].trim().toInt(), if (n.size == 1) Int.MAX_VALUE else n[1].trim().toInt())
+            if (name == "rep") {
+                RegexpRepetition(constructAst(ast), n[0].trim().toInt(), if (n.size == 1) Int.MAX_VALUE else n[1].trim().toInt())
+            } else {
+                RegexpNonGreedyRepetition(constructAst(ast), n[0].trim().toInt(), if (n.size == 1) Int.MAX_VALUE else n[1].trim().toInt())
+            }
+        }
+        "backref" -> RegexpBackreference(content.toInt())
+        "cap" -> RegexpCapture(constructAst(content))
+        "lookahead", "nlookahead" -> if (name == "lookahead") {
+            RegexpLookAhead(constructAst(content))
+        } else {
+            RegexpNegativeLookAhead(constructAst(content))
         }
         else -> throw IllegalArgumentException("$name not supported")
     }
