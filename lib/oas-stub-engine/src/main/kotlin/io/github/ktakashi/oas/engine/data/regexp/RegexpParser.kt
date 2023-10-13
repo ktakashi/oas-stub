@@ -17,6 +17,7 @@ import io.github.ktakashi.peg.satisfy
 import io.github.ktakashi.peg.seq
 import java.text.ParseException
 import java.util.EnumSet
+import java.util.Optional
 
 
 // Maybe for future?
@@ -74,13 +75,19 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         result(digits.joinToString("").toInt())
     }
 
+    private val quantifierPostfix = or(
+        seq(eq('}'), result(Optional.empty())),
+        seq(eq(','), eq('}'), result(Optional.of(Int.MAX_VALUE))),
+        bind(eq(','), decimalDigits, eq('}')) { _, n, _ ->
+            result(Optional.of(n))
+        }
+    )
+
     private val quantifierPrefix = or(
         seq(eq('*'), result(Quantifier(0, Int.MAX_VALUE))),
         seq(eq('+'), result(Quantifier(1, Int.MAX_VALUE))),
         seq(eq('?'), result(Quantifier(0, 1))),
-        bind(eq('{'), decimalDigits, eq('}')) { _, n, _ -> result(Quantifier(n, n)) },
-        bind(eq('{'), decimalDigits, seq(eq(','), eq('}'))) { _, n, _ -> result(Quantifier(n, Int.MAX_VALUE)) },
-        bind(eq('{'), decimalDigits, eq(','), decimalDigits, eq('}')) { _, n0, _, n1, _ -> result(Quantifier(n0, n1)) }
+        bind(eq('{'), decimalDigits, quantifierPostfix) { _, n, m -> result(Quantifier(n, m.orElse(n))) },
     )
 
     private val quantifier = bind(quantifierPrefix, optional(eq('?'))) { q, o -> result(q to o.isPresent) }
@@ -95,36 +102,34 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         seq(eq('\\'), eq('D'), result(REGEXP_NON_DIGIT_SET))
     )
 
-    private val controlEscape: Parser<Char, RegexpNode> = bind(eq('\\'), satisfy { c: Char -> "fnrtv".indexOf(c) >= 0 }) { _, c ->
-        result(RegexpPatternChar(when (c) {
-            'f' -> '\u000c'
-            'n' -> '\n'
-            'r' -> '\r'
-            't' -> '\t'
-            else -> '\u000b' // vtab
-        }))
-    }
-
-    private val characterEscape = or(
-        controlEscape,
-        bind(seq(eq('\\'), eq('c')), satisfy { c: Char -> ALPHABETS.indexOf(c.lowercaseChar()) >= 0 }) { _, c ->
-            result(RegexpPatternChar((ALPHABETS.indexOf(c.lowercaseChar()) + 1).toChar()))
+    private val characterEscape: Parser<Char, RegexpNode> = seq(eq('\\'), or(
+        bind(satisfy { c: Char -> "fnrtv".indexOf(c) >= 0 }) { c ->
+            result(RegexpPatternChar(when (c) {
+                'f' -> '\u000c'
+                'n' -> '\n'
+                'r' -> '\r'
+                't' -> '\t'
+                else -> '\u000b' // vtab
+            }))
         },
-        bind(seq(eq('\\'), eq('x')), repeat(hexDigit, 2)) { _, hs ->
+        seq(eq('c'), bind(satisfy { c: Char -> ALPHABETS.indexOf(c.lowercaseChar()) >= 0 }) { c ->
+            result(RegexpPatternChar((ALPHABETS.indexOf(c.lowercaseChar()) + 1).toChar()))
+        }),
+        seq(eq('x'), bind(repeat(hexDigit, 2)) { hs ->
             // (hi << 4) | lo
             val v = hs.map { Character.digit(it, 16) }.fold(0) { acc, d ->
                 (acc shl 4) or d
             }
             result(RegexpPatternChar(v.toChar()))
-        },
-        bind(seq(eq('\\'), eq('u')), repeat(hexDigit, 4)) { _, hs ->
+        }),
+        seq(eq('u'), bind(repeat(hexDigit, 4)) { hs ->
             // (u3 << 12) | (u2 << 8) | (u1 << 4) | u0
             val v = hs.map { Character.digit(it, 16) }.fold(0) { acc, d ->
                 (acc shl 4) or d
             }
             result(RegexpPatternChar(v.toChar()))
-        }
-    )
+        })
+    ))
 
     private val decimalEscape = or(
         bind(seq(eq('\\'), eq('0')), many(decimalDigit)) { _, ds ->
