@@ -1,5 +1,7 @@
 package io.github.ktakashi.oas.engine.data.regexp
 
+import io.github.ktakashi.oas.engine.data.charset.CharSet
+
 sealed interface RegexpNode
 
 sealed interface RegexpNodeContainer: RegexpNode {
@@ -18,7 +20,7 @@ data object RegexpNonWordBoundary: RegexpNode
 data object RegexpAny: RegexpNode
 data class RegexpPatternChar(val char: Char): RegexpNode
 data class RegexpBackreference(val reference: Int): RegexpNode
-data class RegexpCharSet(val min: Char, val max: Char): RegexpNode
+data class RegexpCharSet(val charset: CharSet): RegexpNode
 data class RegexpAlter(val regexps: List<RegexpNode>): RegexpNode {
     constructor(): this(listOf())
     companion object {

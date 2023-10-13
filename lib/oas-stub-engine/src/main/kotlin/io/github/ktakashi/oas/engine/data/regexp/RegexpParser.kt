@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.engine.data.regexp
 
+import io.github.ktakashi.oas.engine.data.charset.CharSet
 import io.github.ktakashi.peg.Parser
 import io.github.ktakashi.peg.SuccessResult
 import io.github.ktakashi.peg.any
@@ -7,9 +8,10 @@ import io.github.ktakashi.peg.bind
 import io.github.ktakashi.peg.defer
 import io.github.ktakashi.peg.eq
 import io.github.ktakashi.peg.many
-import io.github.ktakashi.peg.repeat
+import io.github.ktakashi.peg.optional
 import io.github.ktakashi.peg.or
 import io.github.ktakashi.peg.peek
+import io.github.ktakashi.peg.repeat
 import io.github.ktakashi.peg.result
 import io.github.ktakashi.peg.satisfy
 import io.github.ktakashi.peg.seq
@@ -28,9 +30,9 @@ private fun regexpAlt(vararg regexps: RegexpNode): RegexpNode =
     regexps.fold(RegexpAlter.EMPTY) { acc, regexp ->  acc + regexp }
 
 private const val REGEXP_SPECIAL_CHARACTERS = "^\$\\.*+?()[]{}|"
-private val REGEXP_DIGIT_SET = RegexpCharSet('0', '9')
+private val REGEXP_DIGIT_SET = RegexpCharSet(CharSet.fromRange('0', '9'))
 private val REGEXP_NON_DIGIT_SET = RegexpComplement(REGEXP_DIGIT_SET)
-private val REGEXP_WORD_SET = regexpAlt(RegexpCharSet('a', 'z'), RegexpCharSet('A', 'Z'), REGEXP_DIGIT_SET, RegexpPatternChar('_'))
+private val REGEXP_WORD_SET = RegexpCharSet(CharSet.fromRange('a', 'z').addRange('A', 'Z').add(REGEXP_DIGIT_SET.charset).add('_'))
 private val REGEXP_NON_WORD_SET = RegexpComplement(REGEXP_WORD_SET)
 // space, \t, \r, \n \v = \u000B and \f = \u000C
 private val REGEXP_SPACE_SET = regexpAlt(RegexpPatternChar(' '),
@@ -81,10 +83,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(eq('{'), decimalDigits, eq(','), decimalDigits, eq('}')) { _, n0, _, n1, _ -> result(Quantifier(n0, n1)) }
     )
 
-    private val quantifier: Parser<Char, Pair<Quantifier, Boolean>> = or(
-        bind(quantifierPrefix, eq('?')) { q, _ -> result(q to true) },
-        bind(quantifierPrefix) { q -> result(q to false) }
-    )
+    private val quantifier = bind(quantifierPrefix, optional(eq('?'))) { q, o -> result(q to o.isPresent) }
 
     // Slightly defers from the ECMA specification for our convenience
     private val characterClassEscape = or(
@@ -141,7 +140,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(satisfy { c: Char -> "\\]-".indexOf(c) < 0 }) { c -> result(RegexpPatternChar(c)) },
         characterClassEscape,
         characterEscape,
-        decimalEscape,
+        // decimalEscape, In charset, `[]`, why do we need decimal escape? so remove it for my laziness
         seq(eq('\\'), eq('b'), result(RegexpPatternChar('\b'))),
         bind(eq('\\'), ::any) { _, c: Char -> result(RegexpPatternChar(c)) }
     )
@@ -151,28 +150,39 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         classAtomNoDash
     )
 
-    private val classRanges: Parser<Char, RegexpNode> by lazy {
+    private val classRanges: Parser<Char, RegexpCharSet> by lazy {
+        // here classAtom returns only the blow types
+        // - RegexpPatternChar
+        // - RegexpCharSet
         or(
             bind(classAtom, eq('-'), classAtom, defer { classRanges }) { s, _, e, n ->
                 result(when (s) {
                     is RegexpPatternChar -> when (e) {
-                        is RegexpPatternChar -> RegexpAlter.of(RegexpCharSet(s.char, e.char), n)
+                        is RegexpPatternChar -> RegexpCharSet(n.charset.addRange(s.char, e.char))
                         // [a-\d] or so? not sure how it should be handled, but let's do some
                         // meaningful interpretation. (a- inf) | \d
-                        else -> RegexpAlter.of(RegexpCharSet(s.char, Char.MAX_VALUE), e, n)
+                        is RegexpCharSet -> RegexpCharSet(n.charset.addRange(s.char, Char.MAX_VALUE).add(e.charset))
+                        else -> error("[BUG] Unexpected type `e`: $e")
                     }
                     // [\w-whatever] case, '-' will be treated as a char
-                    else -> RegexpAlter.of(s, RegexpPatternChar('-'), e, n)
+                    is RegexpCharSet -> when (e) {
+                        is RegexpPatternChar -> RegexpCharSet(n.charset.add(s.charset).add(e.char))
+                        // [a-\d] or so? not sure how it should be handled, but let's do some
+                        // meaningful interpretation. (a- inf) | \d
+                        is RegexpCharSet -> RegexpCharSet(n.charset.add(s.charset).add(e.charset))
+                        else -> error("[BUG] Unexpected type `e`: $e")
+                    }
+                    else -> error("[BUG] Unexpected type `s`: $s")
                 })
             },
             bind(classAtom, defer { classRanges }) { a, r ->
-                result(if (r is RegexpAlter) {
-                    r.unshift(a)
-                } else {
-                    RegexpAlter.of(a, r)
+                result(when (a) {
+                    is RegexpPatternChar -> RegexpCharSet(r.charset.add(a.char))
+                    is RegexpCharSet -> RegexpCharSet(r.charset.add(a.charset))
+                    else -> error("[BUG] Unexpected type `a`: $a")
                 })
             },
-            seq(peek(eq(']')), result(RegexpNullSeq))
+            seq(peek(eq(']')), result(RegexpCharSet(CharSet.empty())))
         )
     }
 
@@ -197,39 +207,38 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
 
     private val term: Parser<Char, RegexpNode> = or(
         assertion,
-        bind(atom, quantifier) { r, q ->
-            if (q.second) {
-                result(RegexpNonGreedyRepetition(r, q.first.min, q.first.max))
-            } else {
-                result(RegexpRepetition(r, q.first.min, q.first.max))
-            }
-        },
-        atom
+        bind(atom, optional(quantifier)) { r, o ->
+            result(o.map<RegexpNode> { q ->
+                if (q.second) {
+                    RegexpNonGreedyRepetition(r, q.first.min, q.first.max)
+                } else {
+                    RegexpRepetition(r, q.first.min, q.first.max)
+                }
+            }.orElse(r))
+        }
     )
 
     private val alternative: Parser<Char, RegexpNode> by lazy {
-        or(
-            bind(term, defer { alternative }) { t, a ->
-                result(when (a) {
+        bind(term, optional(defer { alternative })) { t, o ->
+            result(o.map { a ->
+                when (a) {
                     is RegexpNullSeq -> t
                     is RegexpSequence -> a.unshift(t)
                     else -> RegexpSequence.of(t, a)
-                })
-            },
-            term
-        )
+                }
+            }.orElse(t))
+        }
     }
 
     private val disjunction: Parser<Char, RegexpNode> by lazy {
-        or(
-            bind(alternative, eq('|'), defer { disjunction }) { a, _, d ->
-                result(when (d) {
+        bind(alternative, optional(seq(eq('|'), defer { disjunction }))) { a, o ->
+            result(o.map { d ->
+                when (d) {
                     is RegexpAlter -> d.unshift(a)
                     else -> RegexpAlter.of(a, d)
-                })
-            },
-            alternative
-        )
+                }
+            }.orElse(a))
+        }
     }
 
     private data class Quantifier(val min: Int, val max: Int)
