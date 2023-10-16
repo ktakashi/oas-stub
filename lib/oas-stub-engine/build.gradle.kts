@@ -30,7 +30,6 @@ dependencies {
     implementation(libs.groovy.core)
     implementation(libs.slf4j.api)
     implementation("io.github.ktakashi.peg:parser-combinators:1.0.1")
-    implementation("dk.brics:automaton:1.12-4")
 
     testImplementation(platform(libs.junit.bom))
     testImplementation("org.junit.jupiter:junit-jupiter")

@@ -36,7 +36,7 @@ class RegexpParserTest {
         "\\t/char(\\t)",
         "\\v/char(\\v)",
         "\\f/char(\\f)",
-        "[a-\\dz]/union(cset(a), cset(0, 9)))",
+        "[a-\\dz]/union(cset(a, a), cset(-, -), cset(0, 9), cset(z, z)))",
         "\\?/char(?)",
         "[\\cA]/cset(\\x01, \\x01)",
         "[\\ca]/cset(\\x01, \\x01)",
@@ -55,10 +55,12 @@ class RegexpParserTest {
         "(a)/cap(char(a))",
         "(?=a)/lookahead(char(a))",
         "(?!a)/nlookahead(char(a))",
+        "[\\w.]/union(cset(a, z), cset(A, Z), cset(0, 9), cset(_, _), cset(., .))",
+        "[a][b]/seq(cset(a, a), cset(b, b))"
     ], delimiter = '/')
     fun parsePattern(pattern: String, ast: String) {
         val result = parser.parse(pattern)
-        // println(result)
+        println(result)
         assertEquals(constructAst(ast), result)
     }
 }

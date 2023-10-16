@@ -2,7 +2,6 @@ package io.github.ktakashi.oas.engine.data.charset
 
 import java.util.NavigableMap
 import java.util.TreeMap
-import javax.xml.stream.events.Characters
 
 /**
  * Scheme like charset.
@@ -14,36 +13,48 @@ import javax.xml.stream.events.Characters
  *
  * The charset doesn't support other than ASCII
  */
-class CharSet {
+sealed class CharSet {
+
+    // For performance reason, we separate commonly used chars (ASCII) and others
+    // It might be better to use bitwise operation, but I'm lazy so maybe later
+    internal val smalls = BooleanArray(SMALL_CHARS)            // characters within 0 and 128
+    // The entry represents range of chars.
+    // The key represents the lower bound of the range, and the value represents
+    // the upper bound of the range.
+    // e.g. e = {'a': 'z'}, this means this entry represents range of [a-z]
+    internal val large: NavigableMap<Int, Int> = TreeMap()    // characters larger than 128
+
     companion object {
         const val MAX_CODE_POINT = 0x10FFFF // for some reason, this doesn't exist or I'm missing then
         const val SMALL_CHARS = 128
-
         @JvmStatic
-        fun empty() = CharSet()
+        fun empty(): CharSet = MutableCharSet()
 
         @JvmStatic
         fun fromString(charset: String): CharSet {
-            val cset = CharSet()
+            val cset = MutableCharSet()
             charset.codePoints().forEach { cp -> cset.addRange(cp, cp) }
             return cset
         }
 
         @JvmStatic
         fun fromRange(from: Char, to: Char): CharSet {
-            val cset = CharSet()
+            val cset = MutableCharSet()
             cset.addRange(from, to)
             return cset
         }
+
+        @JvmField
+        val ASCII = empty().addRange(0, 128).immutable()
+        @JvmField
+        val LETTER = empty().addRange('a', 'z').addRange('A', 'Z').immutable()
+        @JvmField
+        val DIGITS = empty().addRange('0', '9').immutable()
+        @JvmField
+        val PRINTABLE = empty().addRange(32, 126).immutable()
+        @JvmField
+        val SYMBOLS = empty().addRange(33, 47).addRange(58, 64).addRange(91, 96).addRange(123, 126).immutable()
     }
-    // For performance reason, we separate commonly used chars (ASCII) and others
-    // It might be better to use bitwise operation, but I'm lazy so maybe later
-    private val smalls = BooleanArray(SMALL_CHARS)            // characters within 0 and 128
-    // The entry represents range of chars.
-    // The key represents the lower bound of the range, and the value represents
-    // the upper bound of the range.
-    // e.g. e = {'a': 'z'}, this means this entry represents range of [a-z]
-    private val large: NavigableMap<Int, Int> = TreeMap()    // characters larger than 128
 
     fun contains(element: Int): Boolean = if (element < 0) false // obvious case
     else if (element < SMALL_CHARS) smalls[element]
@@ -64,7 +75,7 @@ class CharSet {
         return smallCount + largeCount
     }
 
-    fun ranges(): List<CharRange> {
+    open fun ranges(): List<CharRange> {
         val r = mutableListOf<CharRange>()
         var begin = 0
         var prev = false
@@ -84,7 +95,90 @@ class CharSet {
         return r
     }
 
-    fun complement(): CharSet {
+    abstract fun complement(): CharSet
+
+    abstract fun add(charset: CharSet): CharSet
+
+    fun add(char: Char) = addRange(char, char)
+
+    fun add(codePoint: Int) = addRange(codePoint, codePoint)
+
+    fun addRange(from: Char, to: Char) = addRange(from.code, to.code)
+    abstract fun addRange(from: Int, to: Int): CharSet
+
+    fun immutable(): CharSet {
+        val r = ImmutableCharSet()
+        System.arraycopy(this.smalls, 0, r.smalls, 0, this.smalls.size)
+        r.large.putAll(this.large)
+        return r
+    }
+
+    fun mutable(): CharSet {
+        val r = MutableCharSet()
+        System.arraycopy(this.smalls, 0, r.smalls, 0, this.smalls.size)
+        r.large.putAll(this.large)
+        return r
+    }
+
+    private fun toRegexpString(): String {
+        fun isSymbol(codePoint: Int): Boolean {
+            return ((1 shl Character.OTHER_SYMBOL.toInt() or
+                    (1 shl Character.MATH_SYMBOL.toInt()) or
+                    (1 shl Character.CURRENCY_SYMBOL.toInt()) or
+                    (1 shl Character.MODIFIER_SYMBOL.toInt()) or
+                    (1 shl Character.OTHER_PUNCTUATION.toInt()) or
+                    (1 shl Character.DASH_PUNCTUATION.toInt()) or
+                    (1 shl Character.CONNECTOR_PUNCTUATION.toInt()) or
+                    (1 shl Character.END_PUNCTUATION.toInt()) or
+                    (1 shl Character.START_PUNCTUATION.toInt()))
+                    shr Character.getType(codePoint) and 1) != 0
+        }
+
+        fun codePointToString(codePoint: Int): String = when {
+            codePoint in 0 until 20 || codePoint in 0x7F .. 0xFF -> String.format("\\x%02x", codePoint)
+            !Character.isLetterOrDigit(codePoint) && !isSymbol(codePoint)-> String.format("\\u%04x", codePoint)
+            else -> Character.toString(codePoint)
+        }
+        val sb = StringBuilder()
+        sb.append("[")
+        ranges().forEach { (min, max) ->
+            sb.append(codePointToString(min))
+            if (min != max) {
+                sb.append("-").append(codePointToString(max))
+            }
+        }
+        sb.append("]")
+        return sb.toString()
+    }
+
+    override fun toString(): String {
+        return "CharSet(${toRegexpString()})"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CharSet
+
+        if (!smalls.contentEquals(other.smalls)) return false
+        if (large != other.large) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = smalls.contentHashCode()
+        result = 31 * result + large.hashCode()
+        return result
+    }
+
+
+    data class CharRange(val min: Int, val max: Int)
+}
+
+class MutableCharSet: CharSet() {
+    override fun complement(): CharSet {
         for (i in 0 until SMALL_CHARS) {
             smalls[i] = !smalls[i]
         }
@@ -103,11 +197,7 @@ class CharSet {
         return this
     }
 
-    fun add(char: Char) = addRange(char, char)
-
-    fun add(codePoint: Int) = addRange(codePoint, codePoint)
-
-    fun add(charset: CharSet): CharSet {
+    override fun add(charset: CharSet): CharSet {
         charset.smalls.forEachIndexed { index, b ->
             if (b) {
                 smalls[index] = true
@@ -119,9 +209,7 @@ class CharSet {
         return this
     }
 
-    fun addRange(from: Char, to: Char) = addRange(from.code, to.code)
-
-    fun addRange(from: Int, to: Int): CharSet {
+    override fun addRange(from: Int, to: Int): CharSet {
         // invalid range. should we raise an error here?
         if (to < from) return this
         val newFrom = if (from < SMALL_CHARS) {
@@ -171,46 +259,17 @@ class CharSet {
         large[from] = 0
         return large.lowerEntry(from + 1) // get the newly created entry
     }
+}
 
-    private fun toRegexpString(): String {
-        fun codePointToString(codePoint: Int): String = when {
-            codePoint in 0 until 20 || codePoint in 0x7F .. 0xFF -> String.format("\\x%02x", codePoint)
-            !Character.isLetterOrDigit(codePoint) -> String.format("\\u%04x", codePoint)
-            else -> Character.toString(codePoint)
-        }
-        val sb = StringBuilder()
-        sb.append("[")
-        ranges().forEach { (min, max) ->
-            sb.append(codePointToString(min))
-            if (min != max) {
-                sb.append("-").append(codePointToString(max))
-            }
-        }
-        sb.append("]")
-        return sb.toString()
+class ImmutableCharSet: CharSet() {
+    private val range: List<CharRange> by lazy {
+        super.ranges()
     }
+    override fun complement(): CharSet = empty().add(this).complement()
 
-    override fun toString(): String {
-        return "CharSet(${toRegexpString()})"
-    }
+    override fun add(charset: CharSet): CharSet = empty().add(this).add(charset)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    override fun addRange(from: Int, to: Int): CharSet = empty().add(this).addRange(from, to)
 
-        other as CharSet
-
-        if (!smalls.contentEquals(other.smalls)) return false
-        if (large != other.large) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = smalls.contentHashCode()
-        result = 31 * result + large.hashCode()
-        return result
-    }
-
-    data class CharRange(val min: Int, val max: Int)
+    override fun ranges(): List<CharRange> = range
 }

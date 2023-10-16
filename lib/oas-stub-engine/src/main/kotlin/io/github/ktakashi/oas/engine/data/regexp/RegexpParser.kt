@@ -48,6 +48,9 @@ private val REGEXP_NON_SPACE_SET = RegexpComplement(REGEXP_SPACE_SET)
 
 private const val ALPHABETS = "abcdefghijklmnopqrstuvwxyz"
 
+// workaround until parser-combinator 1.0.2
+private fun <T, U> resultA(action: () -> U) = { next: Sequence<T> -> SuccessResult(action(), next) }
+
 // BNF:
 //  - https://www.cs.sfu.ca/~cameron/Teaching/384/99-3/regexp-plg.html
 //  - https://262.ecma-international.org/5.1/#sec-15.10.1
@@ -164,9 +167,8 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
                 result(when (s) {
                     is RegexpPatternChar -> when (e) {
                         is RegexpPatternChar -> RegexpCharSet(n.charset.addRange(s.char, e.char))
-                        // [a-\d] or so? not sure how it should be handled, but let's do some
-                        // meaningful interpretation. (a- inf) | \d
-                        is RegexpCharSet -> RegexpCharSet(n.charset.addRange(s.char, Char.MAX_VALUE).add(e.charset))
+                        // [a-\d] or so, we interpret this as charset('a', '-', [0-9])
+                        is RegexpCharSet -> RegexpCharSet(n.charset.add(s.char).add('-').add(e.charset))
                         else -> error("[BUG] Unexpected type `e`: $e")
                     }
                     // [\w-whatever] case, '-' will be treated as a char
@@ -187,7 +189,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
                     else -> error("[BUG] Unexpected type `a`: $a")
                 })
             },
-            seq(peek(eq(']')), result(RegexpCharSet(CharSet.empty())))
+            seq(peek(eq(']')), resultA { RegexpCharSet(CharSet.empty()) })
         )
     }
 
@@ -213,7 +215,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
     private val term: Parser<Char, RegexpNode> = or(
         assertion,
         bind(atom, optional(quantifier)) { r, o ->
-            result(o.map<RegexpNode> { q ->
+            result(o.map { q ->
                 // optinisation
                 // e.g. \d+ -> \d\d*, so the repetition would always have minimum 0
                 val rep = q.first.min

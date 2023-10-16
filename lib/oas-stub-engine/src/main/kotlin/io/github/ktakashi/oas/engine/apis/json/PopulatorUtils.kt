@@ -10,8 +10,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import dk.brics.automaton.RegExp
-import dk.brics.automaton.State
+import io.github.ktakashi.oas.engine.data.regexp.RegexpDataGenerator
 import io.swagger.v3.oas.models.media.Schema
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -20,12 +19,13 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.math.min
-import kotlin.random.Random
 import org.slf4j.LoggerFactory
 
 internal typealias NodePopulator = (Schema<*>) -> JsonNode
 
 private val logger = LoggerFactory.getLogger("io.github.ktakashi.oas.engine.apis.json.PopulatorUtils")
+
+private val regexpDataGenerator = RegexpDataGenerator()
 
 @Suppress("kotlin:S6518") // impossible to make it
 internal fun populateObjectNode(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
@@ -103,79 +103,4 @@ private fun handleRange(schema: Schema<*>): JsonNode = schema.minimum?.let { v -
     } }
     ?: IntNode(0) // no minimum nor no maximum
 
-private fun generateMatchingString(pattern: String): String {
-    val random = Random.Default
-    tailrec fun generate(sb: StringBuilder, state: State, minLength: Int, maxLength: Int): String {
-        if (state.isAccept) {
-            if (sb.length in minLength..maxLength) {
-                return sb.toString()
-            }
-            if (random.nextInt() > 0.3 * Int.MAX_VALUE && sb.length >= minLength) {
-                return sb.toString()
-            }
-        }
-        val transitions = state.getSortedTransitions(false)
-        if (transitions.isEmpty()) {
-            return sb.toString()
-        }
-        val next = random.nextInt(transitions.size)
-        val randomTransition = transitions[next]
-        val diff = randomTransition.max - randomTransition.min + 1
-        val offset = if (diff > 0) random.nextInt(diff) else diff
-        return generate(sb.append(randomTransition.min + offset), randomTransition.dest, minLength, maxLength)
-    }
-    val regexp = RegExp(normalize(pattern))
-    val automaton = regexp.toAutomaton()
-    val state = automaton.initialState
-    val sb = StringBuilder()
-    return generate(sb, state, 1, Int.MAX_VALUE)
-}
-
-private const val SPECIAL_CHARS = ".^$*+?(){|[\\@"
-private fun normalize(pattern: String): String {
-    fun quote(sb: StringBuilder, start: Int): Int {
-        var i = start
-        sb.append("\\Q")
-        while (i < pattern.length) {
-            val c = pattern[i++]
-            if (SPECIAL_CHARS.indexOf(c) > 0) {
-                sb.append('\\')
-            }
-            sb.append(c)
-        }
-        sb.append("\\E")
-        return i
-    }
-    fun appendRange(sb: StringBuilder, range: String, inCharSet: Boolean) {
-        if (!inCharSet) sb.append('[')
-        sb.append(range)
-        if (!inCharSet) sb.append(']')
-    }
-    val sb = StringBuilder()
-    var i = 0
-    var inCharset = false
-    while (i < pattern.length) {
-        when (val c = pattern[i++]) {
-            '\\' -> when (val c1 = pattern[i++]) {
-                'd' -> sb.append("[0-9]")
-                'D' -> sb.append("[^0-9]")
-                's' -> sb.append("[ \t\n\r]")
-                'S' -> sb.append("[^ \t\n\r]")
-                'w' -> sb.append("[0-9a-zA-Z]")
-                'W' -> sb.append("[^0-9a-zA-Z]")
-                'Q' -> i = quote(sb, i)
-                else -> sb.append(c).append(c1)
-            }
-            '[' -> {
-                inCharset = true
-                sb.append(c)
-            }
-            ']' -> {
-                inCharset = false
-                sb.append(c)
-            }
-            else -> sb.append(c)
-        }
-    }
-    return sb.toString()
-}
+private fun generateMatchingString(pattern: String): String = regexpDataGenerator.generate(pattern)
