@@ -214,10 +214,24 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         assertion,
         bind(atom, optional(quantifier)) { r, o ->
             result(o.map<RegexpNode> { q ->
-                if (q.second) {
-                    RegexpNonGreedyRepetition(r, q.first.min, q.first.max)
+                // optinisation
+                // e.g. \d+ -> \d\d*, so the repetition would always have minimum 0
+                val rep = q.first.min
+                val max = q.first.max - (if (q.first.max == Int.MAX_VALUE) 0 else rep)
+                val rp = if (q.second) {
+                    RegexpNonGreedyRepetition(r, 0, max)
                 } else {
-                    RegexpRepetition(r, q.first.min, q.first.max)
+                    RegexpRepetition(r, 0, max)
+                }
+                if (q.first.min == 0) {
+                    rp
+                } else {
+                    val rs = Array(rep) { r }
+                    if (max == 0) {
+                        RegexpSequence.of(*rs)
+                    } else {
+                        RegexpSequence.of(*rs, rp)
+                    }
                 }
             }.orElse(r))
         }
