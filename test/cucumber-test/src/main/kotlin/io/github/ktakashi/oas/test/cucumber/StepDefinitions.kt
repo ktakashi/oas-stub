@@ -184,13 +184,13 @@ class StepDefinitions
     }
 
     @Then("I {string} to {string} with {string} as {string}")
-    fun `I {string} to {string} with {string} as {string}`(method: String, path: String, content: String, contentType: String) {
+    fun iGETtoPathWithContentasContentType(method: String, path: String, content: String, contentType: String) {
         requestApi(path, contentType, content, method)
     }
 
 
     @Then("[Protocol Error] I {string} to {string} with {string} as {string}")
-    fun `Protocol Error I {string} to {string} with {string} as {string}`(method: String, path: String, content: String, contentType: String) {
+    fun protocolError(method: String, path: String, content: String, contentType: String) {
         // Either client exception or illegal argument exception, but can't say which one for some weird reason
         assertThrows<Exception> { requestApi(path, contentType, content, method) }
     }
@@ -225,18 +225,18 @@ class StepDefinitions
     }
 
     @Then("I get http status {int}")
-    fun `I get this {int}`(status: Int) {
+    fun iGetHttpStatus(status: Int) {
         testContext.response?.then()?.statusCode(status) ?: throw IllegalStateException("No response")
     }
 
     @Then("I get response header of {string} with {string}")
-    fun `I get response header of {string} with {string}`(name: String, value: String) {
+    fun iGetResponseHeaderOfWith(name: String, value: String) {
         val matcher = if ("<null>" != value) equalTo(value) else equalTo(null)
         testContext.response?.then()?.header(name, matcher) ?: throw IllegalStateException("no response")
     }
 
     @Then("I get response JSON satisfies this {string}")
-    fun `I get response JSON satisfies this {string}`(condition: String) {
+    fun IGetResponseJsonSatifiesThis(condition: String) {
         if ("<null>" == condition) {
             val body = testContext.response?.body() ?: throw IllegalStateException("no response")
             val r = body.asByteArray()
@@ -251,6 +251,11 @@ class StepDefinitions
                 validatableResponse.body(path, matcher)
             }
         }
+    }
+
+    @Then("I get pattern of {string} as response")
+    fun iGetPatternOfAsResponse(body: String) {
+        testContext.response?.then()?.body(matchesPattern(body)) ?: throw IllegalStateException("No response")
     }
 
     private fun checkMarker(value: String): Matcher<Any?> {

@@ -1,0 +1,43 @@
+openapi: "3.1.0"
+info:
+  version: 1.0.0
+  title: My test API
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+paths:
+  /pattern0:
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pattern0"
+  /pattern1:
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pattern1"
+  /pattern2:
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pattern2"
+components:
+  schemas:
+    Pattern0:
+      type: string
+      pattern: '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+    Pattern1:
+      type: string
+      pattern: '\d\d(\.\d+)?-\w\w\w*'
+    Pattern2:
+      type: string
+      pattern: '^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,10}$'

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import io.github.ktakashi.oas.engine.data.regexp.RegexpDataGenerator
 import io.swagger.v3.oas.models.media.Schema
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -23,6 +24,8 @@ import org.slf4j.LoggerFactory
 internal typealias NodePopulator = (Schema<*>) -> JsonNode
 
 private val logger = LoggerFactory.getLogger("io.github.ktakashi.oas.engine.apis.json.PopulatorUtils")
+
+private val regexpDataGenerator = RegexpDataGenerator()
 
 @Suppress("kotlin:S6518") // impossible to make it
 internal fun populateObjectNode(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
@@ -83,8 +86,12 @@ private fun handleText(schema: Schema<*>): JsonNode =
         "date-time" -> TextNode.valueOf(OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
         "date" -> TextNode.valueOf(LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE))
         "email" -> TextNode.valueOf("example@example.com")
-        else -> TextNode.valueOf(if (schema.enum != null && schema.enum.isNotEmpty()) schema.enum[0].toString() else "string")
+        else -> handlePattern(schema)
     }
+private fun handlePattern(schema: Schema<*>): JsonNode =
+    schema.pattern?.let {
+        TextNode.valueOf(generateMatchingString(it))
+    } ?: TextNode.valueOf(if (schema.enum != null && schema.enum.isNotEmpty()) schema.enum[0].toString() else "string")
 
 private fun handleRange(schema: Schema<*>): JsonNode = schema.minimum?.let { v -> DecimalNode(v) }
     ?: schema.maximum?.let { v -> when (v.signum()) {
@@ -95,3 +102,5 @@ private fun handleRange(schema: Schema<*>): JsonNode = schema.minimum?.let { v -
         else -> IntNode(1)
     } }
     ?: IntNode(0) // no minimum nor no maximum
+
+private fun generateMatchingString(pattern: String): String = regexpDataGenerator.generate(pattern)
