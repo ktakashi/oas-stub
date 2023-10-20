@@ -28,24 +28,16 @@ enum class RegexpParserOption {
     MULTILINE
 }
 
-private fun regexpAlt(vararg regexps: RegexpNode): RegexpNode =
-    regexps.fold(RegexpAlter.EMPTY) { acc, regexp ->  acc + regexp }
-
 private const val REGEXP_SPECIAL_CHARACTERS = "^\$\\.*+?()[]{}|"
-private val REGEXP_DIGIT_SET = RegexpCharSet(CharSet.fromRange('0', '9'))
-private val REGEXP_NON_DIGIT_SET = RegexpComplement(REGEXP_DIGIT_SET)
-private val REGEXP_WORD_SET = RegexpCharSet(CharSet.fromRange('a', 'z').addRange('A', 'Z').add(REGEXP_DIGIT_SET.charset).add('_'))
-private val REGEXP_NON_WORD_SET = RegexpComplement(REGEXP_WORD_SET)
+// We can also write RegexpComplement(node) for _NON_ charset
+// but to restrict types, we do like this. It's a bit memory inefficient though
+private val REGEXP_DIGIT_SET = RegexpCharSet(CharSet.fromRange('0', '9').immutable())
+private val REGEXP_NON_DIGIT_SET = RegexpCharSet(REGEXP_DIGIT_SET.charset.complement())
+private val REGEXP_WORD_SET = RegexpCharSet(CharSet.fromRange('a', 'z').addRange('A', 'Z').add(REGEXP_DIGIT_SET.charset).add('_').immutable())
+private val REGEXP_NON_WORD_SET = RegexpCharSet(REGEXP_WORD_SET.charset.complement())
 // space, \t, \r, \n \v = \u000B and \f = \u000C
-private val REGEXP_SPACE_SET = regexpAlt(RegexpPatternChar(' '),
-    // should be make this range of \u0009 - \u000C?
-    RegexpPatternChar('\t'),
-    RegexpPatternChar('\n'),
-    RegexpPatternChar('\u000B'),
-    RegexpPatternChar('\u000C'),
-    RegexpPatternChar('\r')
-)
-private val REGEXP_NON_SPACE_SET = RegexpComplement(REGEXP_SPACE_SET)
+private val REGEXP_SPACE_SET = RegexpCharSet(CharSet.fromString(" \t\n\u000B\u000C\r").immutable())
+private val REGEXP_NON_SPACE_SET = RegexpCharSet(REGEXP_SPACE_SET.charset.complement())
 
 private const val ALPHABETS = "abcdefghijklmnopqrstuvwxyz"
 
@@ -94,7 +86,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
     private val quantifier = bind(quantifierPrefix, optional(eq('?'))) { q, o -> result(q to o.isPresent) }
 
     // Slightly defers from the ECMA specification for our convenience
-    private val characterClassEscape = or(
+    private val characterClassEscape: Parser<Char, RegexpSingle> = or(
         token("\\w".asSequence()) { REGEXP_WORD_SET },
         token("\\W".asSequence()) { REGEXP_NON_WORD_SET },
         token("\\s".asSequence()) { REGEXP_SPACE_SET },
@@ -103,7 +95,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         token("\\D".asSequence()) { REGEXP_NON_DIGIT_SET }
     )
 
-    private val characterEscape: Parser<Char, RegexpNode> = seq(eq('\\'), or(
+    private val characterEscape: Parser<Char, RegexpSingle> = seq(eq('\\'), or(
         bind(satisfy { c: Char -> "fnrtv".indexOf(c) >= 0 }) { c ->
             result(RegexpPatternChar(when (c) {
                 'f' -> '\u000c'
@@ -142,7 +134,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(eq('\\'), decimalDigit) { _, d -> result(RegexpBackreference(Character.digit(d, 10))) }
     )
 
-    private val classAtomNoDash = or(
+    private val classAtomNoDash: Parser<Char, RegexpSingle> = or(
         bind(satisfy { c: Char -> "\\]-".indexOf(c) < 0 }) { c -> result(RegexpPatternChar(c)) },
         characterClassEscape,
         characterEscape,
@@ -151,7 +143,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(eq('\\'), ::any) { _, c: Char -> result(RegexpPatternChar(c)) }
     )
 
-    private val classAtom = or(
+    private val classAtom: Parser<Char, RegexpSingle> = or(
         seq(eq('-'), result(RegexpPatternChar('-'))),
         classAtomNoDash
     )
@@ -167,24 +159,19 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
                         is RegexpPatternChar -> RegexpCharSet(n.charset.addRange(s.char, e.char))
                         // [a-\d] or so, we interpret this as charset('a', '-', [0-9])
                         is RegexpCharSet -> RegexpCharSet(n.charset.add(s.char).add('-').add(e.charset))
-                        else -> error("[BUG] Unexpected type `e`: $e")
                     }
                     // [\w-whatever] case, '-' will be treated as a char
                     is RegexpCharSet -> when (e) {
-                        is RegexpPatternChar -> RegexpCharSet(n.charset.add(s.charset).add(e.char))
-                        // [a-\d] or so? not sure how it should be handled, but let's do some
-                        // meaningful interpretation. (a- inf) | \d
-                        is RegexpCharSet -> RegexpCharSet(n.charset.add(s.charset).add(e.charset))
-                        else -> error("[BUG] Unexpected type `e`: $e")
+                        is RegexpPatternChar -> RegexpCharSet(n.charset.add(s.charset).add('-').add(e.char))
+                        // [\d-\w]
+                        is RegexpCharSet -> RegexpCharSet(n.charset.add(s.charset).add(e.charset).add('-'))
                     }
-                    else -> error("[BUG] Unexpected type `s`: $s")
                 })
             },
             bind(classAtom, defer { classRanges }) { a, r ->
                 result(when (a) {
                     is RegexpPatternChar -> RegexpCharSet(r.charset.add(a.char))
                     is RegexpCharSet -> RegexpCharSet(r.charset.add(a.charset))
-                    else -> error("[BUG] Unexpected type `a`: $a")
                 })
             },
             seq(peek(eq(']')), result { RegexpCharSet(CharSet.empty()) })
@@ -196,11 +183,12 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         bind(eq('['), classRanges, eq(']')) { _, range, _ -> result(range) }
     )
 
-    private val atom = or(
+    private val atom: Parser<Char, RegexpNode> = or(
         seq(eq('.'), result(RegexpAny)),
+        // To deceive compiler...
+        bind(characterClassEscape) { v -> result(v) },
+        bind(characterEscape) { v -> result(v) },
 
-        characterClassEscape,
-        characterEscape,
         characterClass,
         decimalEscape,
         bind(eq('('), defer { disjunction }, eq(')')) { _, ex, _ -> result(RegexpCapture(ex)) },

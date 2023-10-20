@@ -1,8 +1,10 @@
 package io.github.ktakashi.oas.engine.data.regexp
 
 import io.github.ktakashi.oas.engine.data.charset.CharSet
+import java.text.ParseException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
@@ -14,7 +16,7 @@ class RegexpParserTest {
         "\\d\\w/seq(cset(0, 9), union(cset(a, z), cset(A, Z), cset(0, 9), cset(_, _)))",
         "\\d/cset(0, 9)",
         "a|b/alt(char(a), char(b))",
-        "\\D\\W/seq(comp(cset(0, 9)), comp(union(cset(a, z), cset(A, Z), cset(0, 9), cset(_, _))))",
+        "\\D\\W/seq(compset(cset(0, 9)), compset(union(cset(a, z), cset(A, Z), cset(0, 9), cset(_, _))))",
         "./any()",
         "^abc$/seq(start(), char(a), char(b), char(c), end())",
         "a+/seq(char(a), rep(char(a), 0))",
@@ -24,8 +26,11 @@ class RegexpParserTest {
         "a{1,}/seq(char(a), rep(char(a), 0))",
         "a{1,2}/seq(char(a), rep(char(a), 0, 1))",
         "[abc]/cset(a, c)",
+        "[^abc]/comp(cset(a, c))",
         "[a-z]/cset(a, z)",
         "[a-z\\d]/union(cset(a, z), cset(0, 9))",
+        "[\\d-a]/union(cset(0, 9), cset(-, -), cset(a, a))",
+        "[\\d-\\w]/union(cset(0, 9), cset(-, -), cset(a, z), cset(A, Z), cset(_, _))",
         "a+?/seq(char(a), ngrep(char(a), 0))",
         "[\\q]/cset(q, q)",
         "[\\n]/cset(\\n, \\n)",
@@ -48,11 +53,14 @@ class RegexpParserTest {
         "\\cj/char(\\n)",
         "\\x61/char(a)",
         "\\u0061/char(a)",
+        "\\b/bound()",
+        "\\B/nbound()",
         "[\\b]/cset(\\x08, \\x08)",
         "\\0/char(\\x00)",
         "\\1/backref(1)",
         "\\01/char(\\x01)",
         "(a)/cap(char(a))",
+        "(?:a)/char(a)",
         "(?=a)/lookahead(char(a))",
         "(?!a)/nlookahead(char(a))",
         "[\\w.]/union(cset(a, z), cset(A, Z), cset(0, 9), cset(_, _), cset(., .))",
@@ -62,6 +70,11 @@ class RegexpParserTest {
         val result = parser.parse(pattern)
         println(result)
         assertEquals(constructAst(ast), result)
+    }
+
+    @Test
+    fun parseError() {
+        assertThrows<ParseException> { parser.parse("(?:") }
     }
 }
 
@@ -121,6 +134,8 @@ private fun constructAst(ast: String): RegexpNode {
     val (name, content) = parseNameAndContent(ast)
     return when (name) {
         "seq" -> RegexpSequence(parseContent(content).map { constructAst(it) })
+        "bound" -> RegexpWordBoundary
+        "nbound" -> RegexpNonWordBoundary
         "alt" -> RegexpAlter(parseContent(content).map { constructAst(it) })
         "cset" -> content.split(",").map { it.trim() }.let {
             if (it.size == 1) {
@@ -135,6 +150,7 @@ private fun constructAst(ast: String): RegexpNode {
             .fold(CharSet.empty()) { acc, charSet -> acc.add(charSet) })
         "char" -> RegexpPatternChar(handleChar(content))
         "comp" -> RegexpComplement(constructAst(content))
+        "compset" -> RegexpCharSet((constructAst(content) as RegexpCharSet).charset.complement())
         "any" -> RegexpAny
         "start" -> RegexpStartAnchor
         "end" -> RegexpEndAnchor

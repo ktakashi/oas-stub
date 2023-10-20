@@ -157,9 +157,7 @@ sealed class CharSet {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as CharSet
+        if (other !is CharSet) return false
 
         if (!smalls.contentEquals(other.smalls)) return false
         if (large != other.large) return false
