@@ -29,7 +29,7 @@ dependencies {
     implementation(libs.caffeine)
     implementation(libs.groovy.core)
     implementation(libs.slf4j.api)
-    implementation("io.github.ktakashi.peg:parser-combinators:1.0.1")
+    implementation("io.github.ktakashi.peg:parser-combinators:1.0.2")
 
     testImplementation(platform(libs.junit.bom))
     testImplementation("org.junit.jupiter:junit-jupiter")
