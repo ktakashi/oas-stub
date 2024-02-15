@@ -33,6 +33,7 @@ include(":app:guice:oas-stub-storage-guice-module-api")
 include(":app:guice:oas-stub-guice-module")
 include(":app:guice:oas-stub-hazelcast-storage-guice-module")
 
+include(":app:ktor:oas-stub-ktor-web")
 
 include(":app:spring:oas-stub-storage-autoconfigure-api")
 include(":app:spring:oas-stub-inmemory-storage-autoconfigure")

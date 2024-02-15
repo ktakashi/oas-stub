@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.21"
+kotlin = "1.9.22"
 dokka = "1.9.0"
 jackson = "2.16.0"
 servlet-api = "6.0.0"
@@ -14,10 +14,14 @@ spring-cloud = "4.1.0"
 projectreactor = "3.6.0"
 guice = "7.0.0"
 jetty = "12.0.1"
-guava = "32.1.2-jre"
+guava = "33.0.0-jre"
 flapdoodle = "4.9.2"
 jersey = "3.1.3"
 aspectj = "1.9.20.1"
+ktor = "2.3.8"
+kotlinx-coroutines = "1.6.4"
+kotlinx-serialization = "1.4.1"
+koin = "3.5.3"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -106,6 +110,15 @@ jetty-ee10-webapp = { group = "org.eclipse.jetty.ee10", name = "jetty-ee10-webap
 
 guava = { group = "com.google.guava", name = "guava", version.ref="guava"}
 
+ktor-server-core = { group = "io.ktor", name = "ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation-jvm", version.ref = "ktor" }
+ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty-jvm", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
+
+koin-core-coroutines = { group = "io.insert-koin", name = "koin-core-coroutines", version.ref = "koin" }
+koin-ktor = { group = "io.insert-koin", name = "koin-ktor", version.ref = "koin" }
+koin-logger-slf4j = { group = "io.insert-koin", name = "koin-logger-slf4j", version.ref = "koin" }
+
 # test libraries
 # We use BOM only for test libraries if possible
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
@@ -113,3 +126,11 @@ cucumber-bom = { group = "io.cucumber", name = "cucumber-bom", version = "7.13.0
 flapdoodle-embed-mongo = { group = "de.flapdoodle.embed", name = "de.flapdoodle.embed.mongo", version.ref = "flapdoodle" }
 awaitility = { group = "org.awaitility", name = "awaitility", version = "4.2.0" }
 rest-assured = { group = "io.rest-assured", name = "rest-assured", version = "5.3.1" }
+
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
+ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation-jvm", version.ref = "ktor" }
+koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin" }
+koin-junit5 = { group = "io.insert-koin", name = "koin-test-junit5", version.ref = "koin" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version = "5.10.0" }
