@@ -11,6 +11,8 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHttpError
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
+import io.github.ktakashi.oas.plugin.apis.HttpRequest
+import io.github.ktakashi.oas.plugin.apis.HttpResponse
 import io.github.ktakashi.oas.plugin.apis.RequestContext
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
@@ -20,7 +22,6 @@ import io.swagger.v3.oas.models.SpecVersion
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.io.IOException
 import java.net.HttpCookie
@@ -32,13 +33,14 @@ import org.apache.http.HttpStatus
 
 data class ApiContext(val context: String, val apiPath: String, val method: String, val openApi: OpenAPI, val apiDefinitions: ApiDefinitions)
 
+
 fun interface ApiContextService {
     /**
      * Retrieves [ApiContext] from the [request]
      *
      * If context is not found, then the result would be empty
      */
-    fun getApiContext(request: HttpServletRequest): Optional<ApiContext>
+    fun getApiContext(request: HttpRequest): Optional<ApiContext>
 }
 
 /**
@@ -72,7 +74,7 @@ interface ApiExecutionService: ApiContextService {
      *
      * The response is intact after the call, so users must call [ResponseContext.emitResponse]
      */
-    fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext
+    fun executeApi(apiContext: ApiContext, request: HttpRequest, response: HttpResponse): ResponseContext
 }
 
 /**
@@ -109,7 +111,7 @@ class DefaultApiService
                     private val apiPathService: ApiPathService,
                     private val apiResultProvider: ApiResultProvider,
                     private val pluginService: PluginService): ApiExecutionService, ApiRegistrationService {
-    override fun getApiContext(request: HttpServletRequest): Optional<ApiContext> =
+    override fun getApiContext(request: HttpRequest): Optional<ApiContext> =
             apiPathService.extractApiNameAndPath(request.requestURI).flatMap { (context, api) ->
                 storageService.getApiDefinitions(context).flatMap { apiDefinitions ->
                     storageService.getOpenApi(context)
@@ -145,7 +147,7 @@ class DefaultApiService
 
     override fun getAllNames(): Set<String> = storageService.getApiNames()
 
-    override fun executeApi(apiContext: ApiContext, request: HttpServletRequest, response: HttpServletResponse): ResponseContext {
+    override fun executeApi(apiContext: ApiContext, request: HttpRequest, response: HttpResponse): ResponseContext {
         val path = apiContext.apiPath
         val requestContext = makeRequestContext(apiContext, path, request, response)
         val adjustedPath = adjustBasePath(requestContext.apiPath, apiContext.openApi)
@@ -161,7 +163,7 @@ class DefaultApiService
         return emitResponse(requestContext, responseContext)
     }
 
-    private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpServletRequest, response: HttpServletResponse) =
+    private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpRequest, response: HttpResponse) =
             apiContext.apiDefinitions.let { apiDefinitions ->
                 ApiContextAwareRequestContext(
                         apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
@@ -172,7 +174,7 @@ class DefaultApiService
                             ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
                             putAll(readHeaders(request))
                         },
-                        cookies = request.cookies?.associate { c -> c.name to HttpCookie(c.name, c.value) } ?: mapOf(),
+                        cookies = request.cookies.associate { c -> c.name to HttpCookie(c.name, c.value) },
                         method = request.method, queryParameters = parseQueryParameters(request.queryString),
                         rawRequest = request, rawResponse = response)
             }
@@ -253,11 +255,11 @@ private fun parseQueryParameters(s: String?): Map<String, List<String?>> = s?.le
         n to (m.groups[3]?.value ?: if (!eq.isNullOrEmpty()) "" else null)
     }
 }?.groupBy({ p -> p.first }, { p -> p.second }) ?: mapOf()
-private fun readHeaders(request: HttpServletRequest): Map<String, List<String>> = request.headerNames.asSequence().map { n ->
+private fun readHeaders(request: HttpRequest): Map<String, List<String>> = request.headerNames.asSequence().map { n ->
     n to request.getHeaders(n).toList()
 }.toMap().toSortedMap(String.CASE_INSENSITIVE_ORDER)
 
-private fun readContent(request: HttpServletRequest): Optional<ByteArray> = when (request.method) {
+private fun readContent(request: HttpRequest): Optional<ByteArray> = when (request.method) {
     "GET", "DELETE", "HEAD", "OPTIONS" -> Optional.empty()
     else -> try {
         val size = request.getHeader("Content-Length")?.let(Integer::parseInt) ?: -1
@@ -282,8 +284,8 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          override val headers: Map<String, List<String>>,
                                          override val cookies: Map<String, HttpCookie>,
                                          override val queryParameters: Map<String, List<String?>>,
-                                         override val rawRequest: HttpServletRequest,
-                                         override val rawResponse: HttpServletResponse): RequestContext {
+                                         override val rawRequest: HttpRequest,
+                                         override val rawResponse: HttpResponse): RequestContext {
     override val applicationName
         get() = apiContext.context
 
@@ -295,7 +297,7 @@ internal data class DefaultResponseContext(override val status: Int,
                                            override val content: Optional<ByteArray> = Optional.empty(),
                                            override val contentType: Optional<String> = Optional.empty(),
                                            override val headers: Map<String, List<String>> = mapOf()): ResponseContext {
-    override fun emitResponse(response: HttpServletResponse) {
+    override fun emitResponse(response: HttpResponse) {
         response.status = this.status
         headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
         contentType.ifPresent { t -> response.contentType = t }
@@ -334,7 +336,7 @@ internal data class HighLatencyResponseContext(override val status: Int,
 
     override fun mutate(): ResponseContext.ResponseContextBuilder = throw UnsupportedOperationException("Mutation of this class is not allowed")
 
-    override fun emitResponse(response: HttpServletResponse) {
+    override fun emitResponse(response: HttpResponse) {
         response.status = this.status
         contentType.ifPresent { t -> response.contentType = t }
         headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }

@@ -43,7 +43,7 @@ interface ResponseContext {
      *
      * **WARNING** this method is not meant to be called in a plugin.
      */
-    fun emitResponse(response: HttpServletResponse)
+    fun emitResponse(response: HttpResponse)
 
     /**
      * [ResponseContext] builder interface.

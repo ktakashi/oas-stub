@@ -11,6 +11,7 @@ groovy = "4.0.15"
 spring = "6.1.6"
 spring-boot="3.2.5"
 spring-cloud = "4.1.2"
+spring-cloud-config = "4.1.1"
 projectreactor = "3.6.5"
 guice = "7.0.0"
 jetty = "12.0.1"
@@ -94,7 +95,7 @@ spring-boot-configuration-processor = { group = "org.springframework.boot", name
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring-boot" }
 
 spring-cloud-starter-bootstrap = { group = "org.springframework.cloud", name = "spring-cloud-starter-bootstrap", version.ref = "spring-cloud" }
-spring-cloud-starter-config = { group = "org.springframework.cloud", name = "spring-cloud-starter-config", version.ref = "spring-cloud" }
+spring-cloud-starter-config = { group = "org.springframework.cloud", name = "spring-cloud-starter-config", version.ref = "spring-cloud-config" }
 spring-cloud-context = { group = "org.springframework.cloud", name = "spring-cloud-context", version.ref = "spring-cloud" }
 
 springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.2.0" }

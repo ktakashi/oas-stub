@@ -7,6 +7,8 @@ import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiMetric
+import io.github.ktakashi.oas.plugin.apis.HttpRequest
+import io.github.ktakashi.oas.plugin.apis.HttpResponse
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import jakarta.inject.Inject
 import jakarta.inject.Named
@@ -17,8 +19,12 @@ import jakarta.servlet.AsyncListener
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.HttpCookie
 import java.time.Duration
 import java.time.OffsetDateTime
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.atomic.AtomicBoolean
@@ -41,8 +47,8 @@ class OasDispatchServlet
         val listener = OasDispatchServletAsyncListener()
         val now = OffsetDateTime.now()
         asyncContext.addListener(listener)
-
-        CompletableFuture.supplyAsync({ apiExecutionService.getApiContext(req) }, executor)
+        val request = ServletHttpRequest(req)
+        CompletableFuture.supplyAsync({ apiExecutionService.getApiContext(request) }, executor)
             .thenComposeAsync({ apiContext ->
                 if (listener.isCompleted) {
                     CompletableFuture.completedFuture(asyncContext)
@@ -53,7 +59,7 @@ class OasDispatchServlet
                                 setAttributes(req, now, context)
                             }
                         } ?: setAttributes(req, now, context)
-                        processApi(asyncContext, req, context)
+                        processApi(asyncContext, request, context)
                     }.orElseGet {
                         res.status = 404
                         CompletableFuture.completedFuture(asyncContext)
@@ -77,8 +83,8 @@ class OasDispatchServlet
             }
     }
 
-    private fun processApi(asyncContext: AsyncContext, req: HttpServletRequest, apiContext: ApiContext): CompletionStage<AsyncContext> {
-        val response = asyncContext.response as HttpServletResponse
+    private fun processApi(asyncContext: AsyncContext, req: HttpRequest, apiContext: ApiContext): CompletionStage<AsyncContext> {
+        val response = ServletHttpResponse(asyncContext.response as HttpServletResponse)
         return apiDelayService.delayFuture(apiContext, CompletableFuture.supplyAsync({ apiExecutionService.executeApi(apiContext, req, response) }, executor))
                 .thenApplyAsync({ responseContext ->
                     logger.debug("Response -> {}", responseContext)
@@ -133,5 +139,49 @@ private class OasDispatchServletAsyncListener: AsyncListener {
     override fun onStartAsync(event: AsyncEvent?) {
         // do nothing
     }
+}
+
+class ServletHttpRequest(private val request: HttpServletRequest): HttpRequest {
+    private val internalCookies = request.cookies?.map { c ->
+        HttpCookie(c.name, c.value).apply {
+            domain = c.domain
+            path = c.path
+            isHttpOnly = c.isHttpOnly
+            secure = c.secure
+        }
+    } ?: listOf()
+    override val requestURI: String
+        get() = request.requestURI
+    override val method: String
+        get() = request.method
+    override val contentType: String
+        get() = request.contentType
+    override val cookies: List<HttpCookie>
+        get() = internalCookies
+    override val queryString: String
+        get() = request.queryString
+    override val inputStream: InputStream
+        get() = request.inputStream
+
+    override fun getHeader(name: String): String? = request.getHeader(name)
+
+    override fun getHeaders(name: String): List<String> = Collections.list(request.getHeaders(name))
+
+    override val headerNames: Collection<String>
+        get() = Collections.list(request.headerNames)
+}
+
+class ServletHttpResponse(private val response: HttpServletResponse): HttpResponse {
+    override var status: Int
+        get() = response.status
+        set(value) { response.status = value }
+    override var contentType: String
+        get() = response.contentType
+        set(value) { response.contentType = value }
+
+    override fun addHeader(name: String, value: String) = response.addHeader(name, value)
+
+    override val outputStream: OutputStream
+        get() = response.outputStream
 
 }
