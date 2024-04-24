@@ -92,7 +92,7 @@ class OasStubServerTestExecutionListener: AbstractTestExecutionListener() {
     private fun isTarget(testContext: TestContext) =
         !(applicationContextBroken(testContext) || annotationMissing(testContext) || configurationMissing(testContext))
 
-    private fun configurationMissing(testContext: TestContext) = !testContext.applicationContext.containsBean(OAS_STUB_SERVICER_CONFIGURATION_BEAN_NAME)
+    private fun configurationMissing(testContext: TestContext) = !testContext.applicationContext.containsBean(OAS_STUB_SERVER_CONFIGURATION_BEAN_NAME)
 
     private fun annotationMissing(testContext: TestContext) = !TestContextAnnotationUtils.hasAnnotation(testContext.testClass, AutoConfigureOasStubServer::class.java)
 

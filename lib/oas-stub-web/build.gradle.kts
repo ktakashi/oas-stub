@@ -9,6 +9,7 @@ description = "OAS stub web"
 
 dependencies {
     api(project(":lib:oas-stub-engine"))
+    api(project(":lib:oas-stub-web-api"))
     api(libs.servlet.api)
     api(libs.ws.rs.api)
     implementation(libs.aspectjrt)

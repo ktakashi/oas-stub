@@ -23,9 +23,9 @@ import org.springframework.context.SmartLifecycle
 import org.springframework.context.annotation.Configuration
 
 internal const val OAS_STUB_SERVER_PROPERTY_PREFIX = "${OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX}.server"
-internal const val OAS_STUB_SERVICER_CONFIGURATION_BEAN_NAME = "oasStubServerConfiguration"
+internal const val OAS_STUB_SERVER_CONFIGURATION_BEAN_NAME = "oasStubServerConfiguration"
 
-@Configuration(OAS_STUB_SERVICER_CONFIGURATION_BEAN_NAME)
+@Configuration(OAS_STUB_SERVER_CONFIGURATION_BEAN_NAME)
 @EnableConfigurationProperties(value = [OasStubServerProperties::class, OasStubTestProperties::class])
 class OasStubServerConfiguration(internal val serverProperties: OasStubServerProperties,
                                  private val testProperties: OasStubTestProperties,

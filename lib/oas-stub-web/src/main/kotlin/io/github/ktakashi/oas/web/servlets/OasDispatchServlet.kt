@@ -154,11 +154,11 @@ class ServletHttpRequest(private val request: HttpServletRequest): HttpRequest {
         get() = request.requestURI
     override val method: String
         get() = request.method
-    override val contentType: String
+    override val contentType: String?
         get() = request.contentType
     override val cookies: List<HttpCookie>
         get() = internalCookies
-    override val queryString: String
+    override val queryString: String?
         get() = request.queryString
     override val inputStream: InputStream
         get() = request.inputStream

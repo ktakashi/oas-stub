@@ -11,7 +11,6 @@ dependencies {
     api(project(":lib:oas-stub-model"))
     api(project(":lib:oas-stub-plugin"))
     api(project(":lib:oas-stub-storage-api"))
-    api(libs.servlet.api)
 
     implementation(libs.kotlin.stdlib)
     implementation(libs.inject.api)

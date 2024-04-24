@@ -18,9 +18,9 @@ interface HttpRequest {
      * request method
      */
     val method: String
-    val contentType: String
+    val contentType: String?
     val cookies: List<HttpCookie>
-    val queryString: String
+    val queryString: String?
     val inputStream: InputStream
 
     fun getHeader(name: String): String?

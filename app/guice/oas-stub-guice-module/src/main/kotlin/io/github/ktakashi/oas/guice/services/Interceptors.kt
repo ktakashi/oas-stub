@@ -30,7 +30,8 @@ class DelayableInterceptionService
 @Inject constructor(private val interceptorProvider: Provider<DelayableInterceptor>): InterceptionService {
     override fun getDescriptorFilter(): Filter = BuilderHelper.allFilter()
 
-    override fun getMethodInterceptors(method: Method): List<MethodInterceptor> = if (method.isAnnotationPresent(Delayable::class.java)) {
+    override fun getMethodInterceptors(method: Method): List<MethodInterceptor> = if (method.isAnnotationPresent(
+            Delayable::class.java)) {
         listOf(interceptorProvider.get())
     } else {
         listOf()

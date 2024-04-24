@@ -37,6 +37,6 @@ dependencies {
     // only for testing, so just use directly like this
     // We put them in libs.versions.toml when we started using
     // in multiple locations
-    testImplementation("org.bouncycastle:bcprov-jdk15on:1.70")
-    testImplementation("org.bouncycastle:bcpkix-jdk15on:1.70")
+    testImplementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+    testImplementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
 }

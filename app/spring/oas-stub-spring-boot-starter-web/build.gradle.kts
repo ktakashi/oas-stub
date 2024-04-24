@@ -17,6 +17,7 @@ tasks.dokkaHtml {
 dependencies {
     api(project(":lib:oas-stub-web"))
     api(project(":app:jersey:oas-stub-jersey-resource"))
+    api(project(":app:spring:oas-stub-spring-boot-autoconfigure"))
     api(project(":app:spring:oas-stub-inmemory-storage-autoconfigure"))
     api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
     api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
