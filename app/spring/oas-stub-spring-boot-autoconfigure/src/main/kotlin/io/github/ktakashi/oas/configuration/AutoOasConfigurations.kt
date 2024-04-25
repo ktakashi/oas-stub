@@ -10,6 +10,7 @@ import io.github.ktakashi.oas.engine.apis.ApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.engine.apis.ApiPathService
+import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.ApiRequestBodyValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestParameterValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestPathVariableValidator

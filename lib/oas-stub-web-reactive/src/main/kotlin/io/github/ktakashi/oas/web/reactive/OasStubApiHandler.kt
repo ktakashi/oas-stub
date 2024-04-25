@@ -9,6 +9,7 @@ import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiMetric
 import io.github.ktakashi.oas.plugin.apis.HttpRequest
 import io.github.ktakashi.oas.plugin.apis.HttpResponse
+import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import java.io.ByteArrayOutputStream
@@ -19,6 +20,9 @@ import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicReference
 import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.core.io.buffer.DataBufferFactory
+import org.springframework.core.io.buffer.DataBufferUtils
+import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyExtractors
 import org.springframework.web.reactive.function.BodyInserters
@@ -31,6 +35,7 @@ class OasStubApiHandler
 @Inject constructor(private val apiExecutionService: ApiExecutionService,
                     private val apiDelayService: ApiDelayService,
                     private val apiObserver: ApiObserver) {
+    private val dataBufferFactory = DefaultDataBufferFactory()
     fun handleStubApiExecution(request: ServerRequest): Mono<ServerResponse> {
         // TODO delay and observer
         val outputStream = ByteArrayOutputStream()
@@ -38,9 +43,7 @@ class OasStubApiHandler
         val now = OffsetDateTime.now()
         val ref = AtomicReference<ApiContext>(null)
         return request.body(BodyExtractors.toMono(DataBuffer::class.java))
-            .contextWrite { context ->
-                context.put("api_context", ref)
-            }
+            .switchIfEmpty(Mono.defer { Mono.just(dataBufferFactory.allocateBuffer(0)) })
             .map { ReactiveHttpRequest(request, it.asInputStream()) }
             .flatMap { httpRequest ->
                 Mono.justOrEmpty(apiExecutionService.getApiContext(httpRequest))
@@ -52,24 +55,28 @@ class OasStubApiHandler
                         }
                     }
             }.flatMap { responseContext -> ServerResponse.status(responseContext.status)
+                .contentType(responseContext.contentType.map(MediaType::parseMediaType).orElse(MediaType.APPLICATION_JSON))
                 .headers { headers -> headers.putAll(response.headers) }
                 .body(BodyInserters.fromPublisher(Mono.fromSupplier {
                     // TODO make a pipe output stream to DataBuffer or something to emit body
                     responseContext.emitResponse(response)
                     outputStream.toByteArray()
                 }, ByteArray::class.java))
-            }.doOnSuccess {
-                ref.get()?.let { context ->
-                    report(context, request, response, now)
+                .doOnSuccess {
+                    ref.get()?.let { context ->
+                        report(context, request, responseContext, now)
+                    }
+                }.doOnError { e ->
+                    ref.get()?.let { context ->
+                        report(context, request, responseContext, now, e)
+                    }
                 }
-            }.doOnError { e ->
-                ref.get()?.let { context ->
-                    report(context, request, response, now, e)
-                }
+            }.contextWrite { context ->
+                context.put("api_context", ref)
             }
     }
 
-    private fun report(context: ApiContext, request: ServerRequest, response: HttpResponse, start: OffsetDateTime, e: Throwable? = null) {
+    private fun report(context: ApiContext, request: ServerRequest, response: ResponseContext, start: OffsetDateTime, e: Throwable? = null) {
         fun rec() {
             val end = OffsetDateTime.now()
             val metric = ApiMetric(start, Duration.between(start, end), context.apiPath, request.method().name(), response.status, e)

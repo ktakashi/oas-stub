@@ -34,7 +34,6 @@ class AutoOasReactiveConfiguration {
         ApiRouterFunctionBuilder(properties.adminPrefix, apiRegistrationService)
 
     @Bean
-    @ConditionalOnProperty(name = ["oas.stub.reactive-server.enabled"], havingValue = "true")
     fun oasStubRouterFunction(properties: OasApplicationServletProperties,
                               apiHandler: OasStubApiHandler,
                               functionBuilders: Set<RouterFunctionBuilder>) =

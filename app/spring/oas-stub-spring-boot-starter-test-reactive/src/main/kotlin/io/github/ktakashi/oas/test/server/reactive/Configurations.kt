@@ -1,25 +1,27 @@
 package io.github.ktakashi.oas.test.server.reactive
 
-import io.github.ktakashi.oas.configuration.OasApplicationServletProperties
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
+import io.github.ktakashi.oas.reactive.configuration.AutoOasReactiveConfiguration
 import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestService
-import io.github.ktakashi.oas.web.reactive.OasStubApiHandler
-import io.github.ktakashi.oas.web.reactive.RouterFunctionBuilder
-import io.github.ktakashi.oas.web.reactive.RouterFunctionFactory
+import io.netty.handler.ssl.util.SelfSignedCertificate
 import jakarta.annotation.PostConstruct
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.SmartLifecycle
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.support.GenericApplicationContext
+import org.springframework.context.annotation.Lazy
 import org.springframework.http.server.reactive.ReactorHttpHandlerAdapter
-import org.springframework.web.reactive.DispatcherHandler
-import org.springframework.web.reactive.function.server.support.RouterFunctionMapping
 import org.springframework.web.server.adapter.WebHttpHandlerBuilder
 import reactor.netty.DisposableServer
+import reactor.netty.http.Http11SslContextSpec
 import reactor.netty.http.server.HttpServer
 
 internal const val OAS_STUB_REACTIVE_SERVER_PROPERTY_PREFIX = "${OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX}.server"
@@ -34,41 +36,55 @@ data class OasStubReactiveServerProperties(
     val resetConfigurationAfterEachTest: Boolean = false
 )
 
+@AutoConfiguration(after = [AutoOasReactiveConfiguration::class])
+@EnableConfigurationProperties(OasStubTestProperties::class)
+@Configuration
+class AutoOasStubTestServiceConfiguration(private val testProperties: OasStubTestProperties,) {
+    @Bean
+    @ConditionalOnMissingBean
+    fun oasStubTestService(apiRegistrationService: ApiRegistrationService, apiObserver: ApiObserver) =
+        OasStubTestService(testProperties, apiRegistrationService, apiObserver)
+}
+
 @Configuration
 @EnableConfigurationProperties(value = [OasStubReactiveServerProperties::class, OasStubTestProperties::class])
-class OasStubReactiveConfiguration(private val servletProperties: OasApplicationServletProperties,
-                                   val serverProperties: OasStubReactiveServerProperties,
-                                   private val testProperties: OasStubTestProperties,
-                                   private val applicationContext: ConfigurableApplicationContext,
-                                   private val apiHandler: OasStubApiHandler,
-                                   private val functionBuilders: Set<RouterFunctionBuilder>)
+@EnableAutoConfiguration
+class OasStubReactiveConfiguration(val serverProperties: OasStubReactiveServerProperties,
+                                   private val applicationContext: ConfigurableApplicationContext)
     : SmartLifecycle {
     private lateinit var httpServer: DisposableServer
+    private var httpsServer: DisposableServer? = null
     private lateinit var oasStubTestService: OasStubTestService
 
-    fun nettyHttpServer(): DisposableServer {
-        val routerFunction = RouterFunctionFactory(apiHandler).buildRouterFunction(servletProperties.prefix, functionBuilders)
-
-        val newContext = applicationContext.also { context ->
-            context.beanFactory.registerSingleton("oasStubRouterFunction", routerFunction)
-//            val mapping = RouterFunctionMapping(routerFunction).apply {
-//                applicationContext = context
-//            }
-//            context.beanFactory.registerSingleton("routerFunctionMapping", mapping)
-//            context.refresh()
-//            context.beanFactory.registerSingleton(WebHttpHandlerBuilder.WEB_HANDLER_BEAN_NAME, DispatcherHandler(context))
-        }
+    fun nettyHttpServer(): Pair<DisposableServer, DisposableServer?> {
+        val newContext = applicationContext
+        // newContext.beanFactory.registerSingleton("oasStubRouterFunction", routerFunction)
+        // val mapping = RouterFunctionMapping(routerFunction).apply { applicationContext = newContext }
+        // newContext.beanFactory.registerSingleton("routerFunctionMapping", mapping)
+        // newContext.refresh()
+        // newContext.beanFactory.registerSingleton(WebHttpHandlerBuilder.WEB_HANDLER_BEAN_NAME, DispatcherHandler(newContext))
         val handler = WebHttpHandlerBuilder.applicationContext(newContext).build()
         val adapter = ReactorHttpHandlerAdapter(handler)
-        return HttpServer.create().port(serverProperties.port).handle(adapter).bindNow()
+        return HttpServer.create().port(serverProperties.port).handle(adapter).bindNow() to
+         if (serverProperties.httpsPort != -1) {
+             val cert = SelfSignedCertificate()
+             val spec = Http11SslContextSpec.forServer(cert.certificate(), cert.privateKey())
+             HttpServer.create().port(serverProperties.httpsPort)
+                 .secure { contextSpec -> contextSpec.sslContext(spec) }
+                 .handle(adapter).bindNow()
+         } else {
+             null
+         }
+
     }
 
     @PostConstruct
     fun init() {
         val beanFactory = applicationContext.beanFactory
-        httpServer = nettyHttpServer()
-        oasStubTestService = OasStubTestService(testProperties, beanFactory.getBean(ApiRegistrationService::class.java), beanFactory.getBean(ApiObserver::class.java))
-        beanFactory.registerSingleton("oasStubTestService", oasStubTestService)
+        val (http, https) = nettyHttpServer()
+        httpServer = http
+        httpsServer = https
+        oasStubTestService = beanFactory.getBean(OasStubTestService::class.java)
     }
 
     fun resetConfiguration() {
@@ -78,7 +94,12 @@ class OasStubReactiveConfiguration(private val servletProperties: OasApplication
 
     override fun start() {
         if (httpServer.isDisposed) {
-            httpServer = nettyHttpServer()
+            val (http, https) = nettyHttpServer()
+            httpServer = http
+            if (httpsServer?.isDisposed != true) {
+                httpsServer?.disposeNow()
+            }
+            httpsServer = https
         }
         resetConfiguration()
     }
