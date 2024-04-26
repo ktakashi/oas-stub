@@ -7,6 +7,7 @@ import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestService
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import jakarta.annotation.PostConstruct
+import java.security.cert.X509Certificate
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -37,19 +38,32 @@ data class OasStubReactiveServerProperties(
 @AutoConfiguration(after = [AutoOasReactiveConfiguration::class])
 @EnableConfigurationProperties(OasStubTestProperties::class)
 @Configuration
-class AutoOasStubTestServiceConfiguration(private val testProperties: OasStubTestProperties,) {
+class AutoOasStubTestServiceConfiguration(private val testProperties: OasStubTestProperties) {
     @Bean
     @ConditionalOnMissingBean
     fun oasStubTestService(apiRegistrationService: ApiRegistrationService, apiObserver: ApiObserver) =
         OasStubTestService(testProperties, apiRegistrationService, apiObserver)
+
+    @Bean
+    @ConditionalOnMissingBean
+    fun oasStubSelfSignedCertificate() = SelfSignedCertificate()
+
+    @Bean
+    @ConditionalOnMissingBean
+    fun oasStubTestServerCertificate(certificate: SelfSignedCertificate): X509Certificate = certificate.cert()
 }
 
 @Configuration
 @EnableConfigurationProperties(value = [OasStubReactiveServerProperties::class, OasStubTestProperties::class])
 @EnableAutoConfiguration
 class OasStubReactiveConfiguration(val serverProperties: OasStubReactiveServerProperties,
-                                   private val applicationContext: ConfigurableApplicationContext)
+                                   private val applicationContext: ConfigurableApplicationContext,
+                                   private val certificate: SelfSignedCertificate)
     : SmartLifecycle {
+    companion object {
+        const val OAS_STUB_SERVER_CERTIFICATE_BEAN_NAME = "oasStubTestServerCertificate"
+    }
+
     private lateinit var httpServer: DisposableServer
     private var httpsServer: DisposableServer? = null
     private lateinit var oasStubTestService: OasStubTestService
@@ -65,8 +79,8 @@ class OasStubReactiveConfiguration(val serverProperties: OasStubReactiveServerPr
         val adapter = ReactorHttpHandlerAdapter(handler)
         return HttpServer.create().port(serverProperties.port).handle(adapter).bindNow() to
          if (serverProperties.httpsPort != -1) {
-             val cert = SelfSignedCertificate()
-             val spec = Http11SslContextSpec.forServer(cert.certificate(), cert.privateKey())
+             val spec = Http11SslContextSpec.forServer(certificate.certificate(), certificate.privateKey())
+
              HttpServer.create().port(serverProperties.httpsPort)
                  .secure { contextSpec -> contextSpec.sslContext(spec) }
                  .handle(adapter).bindNow()

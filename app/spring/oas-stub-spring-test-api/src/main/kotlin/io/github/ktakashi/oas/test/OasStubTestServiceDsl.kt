@@ -48,6 +48,12 @@ fun OasStubTestService.context(context: String, init: OasStubTestServiceDsl.() -
 class OasStubTestServiceDsl
     internal constructor(private var context: OasStubTestApiContext, private val init: OasStubTestServiceDsl.() -> Unit) {
     /**
+     * Configure API specification
+     */
+    fun specification(specification: Resource) {
+        context = context.updateSpecification(specification)
+    }
+    /**
      * Configure context level headers
      */
     fun headers(init: OasStubApiHeadersDsl.() -> Unit) {

@@ -98,6 +98,12 @@ internal constructor(private val apiRegistrationService: ApiRegistrationService,
     fun getApiConfiguration(path: String) = Optional.ofNullable(apiDefinitions.configurations?.get(path))
 
     /**
+     * Update specification
+     */
+    fun updateSpecification(resource: Resource) =
+        OasStubTestApiContext(apiRegistrationService, name, apiDefinitions.updateSpecification(resource.inputStream.reader().readText()))
+
+    /**
      * Inserts or updates the [configuration] with [path]
      */
     fun updateApi(path: String, configuration: ApiConfiguration) =

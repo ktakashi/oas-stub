@@ -19,9 +19,8 @@ import java.net.HttpCookie
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicReference
+import org.slf4j.LoggerFactory
 import org.springframework.core.io.buffer.DataBuffer
-import org.springframework.core.io.buffer.DataBufferFactory
-import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyExtractors
@@ -30,6 +29,8 @@ import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
 import reactor.core.publisher.Mono
 
+private val logger = LoggerFactory.getLogger(OasStubApiHandler::class.java)
+
 @Singleton
 class OasStubApiHandler
 @Inject constructor(private val apiExecutionService: ApiExecutionService,
@@ -37,13 +38,14 @@ class OasStubApiHandler
                     private val apiObserver: ApiObserver) {
     private val dataBufferFactory = DefaultDataBufferFactory()
     fun handleStubApiExecution(request: ServerRequest): Mono<ServerResponse> {
+        logger.debug("Request {} {}", request.method(), request.uri())
         // TODO delay and observer
         val outputStream = ByteArrayOutputStream()
         val response = ReactiveHttpResponse(outputStream = outputStream)
         val now = OffsetDateTime.now()
         val ref = AtomicReference<ApiContext>(null)
         return request.body(BodyExtractors.toMono(DataBuffer::class.java))
-            .switchIfEmpty(Mono.defer { Mono.just(dataBufferFactory.allocateBuffer(0)) })
+            .switchIfEmpty(Mono.defer { Mono.just(dataBufferFactory.allocateBuffer(1)) })
             .map { ReactiveHttpRequest(request, it.asInputStream()) }
             .flatMap { httpRequest ->
                 Mono.justOrEmpty(apiExecutionService.getApiContext(httpRequest))
@@ -54,23 +56,32 @@ class OasStubApiHandler
                             Mono.just(apiExecutionService.executeApi(context, httpRequest, response))
                         }
                     }
-            }.flatMap { responseContext -> ServerResponse.status(responseContext.status)
-                .contentType(responseContext.contentType.map(MediaType::parseMediaType).orElse(MediaType.APPLICATION_JSON))
-                .headers { headers -> headers.putAll(responseContext.headers) }
-                .body(BodyInserters.fromPublisher(Mono.fromSupplier {
-                    // TODO make a pipe output stream to DataBuffer or something to emit body
-                    responseContext.emitResponse(response)
-                    outputStream.toByteArray()
-                }, ByteArray::class.java))
-                .doOnSuccess {
-                    ref.get()?.let { context ->
-                        report(context, request, responseContext, now)
+            }.flatMap { responseContext ->
+                ServerResponse.status(responseContext.status)
+                    .contentType(
+                        responseContext.contentType.map(MediaType::parseMediaType).orElse(MediaType.APPLICATION_JSON)
+                    )
+                    .headers { headers -> headers.putAll(responseContext.headers) }
+                    .body(BodyInserters.fromPublisher(Mono.fromSupplier {
+                        // TODO make a pipe output stream to DataBuffer or something to emit body
+                        responseContext.emitResponse(response)
+                        outputStream.toByteArray()
+                    }, ByteArray::class.java))
+                    .doOnSuccess {
+                        ref.get()?.let { context ->
+                            report(context, request, responseContext, now)
+                        }
+                    }.doOnError { e ->
+                        ref.get()?.let { context ->
+                            report(context, request, responseContext, now, e)
+                        }
                     }
-                }.doOnError { e ->
-                    ref.get()?.let { context ->
-                        report(context, request, responseContext, now, e)
-                    }
-                }
+            }.switchIfEmpty(Mono.defer {
+                logger.debug("Response 404, API not found")
+                ServerResponse.status(404).build()
+            })
+            .doOnError { e ->
+                logger.debug("Unexpected error: {}", e.message, e)
             }.contextWrite { context ->
                 context.put("api_context", ref)
             }
@@ -82,6 +93,7 @@ class OasStubApiHandler
             val metric = ApiMetric(start, Duration.between(start, end), context.apiPath, request.method().name(), response.status, e)
             apiObserver.addApiMetric(context.context, context.apiPath, metric)
         }
+        logger.debug("Response {}", response.status, e)
         ModelPropertyUtils.mergeProperty(context.apiPath, context.apiDefinitions, ApiCommonConfigurations<*>::options)?.let { options ->
             if (options.shouldMonitor == null || options.shouldMonitor == true) {
                 rec()

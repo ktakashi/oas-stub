@@ -129,7 +129,7 @@ class AutoOasEngineConfiguration {
     fun apiService(storageService: StorageService,
                    apiPathService: ApiPathService,
                    apiResultProvider: ApiResultProvider,
-                   pluginService: PluginService): ApiExecutionService
+                   pluginService: PluginService)
             = DefaultApiService(storageService, parsingService(), apiPathService, apiResultProvider, pluginService)
 
     @Bean
