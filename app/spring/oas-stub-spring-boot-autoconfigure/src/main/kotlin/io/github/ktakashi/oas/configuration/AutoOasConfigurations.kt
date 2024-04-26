@@ -109,7 +109,7 @@ class AutoOasApiConfiguration(private val oasApplicationServletProperties: OasAp
 
     @Bean
     @ConditionalOnMissingBean
-    fun apiPathService(@Qualifier(API_PATH_NAME_QUALIFIER) prefix: String) = ApiPathService(prefix)
+    fun apiPathService() = ApiPathService(oasApplicationServletProperties.prefix)
 
     @Bean
     @ConditionalOnMissingBean
