@@ -1,3 +1,9 @@
+Version 1.3.0
+=============
+
+- Reactive module
+- Spring Boot version 3.2.5 
+
 Version 1.2.0
 =============
 
