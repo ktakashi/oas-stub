@@ -4,6 +4,7 @@ import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.test.OasStubTestResources
 import io.github.ktakashi.oas.test.OasStubTestService
+import io.github.ktakashi.oas.test.context
 import io.restassured.RestAssured
 import io.restassured.RestAssured.config
 import io.restassured.RestAssured.given
@@ -93,13 +94,20 @@ private fun check(scheme: String, httpPort: Int, oasStubTestService: OasStubTest
     assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").byStatus(404).count())
     assertEquals(2, oasStubTestService.getTestApiMetrics("petstore").filter { m -> m.httpMethod == "GET"}.count())
 
-    val context = oasStubTestService.getTestApiContext("petstore")
-        .updateHeaders(ApiHeaders(response = sortedMapOf("Extra-Header" to listOf("extra-value"))))
-    context.getApiConfiguration("/v1/pets/{id}").ifPresent { config ->
-        val value = OasStubTestResources.DefaultResponseModel(status = 200, response = """{"id": 2,"name": "Pochi","tag": "dog"}""")
-        val map = config.data?.asMap()?.toMutableMap()
-        map?.put("/v1/pets/2", value)
-        context.updateApi("/v1/pets/{id}", config.updateData(ApiData(map!!))).save()
+    oasStubTestService.context("petstore") {
+        headers {
+            response {
+                header("Extra-Header", "extra-value")
+            }
+        }
+        configuration("/v1/pets/{id}") {
+            data {
+                entry("/v1/pets/2", 200) {
+                    header("boo", "bar", "buz")
+                    body("""{"id": 2,"name": "Pochi","tag": "dog"}""")
+                }
+            }
+        }
     }
 
     given().get(URI.create("${scheme}://localhost:$httpPort/oas/petstore/v1/pets/2"))

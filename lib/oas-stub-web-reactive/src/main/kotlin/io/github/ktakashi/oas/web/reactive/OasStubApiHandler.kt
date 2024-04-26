@@ -56,7 +56,7 @@ class OasStubApiHandler
                     }
             }.flatMap { responseContext -> ServerResponse.status(responseContext.status)
                 .contentType(responseContext.contentType.map(MediaType::parseMediaType).orElse(MediaType.APPLICATION_JSON))
-                .headers { headers -> headers.putAll(response.headers) }
+                .headers { headers -> headers.putAll(responseContext.headers) }
                 .body(BodyInserters.fromPublisher(Mono.fromSupplier {
                     // TODO make a pipe output stream to DataBuffer or something to emit body
                     responseContext.emitResponse(response)

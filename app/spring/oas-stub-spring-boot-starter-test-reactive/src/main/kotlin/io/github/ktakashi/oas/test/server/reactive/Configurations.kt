@@ -8,7 +8,6 @@ import io.github.ktakashi.oas.test.OasStubTestService
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import jakarta.annotation.PostConstruct
 import org.springframework.boot.autoconfigure.AutoConfiguration
-import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -17,7 +16,6 @@ import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.SmartLifecycle
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Lazy
 import org.springframework.http.server.reactive.ReactorHttpHandlerAdapter
 import org.springframework.web.server.adapter.WebHttpHandlerBuilder
 import reactor.netty.DisposableServer
