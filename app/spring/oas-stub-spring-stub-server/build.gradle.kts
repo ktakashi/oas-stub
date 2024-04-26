@@ -34,9 +34,6 @@ dependencies {
     testImplementation(libs.groovy.json)
     testImplementation(libs.groovy.xml)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    // only for testing, so just use directly like this
-    // We put them in libs.versions.toml when we started using
-    // in multiple locations
-    testImplementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
-    testImplementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
+    testImplementation(libs.bcprov.jdk18on)
+    testImplementation(libs.bcpkix.jdk18on)
 }

@@ -13,6 +13,8 @@ dependencies {
     api(project(":app:spring:oas-stub-spring-boot-starter-web-reactive"))
     api(project(":app:spring:oas-stub-spring-test-api"))
     api(libs.spring.boot.starter.test)
+    api(libs.bcprov.jdk18on)
+    api(libs.bcpkix.jdk18on)
     implementation(libs.spring.boot.starter.webflux)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
@@ -30,7 +32,4 @@ dependencies {
     testImplementation(libs.groovy.json)
     testImplementation(libs.groovy.xml)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    testImplementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
-    testImplementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
 }
