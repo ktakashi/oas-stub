@@ -7,7 +7,6 @@ import io.cucumber.plugin.EventListener
 import io.cucumber.plugin.event.EventPublisher
 import io.cucumber.plugin.event.TestRunFinished
 import io.cucumber.plugin.event.TestRunStarted
-import java.lang.IllegalArgumentException
 
 class HazelcastPlugin: EventListener {
     companion object {

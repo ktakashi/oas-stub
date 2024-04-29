@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.plugin.apis
 
-import jakarta.servlet.http.HttpServletResponse
 import java.util.Optional
 
 /**

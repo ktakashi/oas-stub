@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.guice.configurations
 
 import com.fasterxml.jackson.databind.json.JsonMapper
+import io.github.ktakashi.oas.guice.configurations.OasStubServerConnectorConfiguration.SslContextFactorySupplier
 import io.github.ktakashi.oas.guice.modules.OasStubInMemoryPersistentStorageModule
 import io.github.ktakashi.oas.guice.modules.OasStubInMemorySessionStorageModule
 import io.github.ktakashi.oas.guice.storages.apis.OasStubPersistentStorageModuleCreator

@@ -22,7 +22,6 @@ import io.swagger.v3.oas.models.SpecVersion
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
-import jakarta.servlet.http.HttpServletResponse
 import java.io.IOException
 import java.net.HttpCookie
 import java.net.URI

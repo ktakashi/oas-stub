@@ -3,7 +3,6 @@ package io.github.ktakashi.oas.test.cucumber
 import io.cucumber.java.After
 import io.cucumber.java.Before
 import io.github.ktakashi.oas.guice.server.OasStubServer
-import jakarta.annotation.PreDestroy
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 

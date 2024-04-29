@@ -12,7 +12,6 @@ import io.github.ktakashi.oas.web.reactive.RouterFunctionFactory
 import io.github.ktakashi.oas.web.reactive.rests.ApiRouterFunctionBuilder
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
