@@ -2,6 +2,9 @@ Feature: Create APIs from OAS file
 
   @creation
   Scenario Outline: Create Stub APIs
+    Given these HTTP headers
+      | name       | value                                |
+      | Request-ID | cca43b93-a4ff-46cf-8564-d8e4f3899657 |
     Given this API definition '<schema>'
     When I create 'petstore' API definition
     And I '<method>' to '<path>' with '<content>' as '<contentType>'
@@ -63,9 +66,10 @@ Feature: Create APIs from OAS file
       | /schema/v2/uber.yaml | GET    | /v1/me                                                     |         |             | 200    | application/json    | first_name=string     |
     @v3_1 @test-api
     Examples:
-      | schema                | method | path              | content | contentType | status | responseContentType | response   |
-      | /schema/test-api.yaml | GET    | /examples         |         |             | 200    | application/json    | attr=email |
-      | /schema/test-api.yaml | GET    | /examples/objects |         |             | 200    | application/json    | attr=uuid  |
+      | schema                | method | path              | content          | contentType      | status | responseContentType | response   |
+      | /schema/test-api.yaml | GET    | /examples         |                  |                  | 200    | application/json    | attr=email |
+      | /schema/test-api.yaml | GET    | /examples/objects |                  |                  | 200    | application/json    | attr=uuid  |
+      | /schema/test-api.yaml | POST   | /profiles         | {"name": "name"} | application/json | 201    | <null>              | <null>     |
 
 
   @deletion

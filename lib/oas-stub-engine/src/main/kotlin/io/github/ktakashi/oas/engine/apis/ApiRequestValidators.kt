@@ -81,8 +81,13 @@ class ApiRequestBodyValidator
         else -> {
             val content = requestContext.content
             val mediaType = requestContext.contentType.map { v -> MediaType.valueOf(v) }.orElse(MediaType.APPLICATION_JSON_TYPE)
-            val contentType = "${mediaType.type}/${mediaType.subtype}"
-            val requestMediaType = Optional.ofNullable(operation.requestBody?.content?.get(contentType))
+            val operationContent = operation.requestBody?.content
+            // We ignore parameters for now
+            val contentType = operationContent?.keys?.find {
+                val mt = MediaType.valueOf(it)
+                mt.type == mediaType.type && mt.subtype == mediaType.subtype
+            }
+            val requestMediaType = Optional.ofNullable(operationContent?.get(contentType))
             if (requestMediaType.isEmpty) {
                 content.map { operation.requestBody.required ?: false }
                         .map { required -> if (required) success else failedResult("Body with undefined content-type") }

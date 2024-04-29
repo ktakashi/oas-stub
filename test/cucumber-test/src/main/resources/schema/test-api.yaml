@@ -23,7 +23,7 @@ paths:
       requestBody:
         description: Create a profile
         content:
-          application/json:
+          application/json; charset=UTF-8:
             schema:
               $ref: "#/components/schemas/Profile"
       responses:
