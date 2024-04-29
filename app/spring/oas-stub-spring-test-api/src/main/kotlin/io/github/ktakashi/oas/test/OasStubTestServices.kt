@@ -122,7 +122,7 @@ internal constructor(private val apiRegistrationService: ApiRegistrationService,
     /**
      * Updates delay configuration of the API definition
      */
-    fun updateDelay(delay: ApiDelay) = OasStubTestApiContext(apiRegistrationService, name, apiDefinitions.updateDelay(delay))
+    fun updateDelay(delay: ApiDelay?) = OasStubTestApiContext(apiRegistrationService, name, apiDefinitions.updateDelay(delay))
 
     /**
      * Updates options configuration of the API definition

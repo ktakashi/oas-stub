@@ -53,7 +53,7 @@ class AutoOasStubTestServiceConfiguration(private val testProperties: OasStubTes
     fun oasStubTestServerCertificate(certificate: SelfSignedCertificate): X509Certificate = certificate.cert()
 }
 
-@Configuration
+@Configuration(OAS_STUB_REACTIVE_CONFIGURATION_BEAN_NAME)
 @EnableConfigurationProperties(value = [OasStubReactiveServerProperties::class, OasStubTestProperties::class])
 @EnableAutoConfiguration
 class OasStubReactiveConfiguration(val serverProperties: OasStubReactiveServerProperties,
@@ -119,6 +119,7 @@ class OasStubReactiveConfiguration(val serverProperties: OasStubReactiveServerPr
     override fun stop() {
         oasStubTestService.clear()
         httpServer.disposeNow()
+        httpsServer?.disposeNow()
     }
 
     override fun isRunning(): Boolean = !httpServer.isDisposed

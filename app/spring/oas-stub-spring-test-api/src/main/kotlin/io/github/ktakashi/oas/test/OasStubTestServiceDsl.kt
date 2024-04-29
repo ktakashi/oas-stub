@@ -2,12 +2,21 @@ package io.github.ktakashi.oas.test
 
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiData
+import io.github.ktakashi.oas.model.ApiDelay
+import io.github.ktakashi.oas.model.ApiFailure
+import io.github.ktakashi.oas.model.ApiFailureNone
+import io.github.ktakashi.oas.model.ApiFixedDelay
 import io.github.ktakashi.oas.model.ApiHeaders
+import io.github.ktakashi.oas.model.ApiHttpError
+import io.github.ktakashi.oas.model.ApiLatency
+import io.github.ktakashi.oas.model.ApiOptions
+import io.github.ktakashi.oas.model.ApiProtocolFailure
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
 import java.nio.charset.StandardCharsets
 import java.util.SortedMap
 import java.util.TreeMap
+import kotlin.time.DurationUnit
 import org.springframework.core.io.Resource
 
 /**
@@ -61,6 +70,19 @@ class OasStubTestServiceDsl
     }
 
     /**
+     * Configure context level options
+     */
+    fun options(init: OasStubApiOptionsDsl.() -> Unit) {
+        context = context.updateOptions(OasStubApiOptionsDsl(init).save())
+    }
+
+    /**
+     * Configure context level delay
+     */
+    fun delay(init: OasStubApiDelayDsl.() -> Unit) {
+        context = context.updateDelay(OasStubApiDelayDsl(init).save())
+    }
+    /**
      * Configure API level configuration
      */
     fun configuration(path: String, init: OasStubApiConfigurationDsl.() -> Unit) {
@@ -93,6 +115,13 @@ class OasStubApiConfigurationDsl internal  constructor(private val init: OasStub
     }
 
     /**
+     * Configure API level delay
+     */
+    fun delay(init: OasStubApiDelayDsl.() -> Unit) {
+        apiConfiguration = apiConfiguration.updateDelay(OasStubApiDelayDsl(init).save())
+    }
+
+    /**
      * Configure default plugin.
      *
      * By default, default plugin is configured, so only for documentation purpose
@@ -114,11 +143,18 @@ class OasStubApiConfigurationDsl internal  constructor(private val init: OasStub
     /**
      * Configure plugin
      *
-     * [resource] can be any Spring resource, e.g. [ClasspathResource]
+     * [resource] can be any Spring resource, e.g. [ClassPathResource]
      */
     fun plugin(resource: Resource, type: PluginType = PluginType.GROOVY) {
         val plugin = PluginDefinition(type, resource.getContentAsString(StandardCharsets.UTF_8))
         apiConfiguration = apiConfiguration.updatePlugin(plugin)
+    }
+
+    /**
+     * Configure API level options
+     */
+    fun options(init: OasStubApiOptionsDsl.() -> Unit) {
+        apiConfiguration = apiConfiguration.updateOptions(OasStubApiOptionsDsl(init).save())
     }
 
     internal fun save(): ApiConfiguration {
@@ -173,7 +209,82 @@ class OasStubApiResponseDsl internal  constructor(private val status: Int,  val 
     }
 }
 
-class OasStubApiHeadersDsl internal  constructor(private val init: OasStubApiHeadersDsl.() -> Unit) {
+class OasStubApiDelayDsl internal constructor(private val init: OasStubApiDelayDsl.() -> Unit) {
+    private var delay: ApiDelay? = null
+
+    fun noDelay() {
+        delay = null
+    }
+
+    fun fixed(delay: Long, delayUnit: DurationUnit = ApiDelay.DEFAULT_DURATION_UNIT) {
+        this.delay = ApiFixedDelay(delay, delayUnit)
+    }
+
+    internal fun save(): ApiDelay? {
+        init()
+        return delay
+    }
+}
+
+class OasStubApiOptionsDsl internal constructor(private val init: OasStubApiOptionsDsl.() -> Unit) {
+    private var shouldValidate: Boolean? = null
+    private var latency: ApiLatency? = null
+    private var failure: ApiFailure? = null
+    fun shouldValidate(shouldValidate: Boolean?) {
+        this.shouldValidate = shouldValidate
+    }
+    fun latency(init: OasStubApiLatency.() -> Unit) {
+        latency = OasStubApiLatency(init).save()
+    }
+    fun failure(init: OasStubApiFailureDsl.() -> Unit) {
+        failure = OasStubApiFailureDsl(init).save()
+    }
+    internal fun save(): ApiOptions {
+        init()
+        return ApiOptions(shouldValidate = shouldValidate,
+            latency = latency,
+            failure = failure)
+    }
+}
+
+class OasStubApiLatency internal constructor(private val init: OasStubApiLatency.() -> Unit) {
+    private var interval: Long? = null
+    private var unit: DurationUnit = DurationUnit.SECONDS
+
+    fun interval(interval: Long?) {
+        this.interval = interval
+    }
+
+    fun unit(unit: DurationUnit) {
+        this.unit = unit
+    }
+
+    internal fun save(): ApiLatency? {
+        init()
+        return interval?.let {
+            ApiLatency(it, unit)
+        }
+    }
+}
+
+class OasStubApiFailureDsl internal constructor(private val init: OasStubApiFailureDsl.() -> Unit) {
+    private var failure: ApiFailure = ApiFailureNone
+    fun none() {
+        failure = ApiFailureNone
+    }
+    fun protocol() {
+        failure = ApiProtocolFailure
+    }
+    fun status(status: Int) {
+        failure = ApiHttpError(status)
+    }
+    internal fun save(): ApiFailure {
+        init()
+        return failure
+    }
+}
+
+class OasStubApiHeadersDsl internal constructor(private val init: OasStubApiHeadersDsl.() -> Unit) {
     private var apiHeaders = ApiHeaders()
     fun request(init: OasStubApiHeaderDsl.() -> Unit) {
         apiHeaders = apiHeaders.copy(request = OasStubApiHeaderDsl(init).save())
