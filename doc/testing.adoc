@@ -71,20 +71,6 @@ see the Javadoc.
 </dependency>
 ----
 
-[NOTE]
-====
-The `oas-stub-spring-stub-server` requires Jetty version of `12`, this
-means the default Spring Boot dependency doesn't work due to the significant
-API changes on Jetty 12.
-====
-
-[WARNING]
-====
-If your application doesn't use bundled Jetty, such as embedded Jetty server,
-then you just need to update the Jetty version. Otherwise, this module doesn't
-work.
-====
-
 After you added the dependency, then you need to add `@AutoConfigureOasStubServer`
 annotation to your Spring Boot test.
 
