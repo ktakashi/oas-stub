@@ -13,7 +13,10 @@ dependencies {
     api(project(":lib:oas-stub-storage-api"))
 
     implementation(libs.kotlin.stdlib)
-    implementation(libs.inject.api)
+    implementation(libs.koin.core)
+    implementation(libs.projectreactor.reactor.core)
+    implementation(libs.reactor.extra)
+    // For MediaType...
     implementation(libs.ws.rs.api)
     implementation(libs.jersey.client)
     implementation(libs.mail.api)

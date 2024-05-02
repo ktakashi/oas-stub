@@ -13,13 +13,8 @@ import io.swagger.v3.oas.models.media.ComposedSchema
 import io.swagger.v3.oas.models.media.IntegerSchema
 import io.swagger.v3.oas.models.media.NumberSchema
 import io.swagger.v3.oas.models.media.Schema
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 
-@Named @Singleton
-class JsonOpenApi30DataPopulator
-@Inject constructor(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V30) {
+class JsonOpenApi30DataPopulator(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V30) {
     override fun populate(schema: Schema<*>): ByteArray = try {
         val node = populateNode(schema)
         objectMapper.writeValueAsBytes(node)

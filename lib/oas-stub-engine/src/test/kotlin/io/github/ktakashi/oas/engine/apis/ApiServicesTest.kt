@@ -21,7 +21,7 @@ class ApiServicesTest {
         "/schema/servers_test0_3.0.3.yaml,/v3/object,/v3/object",
     ])
     fun adjustBasePathTest(schema: String, path: String, expected: String) {
-        val openApi = parsingService.parse(readStringContent(schema)).orElseThrow()
+        val openApi = parsingService.parse(readStringContent(schema)).block() ?: throw Exception("OpenApi parsing failed")
         val r = adjustBasePath(path, openApi)
         if ("<null>" == expected) {
             assertTrue(r.isEmpty)

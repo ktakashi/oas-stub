@@ -1,6 +1,7 @@
 [versions]
 kotlin = "1.9.23"
 dokka = "1.9.0"
+koin = "3.5.6"
 jackson = "2.17.0"
 servlet-api = "6.0.0"
 swagger-core = "2.2.15"
@@ -13,6 +14,7 @@ spring-boot="3.2.5"
 spring-cloud = "4.1.2"
 spring-cloud-config = "4.1.1"
 projectreactor = "3.6.5"
+reactor-addon = "3.5.1"
 guice = "7.0.0"
 jetty = "12.0.1"
 guava = "32.1.2-jre"
@@ -30,6 +32,8 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 
 [libraries]
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
+
+koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin"}
 
 jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
 jackson-databind-core = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
@@ -50,7 +54,7 @@ xml-bind-api = { group = "jakarta.xml.bind", name = "jakarta.xml.bind-api", vers
 validation-api = { group = "jakarta.validation", name = "jakarta.validation-api", version = "3.0.2" }
 annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version = "2.1.1" }
 
-swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version = "2.1.16" }
+swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version = "2.1.22" }
 swagger-core-jakarta = { group = "io.swagger.core.v3", name = "swagger-core-jakarta", version.ref = "swagger-core" }
 swagger-core-annotations-jakarta = { group = "io.swagger.core.v3", name = "swagger-annotations-jakarta", version.ref = "swagger-core" }
 swagger-core-jaxrs2-jakarta = { group = "io.swagger.core.v3", name = "swagger-jaxrs2-jakarta", version.ref = "swagger-core" }
@@ -104,6 +108,8 @@ spring-cloud-context = { group = "org.springframework.cloud", name = "spring-clo
 springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.2.0" }
 
 projectreactor-reactor-core = { group = "io.projectreactor", name = "reactor-core", version.ref = "projectreactor" }
+reactor-extra = { group = "io.projectreactor.addons", name = "reactor-extra", version.ref = "reactor-addon" }
+
 
 guice-core = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 guice-servlet = { group = "com.google.inject.extensions", name = "guice-servlet", version.ref = "guice" }

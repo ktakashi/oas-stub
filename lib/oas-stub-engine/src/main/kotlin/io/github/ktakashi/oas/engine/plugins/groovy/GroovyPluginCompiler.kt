@@ -4,10 +4,7 @@ import groovy.lang.GroovyClassLoader
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
 import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.plugin.apis.ApiPlugin
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 
-@Named @Singleton
 class GroovyPluginCompiler: PluginCompiler(PluginType.GROOVY) {
     @Suppress("UNCHECKED_CAST")
     override fun compileScript(script: String): Class<ApiPlugin> {

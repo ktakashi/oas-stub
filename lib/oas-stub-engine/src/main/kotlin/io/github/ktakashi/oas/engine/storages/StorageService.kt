@@ -10,28 +10,26 @@ import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.plugin.apis.Storage
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.swagger.v3.oas.models.OpenAPI
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import java.util.Optional
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 
 
-@Named @Singleton
-class StorageService
-@Inject constructor(private val parsingService: ParsingService,
-                    private val persistentStorage: PersistentStorage,
-                    val sessionStorage: Storage) {
-    private val apiDefinitions: LoadingCache<String, Optional<ApiDefinitions>> = Caffeine.newBuilder()
-            .build { k -> persistentStorage.getApiDefinition(k) }
-    private val openApiCache: LoadingCache<String, Optional<OpenAPI>> = Caffeine.newBuilder()
+class StorageService(private val parsingService: ParsingService,
+                     private val persistentStorage: PersistentStorage,
+                     val sessionStorage: Storage) {
+    private val apiDefinitions: LoadingCache<String, Mono<ApiDefinitions>> = Caffeine.newBuilder()
+            .build { k -> Mono.defer { Mono.justOrEmpty(persistentStorage.getApiDefinition(k)) } }
+    private val openApiCache: LoadingCache<String, Mono<OpenAPI>> = Caffeine.newBuilder()
             .build { k -> apiDefinitions[k]
-                    .map<String>(ApiDefinitions::specification)
+                    .mapNotNull<String>(ApiDefinitions::specification)
                     .flatMap(parsingService::parse)
             }
 
-    fun saveApiDefinitions(name: String, definitions: ApiDefinitions): Boolean = persistentStorage.setApiDefinition(name, definitions).also {
+    fun saveApiDefinitions(name: String, definitions: ApiDefinitions): ApiDefinitions? = persistentStorage.setApiDefinition(name, definitions).let {
         apiDefinitions.invalidate(name)
         openApiCache.invalidate(name)
+        if (it) definitions else null
     }
 
     fun deleteApiDefinitions(name: String): Boolean = persistentStorage.deleteApiDefinition(name).also {
@@ -39,13 +37,13 @@ class StorageService
         openApiCache.invalidate(name)
     }
 
-    fun getApiDefinitions(name: String): Optional<ApiDefinitions> = apiDefinitions[name]
-    fun getOpenApi(name: String): Optional<OpenAPI> = openApiCache[name]
+    fun getApiDefinitions(name: String): Mono<ApiDefinitions> = apiDefinitions[name]
+    fun getOpenApi(name: String): Mono<OpenAPI> = openApiCache[name]
 
-    fun getPluginDefinition(name: String, path: String): Optional<PluginDefinition> = apiDefinitions[name]
-            .map { v -> v.configurations }
-            .flatMap { v -> findMatchingPathValue(path, v as Map<String, ApiConfiguration>) }
-            .map { v -> v.plugin }
+    fun getPluginDefinition(name: String, path: String): Mono<PluginDefinition> = apiDefinitions[name]
+            .mapNotNull { v -> v.configurations }
+            .flatMap { v -> Mono.justOrEmpty(findMatchingPathValue(path, v as Map<String, ApiConfiguration>)) }
+            .mapNotNull { v -> v.plugin }
 
-    fun getApiNames(): Set<String> = persistentStorage.getNames()
+    fun getApiNames(): Flux<String> = Flux.defer { Flux.fromIterable(persistentStorage.getNames()) }
 }

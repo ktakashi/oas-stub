@@ -1,7 +1,5 @@
 package io.github.ktakashi.oas.engine.validators
 
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import jakarta.mail.internet.AddressException
 import jakarta.mail.internet.InternetAddress
 import java.time.DateTimeException
@@ -24,7 +22,6 @@ abstract class StringFormatValidator(private val pattern: Pattern?, private val 
     }
 }
 
-@Named @Singleton
 class FormatValidator: StringFormatValidator(null, "format") {
     override fun validate(context: ValidationContext<String>): Boolean = if (context is StringValidationContext) {
         context.format?.matcher(context.target)?.matches() ?: true
@@ -46,7 +43,6 @@ abstract class DateValidator<T>(private val parser: (v: String) -> T, type: Stri
     }
 }
 
-@Named @Singleton
 class LocalDateValidator: DateValidator<LocalDate>(LocalDate::parse, "date")
 
 private fun parseOffsetDateTime(s: String): OffsetDateTime = try {
@@ -54,14 +50,11 @@ private fun parseOffsetDateTime(s: String): OffsetDateTime = try {
 } catch (e: DateTimeParseException) {
     LocalDateTime.parse(s).atOffset(ZoneOffset.UTC)
 }
-@Named @Singleton
 class OffsetDateValidator: DateValidator<OffsetDateTime>(::parseOffsetDateTime, "date-time")
 
 private val uuidPattern = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
-@Named @Singleton
 class UUIDValidator: StringFormatValidator(uuidPattern, "uuid")
 
-@Named @Singleton
 class EmailValidator: StringFormatValidator(null, "email") {
     override fun validate(context: ValidationContext<String>): Boolean = if (context is StringValidationContext) {
         try {

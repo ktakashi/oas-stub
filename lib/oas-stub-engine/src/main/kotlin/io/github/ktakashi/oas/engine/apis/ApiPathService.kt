@@ -1,15 +1,8 @@
 package io.github.ktakashi.oas.engine.apis
 
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import java.util.Optional
 
-const val API_PATH_NAME_QUALIFIER = "ApiPathNameQualifier"
-
-@Named @Singleton
-class ApiPathService
-@Inject constructor(@Named(API_PATH_NAME_QUALIFIER) private val prefix: String) {
+class ApiPathService(private val prefix: String) {
     fun extractApiNameAndPath(uri: String?): Optional<Pair<String, String>> = uri?.let {
         val index = it.indexOf(prefix)
         if (index < 0) {
