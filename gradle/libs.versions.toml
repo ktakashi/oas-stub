@@ -34,6 +34,7 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin"}
+koin-jvm = { group = "io.insert-koin", name = "koin-core-jvm", version.ref = "koin"}
 
 jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
 jackson-databind-core = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }

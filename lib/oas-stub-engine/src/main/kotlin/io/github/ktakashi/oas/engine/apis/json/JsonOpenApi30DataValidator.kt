@@ -26,7 +26,7 @@ import java.util.Optional
 import java.util.regex.Pattern
 
 class JsonOpenApi30DataValidator(private val objectMapper: ObjectMapper,
-                    private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V30), JsonMediaSupport {
+                                 private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V30), JsonMediaSupport {
     override fun validate(input: ByteArray, schema: Schema<*>): ApiValidationResult = try {
         checkSchema(objectMapper.readTree(input), "$", schema)
     } catch (e: IOException) {

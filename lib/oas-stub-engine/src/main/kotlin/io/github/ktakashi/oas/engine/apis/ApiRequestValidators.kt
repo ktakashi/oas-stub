@@ -13,9 +13,6 @@ import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import jakarta.ws.rs.core.MediaType
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -68,7 +65,6 @@ internal fun failedResult(message: String, property: String? = null, type: ApiVa
 
 fun interface ApiRequestValidator {
     fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult
-
 }
 
 private fun getParameter(operation: Operation, path: PathItem) = operation.parameters ?: path.parameters
@@ -101,9 +97,7 @@ class ApiRequestBodyValidator(private val validators: Set<ApiDataValidator<JsonN
     }
 }
 
-@Named @Singleton
-class ApiRequestParameterValidator
-@Inject constructor(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
+class ApiRequestParameterValidator(private val validators: Set<ApiDataValidator<JsonNode>>): ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult =
             getParameter(operation, path)
                     ?.map { p -> validate(requestContext, p) }
@@ -154,9 +148,7 @@ private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
     }
 } ?: JsonNodeFactory.instance.nullNode()
 
-@Named @Singleton
-class ApiRequestSecurityValidator
-@Inject constructor(): ApiRequestValidator {
+class ApiRequestSecurityValidator: ApiRequestValidator {
     override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult =
             getSecurityRequirements(operation, requestContext.apiContext.openApi)?.map { requirement ->
                 requirement.keys.mapNotNull { key -> requestContext.apiContext.openApi.components.securitySchemes?.get(key) }
@@ -207,9 +199,7 @@ class ApiRequestSecurityValidator
 }
 
 
-@Named @Singleton
-class ApiRequestPathVariableValidator
-@Inject constructor(private val requestParameterValidator: ApiRequestParameterValidator): ApiRequestValidator {
+class ApiRequestPathVariableValidator(private val requestParameterValidator: ApiRequestParameterValidator): ApiRequestValidator {
 
     override fun validate(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ApiValidationResult {
         val apiContext = requestContext.apiContext

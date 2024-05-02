@@ -1,5 +1,5 @@
 package io.github.ktakashi.oas.web.reactive.rests
-
+/*
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
@@ -174,3 +174,4 @@ class ApiRouterFunctionBuilder(private val adminPath: String,
 }
 
 
+*/

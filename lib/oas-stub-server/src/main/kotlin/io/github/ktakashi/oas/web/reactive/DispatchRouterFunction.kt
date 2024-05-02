@@ -1,5 +1,5 @@
 package io.github.ktakashi.oas.web.reactive
-
+/*
 import org.springframework.web.reactive.function.server.RequestPredicates
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.RouterFunctions.Builder
@@ -18,3 +18,4 @@ class RouterFunctionFactory(private val oasStubApiHandler: OasStubApiHandler) {
             builders.fold(builder) { acc, b -> b.build(acc) }
         }.build()
 }
+*/
