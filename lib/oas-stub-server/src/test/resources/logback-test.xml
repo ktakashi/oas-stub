@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <logger name="io.github.ktakashi" level="DEBUG"/>
+    <logger name="io.github.ktakashi" level="INFO"/>
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>

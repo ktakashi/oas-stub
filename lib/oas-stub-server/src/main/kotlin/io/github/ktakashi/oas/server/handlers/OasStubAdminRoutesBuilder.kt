@@ -9,6 +9,7 @@ import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.server.io.bodyToInputStream
 import io.github.ktakashi.oas.server.io.bodyToMono
 import io.github.ktakashi.oas.server.options.OasStubServerOptions
+import io.netty.buffer.ByteBufAllocator
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpMethod
@@ -39,7 +40,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
             routes
                 .get(options.adminPath) { _, response ->
                     response.header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .sendObject(apiRegistrationService.getAllNames())
+                        .send(apiRegistrationService.getAllNames().map { ByteBufAllocator.DEFAULT.buffer().writeBytes(it.toByteArray()) })
                 }
                 .path("${options.adminPath}/$PATH_SEGMENT", ::adminContext)
                 .path("${options.adminPath}/$PATH_SEGMENT/options", adminContextApi(ApiDefinitions::options, ApiDefinitions::updateOptions))
@@ -59,11 +60,14 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
                     deleteConfigurationProperty( request, response, request.queryParameters(), ApiConfiguration::updatePlugin)
                 }
                 .put("${options.adminPath}/$PATH_SEGMENT/configurations/plugins/groovy") { request, response ->
-                    putConfigurationProperty(request, response, request.queryParameters()) { configuration, script: String ->
-                        PluginDefinition(type = PluginType.GROOVY, script = script).let {
-                            configuration.updatePlugin(it)
-                        }
-                    }
+                    request.bodyToInputStream().flatMap { body ->
+                        updateConfigurationProperty(request, request.queryParameters()) { configuration ->
+                            PluginDefinition(type = PluginType.GROOVY, script = body.reader().use { it.readText() }).let {
+                                configuration.updatePlugin(it)
+                            }
+                        }.map { v -> ok(response, v) }
+                    }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
+                        .flatMap { r -> r.then() }
                 }
         }
     }
@@ -73,7 +77,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
             apiRegistrationService.getApiDefinitions(context).map { v ->
                 response.header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
                     .status(HttpResponseStatus.OK)
-                    .sendObject(v)
+                    .sendString(Mono.fromCallable { objectMapper.writeValueAsString(v) })
             }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
                 .flatMap { r -> r.then() }
         } ?: sendNotFound(response)
@@ -137,22 +141,13 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
     private inline fun <reified T> putConfigurationProperty(request: HttpServerRequest, response: HttpServerResponse, parameters: Map<String, List<String>>, noinline updater: (ApiConfiguration, T) -> ApiConfiguration) =
         request.bodyToMono<T>(objectMapper).flatMap { body ->
             updateConfigurationProperty(request, parameters) { config -> updater(config, body) }
-                .map { v -> response.status(HttpResponseStatus.OK)
-                    .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .sendObject(v as Any)
-                }.map { def -> response.status(HttpResponseStatus.OK)
-                    .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .sendObject(def as Any)
-                }
+                .map { v -> ok(response, v) }
         }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
             .flatMap { r -> r.then() }
 
     private fun <T> deleteConfigurationProperty(request: HttpServerRequest, response: HttpServerResponse, parameters: Map<String, List<String>>, updater: (ApiConfiguration, T?) -> ApiConfiguration) =
         updateConfigurationProperty(request, parameters) { config -> updater(config, null) }
-            .map { v -> response.status(HttpResponseStatus.OK)
-                .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                .sendObject(v as Any)
-            }.map { noContent(response) }
+            .map { noContent(response) }
             .switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
             .flatMap { r -> r.then() }
 
@@ -178,7 +173,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
                 }
             }.map { v -> response.status(HttpResponseStatus.OK)
                 .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                .sendObject(v as Any)
+                .sendString(Mono.fromCallable { objectMapper.writeValueAsString(v) })
             }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
                 .flatMap { r -> r.then() }
         } ?: sendNotFound(response)
@@ -186,10 +181,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
     private inline fun <reified T> putApiDefinitionsProperty(request: HttpServerRequest, response: HttpServerResponse, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
         request.bodyToMono<T>(objectMapper).flatMap { body ->
             updateApiDefinitionProperty(request) { def -> updater(def, body) }
-                .map { v -> response.status(HttpResponseStatus.OK)
-                    .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .sendObject(v)
-                }
+                .map { v -> ok(response, v) }
         }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
             .flatMap { r -> r.then() }
 
@@ -213,11 +205,14 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
                 .mapNotNull(retriever)
                 .map { response.status(HttpResponseStatus.OK)
                     .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .sendObject(it as Any)
+                    .sendString(Mono.fromCallable { objectMapper.writeValueAsString(it) })
                 }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
                 .flatMap { r -> r.then() }
         } ?: sendNotFound(response)
 
+    private fun ok(response: HttpServerResponse, v: ApiDefinitions) = response.status(HttpResponseStatus.OK)
+        .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+        .sendString(Mono.fromCallable { objectMapper.writeValueAsString(v) })
 }
 
 internal fun sendNotFound(response: HttpServerResponse) = notFound(response).send()

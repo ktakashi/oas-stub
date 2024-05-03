@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.server.options
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
@@ -32,7 +33,7 @@ internal constructor(val port: Int,
                                  private var enableAdmin: Boolean = true,
                                  private var enableMetrics: Boolean = true,
                                  private var enableAccessLog: Boolean = false,
-                                 private var objectMapper: ObjectMapper = ObjectMapper(),
+                                 private var objectMapper: ObjectMapper = ObjectMapper().findAndRegisterModules(),
                                  private var persistentStorage: PersistentStorage = InMemoryPersistentStorage(),
                                  private var sessionStorage: SessionStorage = InMemorySessionStorage()) {
             fun port(port: Int) = apply { this.port = port }
