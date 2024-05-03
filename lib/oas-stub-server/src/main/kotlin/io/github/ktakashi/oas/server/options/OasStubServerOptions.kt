@@ -12,8 +12,10 @@ internal constructor(val port: Int,
                      val httpsPort: Int,
                      val stubPath: String,
                      val adminPath: String,
+                     val metricsPath: String,
                      val ssl: SSL?,
                      val enableAdmin: Boolean,
+                     val enableMetrics: Boolean,
                      val enableAccessLog: Boolean,
                      val objectMapper: ObjectMapper,
                      val persistentStorage: PersistentStorage,
@@ -25,8 +27,10 @@ internal constructor(val port: Int,
                                  private var httpsPort: Int = -1,
                                  private var stubPath: String = "/oas",
                                  private var adminPath: String = "/__admin",
+                                 private var metricsPath: String = "/metrics",
                                  private var ssl: SSL? = null,
                                  private var enableAdmin: Boolean = true,
+                                 private var enableMetrics: Boolean = true,
                                  private var enableAccessLog: Boolean = false,
                                  private var objectMapper: ObjectMapper = ObjectMapper(),
                                  private var persistentStorage: PersistentStorage = InMemoryPersistentStorage(),
@@ -35,15 +39,17 @@ internal constructor(val port: Int,
             fun httpsPort(httpsPort: Int) = apply { this.httpsPort = httpsPort }
             fun stubPath(stubPath: String) = apply { this.stubPath = stubPath }
             fun adminPath(adminPath: String) = apply { this.adminPath = adminPath }
+            fun metricsPath(metricsPath: String) = apply { this.metricsPath = metricsPath }
             fun ssl(ssl: SSL) = apply { this.ssl = ssl }
             fun enableAdmin(enableAdmin: Boolean) = apply { this.enableAdmin = enableAdmin }
+            fun enableMetrics(enableMetrics: Boolean) = apply { this.enableMetrics = enableMetrics }
             fun enableAccessLog(enableAccessLog: Boolean) = apply { this.enableAccessLog = enableAccessLog }
             fun objectMapper(objectMapper: ObjectMapper) = apply { this.objectMapper = objectMapper }
             fun persistentStorage(persistentStorage: PersistentStorage) = apply { this.persistentStorage = persistentStorage }
             fun sessionStorage(sessionStorage: SessionStorage) = apply { this.sessionStorage = sessionStorage }
 
-            fun build() = OasStubServerOptions(port, httpsPort, stubPath, adminPath, ssl, enableAdmin,
-                enableAccessLog, objectMapper, persistentStorage, sessionStorage)
+            fun build() = OasStubServerOptions(port, httpsPort, stubPath, adminPath, metricsPath, ssl, enableAdmin,
+                enableMetrics, enableAccessLog, objectMapper, persistentStorage, sessionStorage)
         }
         @JvmStatic
         fun builder() = Builder()

@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.server
 
 import io.github.ktakashi.oas.server.handlers.OasStubAdminRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubApiHandler
+import io.github.ktakashi.oas.server.handlers.OasStubMetricsRoutesBuilder
 import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
@@ -16,6 +17,7 @@ class OasStubServer(private val options: OasStubServerOptions) {
     private var koinInitialized: Boolean = false
     private lateinit var oasStubApiHandler: OasStubApiHandler
     private lateinit var oasStubAdminRoutesBuilder: OasStubAdminRoutesBuilder
+    private lateinit var oasStubMetricsRoutesBuilder: OasStubMetricsRoutesBuilder
     private var httpServer: DisposableServer? = null
     private var httpsServer: DisposableServer? = null
 
@@ -28,6 +30,7 @@ class OasStubServer(private val options: OasStubServerOptions) {
             }
             oasStubApiHandler = OasStubApiHandler()
             oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options)
+            oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options)
             koinInitialized = true
         }
         httpServer = createNettyServer(options.port).bindNow()
@@ -46,9 +49,9 @@ class OasStubServer(private val options: OasStubServerOptions) {
     private fun createNettyServer(port: Int): HttpServer = HttpServer.create().port(port)
         .accessLog(options.enableAccessLog)
         .route { routes ->
-            if (options.enableAdmin) {
-                oasStubAdminRoutesBuilder.build(routes)
-            }
+            oasStubAdminRoutesBuilder.build(routes)
+            oasStubMetricsRoutesBuilder.build(routes)
+
             routes.route(prefix(options.stubPath), oasStubApiHandler)
         }
 

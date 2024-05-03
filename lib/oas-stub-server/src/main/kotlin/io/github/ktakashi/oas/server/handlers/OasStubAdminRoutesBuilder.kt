@@ -26,44 +26,45 @@ import reactor.netty.http.server.HttpServerRoutes
 
 private typealias AdminApiHandler = (HttpMethod, HttpServerRequest, HttpServerResponse) -> Publisher<Void>
 
-private const val PATH_VARIABLE_NAME = "context"
-private const val PATH_SEGMENT = "{$PATH_VARIABLE_NAME}"
+internal const val PATH_VARIABLE_NAME = "context"
+internal const val PATH_SEGMENT = "{$PATH_VARIABLE_NAME}"
 private const val PARAMETER_NAME = "api"
 
 class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): KoinComponent {
     private val apiRegistrationService: ApiRegistrationService by inject()
     private val objectMapper: ObjectMapper by inject()
     fun build(routes: HttpServerRoutes) {
-        routes
-            .get(options.adminPath) { _, response ->
-                response.header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .sendObject(apiRegistrationService.getAllNames())
-            }
-            .path("${options.adminPath}/$PATH_SEGMENT", ::adminContext)
-            .path("${options.adminPath}/$PATH_SEGMENT/options", adminContextApi(ApiDefinitions::options, ApiDefinitions::updateOptions))
-            .path("${options.adminPath}/$PATH_SEGMENT/configurations", adminContextApi(ApiDefinitions::configurations, ApiDefinitions::updateConfigurations))
-            .path("${options.adminPath}/$PATH_SEGMENT/headers", adminContextApi(ApiDefinitions::headers, ApiDefinitions::updateHeaders))
-            .path("${options.adminPath}/$PATH_SEGMENT/data", adminContextApi(ApiDefinitions::data, ApiDefinitions::updateData))
-            .path("${options.adminPath}/$PATH_SEGMENT/delay", adminContextApi(ApiDefinitions::delay, ApiDefinitions::updateDelay))
+        if (options.enableAdmin) {
+            routes
+                .get(options.adminPath) { _, response ->
+                    response.header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                        .sendObject(apiRegistrationService.getAllNames())
+                }
+                .path("${options.adminPath}/$PATH_SEGMENT", ::adminContext)
+                .path("${options.adminPath}/$PATH_SEGMENT/options", adminContextApi(ApiDefinitions::options, ApiDefinitions::updateOptions))
+                .path("${options.adminPath}/$PATH_SEGMENT/configurations", adminContextApi(ApiDefinitions::configurations, ApiDefinitions::updateConfigurations))
+                .path("${options.adminPath}/$PATH_SEGMENT/headers", adminContextApi(ApiDefinitions::headers, ApiDefinitions::updateHeaders))
+                .path("${options.adminPath}/$PATH_SEGMENT/data", adminContextApi(ApiDefinitions::data, ApiDefinitions::updateData))
+                .path("${options.adminPath}/$PATH_SEGMENT/delay", adminContextApi(ApiDefinitions::delay, ApiDefinitions::updateDelay))
 
-            .path("${options.adminPath}/$PATH_SEGMENT/configurations/options", adminConfigurationApi(ApiConfiguration::options, ApiConfiguration::updateOptions))
-            .path("${options.adminPath}/$PATH_SEGMENT/configurations/headers", adminConfigurationApi(ApiConfiguration::headers, ApiConfiguration::updateHeaders))
-            .path("${options.adminPath}/$PATH_SEGMENT/configurations/data", adminConfigurationApi(ApiConfiguration::data, ApiConfiguration::updateData))
-            .path("${options.adminPath}/$PATH_SEGMENT/configurations/delay", adminConfigurationApi(ApiConfiguration::delay, ApiConfiguration::updateDelay))
-            .get("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request, response ->
-                getConfigurationProperty(request, response, request.queryParameters(), ApiConfiguration::plugin)
-            }
-            .delete("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request, response ->
-                deleteConfigurationProperty(request, response, request.queryParameters(), ApiConfiguration::updatePlugin)
-            }
-            .put("${options.adminPath}/$PATH_SEGMENT/configurations/plugins/groovy") { request, response ->
-                putConfigurationProperty(request, response, request.queryParameters()) { configuration, script: String ->
-                    PluginDefinition(type = PluginType.GROOVY, script = script).let {
-                        configuration.updatePlugin(it)
+                .path("${options.adminPath}/$PATH_SEGMENT/configurations/options", adminConfigurationApi(ApiConfiguration::options, ApiConfiguration::updateOptions))
+                .path("${options.adminPath}/$PATH_SEGMENT/configurations/headers", adminConfigurationApi(ApiConfiguration::headers, ApiConfiguration::updateHeaders))
+                .path("${options.adminPath}/$PATH_SEGMENT/configurations/data", adminConfigurationApi(ApiConfiguration::data, ApiConfiguration::updateData))
+                .path("${options.adminPath}/$PATH_SEGMENT/configurations/delay", adminConfigurationApi(ApiConfiguration::delay, ApiConfiguration::updateDelay))
+                .get("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request, response ->
+                    getConfigurationProperty(request, response, request.queryParameters(), ApiConfiguration::plugin)
+                }
+                .delete("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request, response ->
+                    deleteConfigurationProperty( request, response, request.queryParameters(), ApiConfiguration::updatePlugin)
+                }
+                .put("${options.adminPath}/$PATH_SEGMENT/configurations/plugins/groovy") { request, response ->
+                    putConfigurationProperty(request, response, request.queryParameters()) { configuration, script: String ->
+                        PluginDefinition(type = PluginType.GROOVY, script = script).let {
+                            configuration.updatePlugin(it)
+                        }
                     }
                 }
-            }
-
+        }
     }
 
     private fun adminContext(method: HttpMethod, request: HttpServerRequest, response: HttpServerResponse): Publisher<Void>  = when (method) {
@@ -216,18 +217,20 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
                 .flatMap { r -> r.then() }
         } ?: sendNotFound(response)
 
-    private fun sendNotFound(response: HttpServerResponse) = notFound(response).send()
-
-    private fun sendMethodNotAllowed(response: HttpServerResponse) = methodNotAllowed(response).send()
-
-    private fun notFound(response: HttpServerResponse): HttpServerResponse =
-        response.status(HttpResponseStatus.NOT_FOUND)
-    private fun noContent(response: HttpServerResponse): HttpServerResponse =
-        response.status(HttpResponseStatus.NO_CONTENT)
-    private fun methodNotAllowed(response: HttpServerResponse): HttpServerResponse =
-        response.status(HttpResponseStatus.METHOD_NOT_ALLOWED)
 }
 
+internal fun sendNotFound(response: HttpServerResponse) = notFound(response).send()
+
+internal fun sendMethodNotAllowed(response: HttpServerResponse) = methodNotAllowed(response).send()
+
+internal fun sendNoContent(response: HttpServerResponse) = noContent(response).send()
+
+internal fun notFound(response: HttpServerResponse): HttpServerResponse =
+    response.status(HttpResponseStatus.NOT_FOUND)
+internal fun noContent(response: HttpServerResponse): HttpServerResponse =
+    response.status(HttpResponseStatus.NO_CONTENT)
+internal fun methodNotAllowed(response: HttpServerResponse): HttpServerResponse =
+    response.status(HttpResponseStatus.METHOD_NOT_ALLOWED)
 
 private fun HttpServerRoutes.path(uri: String, init: AdminApiHandler): HttpServerRoutes {
     get(uri) { request, response ->
