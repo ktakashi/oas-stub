@@ -8,6 +8,7 @@ group = "$group.test"
 description = "OAS stub Cucumber test utilities"
 
 dependencies {
+    api(libs.rest.assured)
     implementation(project(":lib:oas-stub-storage-api"))
     implementation(libs.inject.api)
     implementation(libs.spring.web)
@@ -18,7 +19,6 @@ dependencies {
     implementation("org.junit.platform:junit-platform-suite")
     implementation("io.cucumber:cucumber-java")
     implementation("io.cucumber:cucumber-junit-platform-engine")
-    implementation(libs.rest.assured)
     runtimeOnly("org.junit.platform:junit-platform-launcher")
 
     implementation(libs.hazelcast)

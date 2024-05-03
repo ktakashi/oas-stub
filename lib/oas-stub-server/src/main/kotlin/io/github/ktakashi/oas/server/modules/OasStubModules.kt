@@ -19,6 +19,7 @@ import io.github.ktakashi.oas.engine.apis.ApiResultProvider
 import io.github.ktakashi.oas.engine.apis.DefaultApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.DefaultApiService
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataPopulator
+import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataPopulator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataValidator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataValidator
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
@@ -74,7 +75,7 @@ internal val validatorModule = module {
         bind<ApiDataPopulator>()
         bind<ApiAnyDataPopulator>()
     }
-    singleOf(::JsonOpenApi30DataPopulator) {
+    singleOf(::JsonOpenApi31DataPopulator) {
         bind<ApiDataPopulator>()
         bind<ApiAnyDataPopulator>()
     }

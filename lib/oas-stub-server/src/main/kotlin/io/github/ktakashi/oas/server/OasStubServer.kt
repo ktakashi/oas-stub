@@ -46,6 +46,14 @@ class OasStubServer(private val options: OasStubServerOptions) {
         httpsServer = null
     }
 
+    fun port() = httpServer?.port()
+    fun httpsPort() = httpsServer?.port()
+    fun stubPath() = options.stubPath
+    fun adminEnabled() = options.enableAdmin
+    fun adminPath() = options.adminPath
+    fun metricsEnabled() = options.enableMetrics
+    fun metricsPath() = options.metricsPath
+
     private fun createNettyServer(port: Int): HttpServer = HttpServer.create().port(port)
         .accessLog(options.enableAccessLog)
         .route { routes ->

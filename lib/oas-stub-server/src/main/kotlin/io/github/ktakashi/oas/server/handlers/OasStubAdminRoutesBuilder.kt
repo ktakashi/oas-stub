@@ -6,6 +6,7 @@ import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
+import io.github.ktakashi.oas.server.io.bodyToInputStream
 import io.github.ktakashi.oas.server.io.bodyToMono
 import io.github.ktakashi.oas.server.options.OasStubServerOptions
 import io.netty.handler.codec.http.HttpHeaderNames
@@ -79,8 +80,8 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
         HttpMethod.POST -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             val ct = request.requestHeaders()[HttpHeaderNames.CONTENT_TYPE]
             if (ct != null && (ct.startsWith("application/octet-stream") || ct.startsWith("text/plain") )) {
-                request.bodyToMono<ApiDefinitions>(objectMapper)
-                    .flatMap { body -> apiRegistrationService.saveApiDefinitions(context, body) }
+                request.bodyToInputStream()
+                    .flatMap { body -> apiRegistrationService.saveApiDefinitions(context, ApiDefinitions(body.reader().use { it.readText() })) }
                     .map { response.status(HttpResponseStatus.CREATED).header(HttpHeaderNames.LOCATION, "/$context") }
                     .switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
                     .flatMap { r -> r.send() }

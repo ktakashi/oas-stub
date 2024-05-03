@@ -20,7 +20,15 @@ dependencies {
     implementation(libs.projectreactor.reactor.core)
     implementation(libs.jackson.module.kotlin)
 
-    // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    testImplementation("ch.qos.logback:logback-classic:1.5.6")
-
+    testImplementation(project(":test:cucumber-test"))
+    testImplementation(libs.hazelcast)
+    testImplementation(libs.mongodb.driver.sync)
+    testImplementation(enforcedPlatform(libs.cucumber.bom))
+    testImplementation(platform(libs.junit.bom))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.platform:junit-platform-suite")
+    testImplementation("io.cucumber:cucumber-java")
+    testImplementation("io.cucumber:cucumber-junit-platform-engine")
+    testImplementation("io.cucumber:cucumber-spring")
+    testImplementation(libs.spring.boot.starter.test)
 }

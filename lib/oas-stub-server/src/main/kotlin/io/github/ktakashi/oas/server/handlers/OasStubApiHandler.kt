@@ -10,7 +10,6 @@ import io.github.ktakashi.oas.model.ApiMetric
 import io.github.ktakashi.oas.plugin.apis.HttpRequest
 import io.github.ktakashi.oas.plugin.apis.HttpResponse
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
-import io.github.ktakashi.oas.server.io.ByteBufListInputStream
 import io.github.ktakashi.oas.server.io.bodyToInputStream
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
