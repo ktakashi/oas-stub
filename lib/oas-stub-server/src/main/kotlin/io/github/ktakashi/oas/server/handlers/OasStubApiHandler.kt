@@ -10,7 +10,8 @@ import io.github.ktakashi.oas.model.ApiMetric
 import io.github.ktakashi.oas.plugin.apis.HttpRequest
 import io.github.ktakashi.oas.plugin.apis.HttpResponse
 import io.github.ktakashi.oas.plugin.apis.ResponseContext
-import io.netty.buffer.ByteBuf
+import io.github.ktakashi.oas.server.io.ByteBufListInputStream
+import io.github.ktakashi.oas.server.io.bodyToInputStream
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import java.io.ByteArrayOutputStream
@@ -44,11 +45,8 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
         val outputStream = ByteArrayOutputStream()
         val newResponse = ServerHttpResponse(response, outputStream)
 
-        return request.receiveContent()
-            .map { content -> content.content() }
-            .collectList()
-            .map { body -> ServerHttpRequest(request, ByteBufListInputStream(body)) }
-            .switchIfEmpty(Mono.defer { Mono.just(ServerHttpRequest(request, InputStream.nullInputStream())) })
+        return request.bodyToInputStream()
+            .map { inputStream -> ServerHttpRequest(request, inputStream) }
             .flatMap { newRequest ->
                 apiExecutionService.getApiContext(newRequest)
                     .flatMap { context ->
@@ -125,23 +123,3 @@ private class ServerHttpResponse(private val response: HttpServerResponse, overr
     }
 }
 
-private class ByteBufListInputStream(private val bytebufs: List<ByteBuf>): InputStream() {
-    private var index = 0;
-    private var pos = 0
-
-    // TODO implement read(byte[], int, int)
-    override fun read(): Int = readInternal()
-
-    private fun readInternal(): Int = if (index < bytebufs.size) {
-        val buf = bytebufs[index]
-        if (pos < buf.readerIndex()) {
-            buf.getByte(pos++).toInt()
-        } else {
-            index++
-            pos = 0
-            readInternal()
-        }
-    } else {
-        -1
-    }
-}
