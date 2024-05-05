@@ -102,6 +102,8 @@ interface ApiRegistrationService {
      * Retrieves all the registered API names
      */
     fun getAllNames(): Flux<String>
+
+    fun validPath(definitions: ApiDefinitions, path: String): Mono<String>
 }
 
 class DefaultApiRegistrationService(private val storageService: StorageService,
@@ -120,6 +122,13 @@ class DefaultApiRegistrationService(private val storageService: StorageService,
     override fun deleteApiDefinitions(name: String): Mono<Boolean> = Mono.defer { Mono.just(storageService.deleteApiDefinitions(name)) }
 
     override fun getAllNames(): Flux<String> = storageService.getApiNames()
+
+    override fun validPath(definitions: ApiDefinitions, path: String): Mono<String> = definitions.specification?.let { spec ->
+        parsingService.parse(spec).flatMap { openApi ->
+            Mono.justOrEmpty(adjustBasePath(path, openApi).flatMap { p -> findMatchingPath(p, openApi.paths.keys) })
+                .map { path }
+        }
+    } ?: Mono.just(path)
 
     private fun stripInvalidConfiguration(openApi: OpenAPI, apiDefinitions: ApiDefinitions): ApiDefinitions {
         val newConfig = apiDefinitions.configurations?.filterKeys { path ->

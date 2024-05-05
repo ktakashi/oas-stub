@@ -155,13 +155,15 @@ class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): Koin
         request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).mapNotNull { def ->
                 parameters[PARAMETER_NAME]?.get(0)?.let {
-                    val api = URLDecoder.decode(it, StandardCharsets.UTF_8)
-                    val newDef = if (def.configurations == null) def.updateConfigurations(mapOf()) else def
-                    updater(newDef.configurations?.get(api) ?: ApiConfiguration()).let {
-                        newDef.updateConfiguration(api, it)
+                    apiRegistrationService.validPath(def, URLDecoder.decode(it, StandardCharsets.UTF_8)).map { api ->
+                        val newDef = if (def.configurations == null) def.updateConfigurations(mapOf()) else def
+                        updater(newDef.configurations?.get(api) ?: ApiConfiguration()).let { config ->
+                            newDef.updateConfiguration(api, config)
+                        }
                     }
                 }
-            }.flatMap { def -> apiRegistrationService.saveApiDefinitions(context, def) }
+            }.flatMap { it }
+            .flatMap { def -> apiRegistrationService.saveApiDefinitions(context, def) }
         } ?: Mono.empty()
 
     private fun <T> getConfigurationProperty(request: HttpServerRequest, response: HttpServerResponse, parameters: Map<String, List<String>>, retriever: (ApiConfiguration) -> T?) =

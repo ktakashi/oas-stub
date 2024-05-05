@@ -84,8 +84,9 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
 }
 
 private class ServerHttpRequest(private val request: HttpServerRequest, override val inputStream: InputStream): HttpRequest {
+    private val uri = URI.create(request.uri())
     override val requestURI: String
-        get() = request.uri()
+        get() = uri.path
     override val method: String
         get() = request.method().name()
     override val contentType: String?
@@ -95,7 +96,7 @@ private class ServerHttpRequest(private val request: HttpServerRequest, override
             cookies.value.map { HttpCookie(it.name(), it.value()) }
         }
     override val queryString: String?
-        get() = URI.create(request.uri()).query
+        get() = uri.query
 
     override fun getHeader(name: String): String? = request.requestHeaders()[name]
 
