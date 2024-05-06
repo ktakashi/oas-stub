@@ -20,13 +20,14 @@ class OasStubServer(private val options: OasStubServerOptions) {
     private lateinit var oasStubMetricsRoutesBuilder: OasStubMetricsRoutesBuilder
     private var httpServer: DisposableServer? = null
     private var httpsServer: DisposableServer? = null
+    private val stubOptions = options.stubOptions
 
     fun start() {
         if (!koinInitialized) {
             startKoin {
                 modules(validatorModule)
-                modules(makeEngineModule(options))
-                modules(makeStorageModule(options.persistentStorage, options.sessionStorage))
+                modules(makeEngineModule(stubOptions))
+                modules(makeStorageModule(options.stubOptions.persistentStorage, options.stubOptions.sessionStorage))
             }
             oasStubApiHandler = OasStubApiHandler()
             oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options)
@@ -48,11 +49,11 @@ class OasStubServer(private val options: OasStubServerOptions) {
 
     fun port() = httpServer?.port()
     fun httpsPort() = httpsServer?.port()
-    fun stubPath() = options.stubPath
-    fun adminEnabled() = options.enableAdmin
-    fun adminPath() = options.adminPath
-    fun metricsEnabled() = options.enableMetrics
-    fun metricsPath() = options.metricsPath
+    fun stubPath() = stubOptions.stubPath
+    fun adminEnabled() = stubOptions.enableAdmin
+    fun adminPath() = stubOptions.adminPath
+    fun metricsEnabled() = stubOptions.enableMetrics
+    fun metricsPath() = stubOptions.metricsPath
 
     private fun createNettyServer(port: Int): HttpServer = HttpServer.create().port(port)
         .accessLog(options.enableAccessLog)
@@ -60,7 +61,7 @@ class OasStubServer(private val options: OasStubServerOptions) {
             oasStubAdminRoutesBuilder.build(routes)
             oasStubMetricsRoutesBuilder.build(routes)
 
-            routes.route(prefix(options.stubPath), oasStubApiHandler)
+            routes.route(prefix(stubOptions.stubPath), oasStubApiHandler)
         }
 
     private fun prefix(path: String): Predicate<in HttpServerRequest> =
