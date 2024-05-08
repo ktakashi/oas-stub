@@ -26,6 +26,7 @@ import java.net.URI
 import java.time.Duration
 import java.util.Optional
 import java.util.TreeMap
+import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.function.TupleUtils
@@ -325,14 +326,13 @@ internal data class DefaultResponseContext(override val status: Int,
                                            override val content: Optional<ByteArray> = Optional.empty(),
                                            override val contentType: Optional<String> = Optional.empty(),
                                            override val headers: Map<String, List<String>> = mapOf()): ResponseContext {
-    override fun emitResponse(response: HttpResponse) {
+    override fun emitResponse(response: HttpResponse): Publisher<ByteArray> {
         response.status = this.status
         headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
         contentType.ifPresent { t -> response.contentType = t }
-        content.ifPresent { v ->
-            response.outputStream.write(v)
-            response.outputStream.flush()
-        }
+        return content.map { v ->
+            Mono.just(v)
+        }.orElse(Mono.empty())
     }
 
     override fun mutate() = DefaultResponseContextBuilder(status, content, contentType, headers)
@@ -364,20 +364,15 @@ internal data class HighLatencyResponseContext(override val status: Int,
 
     override fun mutate(): ResponseContext.ResponseContextBuilder = throw UnsupportedOperationException("Mutation of this class is not allowed")
 
-    override fun emitResponse(response: HttpResponse) {
+    override fun emitResponse(response: HttpResponse): Publisher<ByteArray> {
         response.status = this.status
         contentType.ifPresent { t -> response.contentType = t }
         headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
-        val outputStream = response.outputStream
-        // flush first, after flush we can't emit header nor status
-        outputStream.flush()
+
         // now let's
-        content.ifPresent { ba ->
-            ba.forEach { b ->
-                Thread.sleep(interval.toMillis())
-                outputStream.write(b.toInt())
-            }
-        }
+        return content.map { ba ->
+            Flux.concat(ba.map { Flux.just(byteArrayOf(it)).delayElements(interval) })
+        }.orElse(Flux.empty())
     }
 
 }

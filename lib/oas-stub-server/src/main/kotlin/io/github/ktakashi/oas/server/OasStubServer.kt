@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.server
 import io.github.ktakashi.oas.server.handlers.OasStubAdminRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubApiHandler
 import io.github.ktakashi.oas.server.handlers.OasStubMetricsRoutesBuilder
+import io.github.ktakashi.oas.server.handlers.OasStubRoutes
 import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
@@ -58,8 +59,9 @@ class OasStubServer(private val options: OasStubServerOptions) {
     private fun createNettyServer(port: Int): HttpServer = HttpServer.create().port(port)
         .accessLog(options.enableAccessLog)
         .route { routes ->
+            val oasStubRoutes = OasStubRoutes(routes, stubOptions.objectMapper)
             oasStubAdminRoutesBuilder.build(routes)
-            oasStubMetricsRoutesBuilder.build(routes)
+            oasStubMetricsRoutesBuilder.build(oasStubRoutes)
 
             routes.route(prefix(stubOptions.stubPath), oasStubApiHandler)
         }

@@ -1,8 +1,6 @@
 package io.github.ktakashi.oas.server.handlers
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.ktakashi.oas.api.http.HttpRequest
-import io.github.ktakashi.oas.api.http.HttpResponse
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.engine.apis.ApiContext
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
@@ -11,16 +9,10 @@ import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiMetric
-import io.github.ktakashi.oas.server.io.bodyToInputStream
-import io.netty.handler.codec.http.HttpHeaderNames
-import io.netty.handler.codec.http.HttpHeaderValues
+import io.github.ktakashi.oas.server.http.OasStubServerHttpRequest
+import io.github.ktakashi.oas.server.http.OasStubServerHttpResponse
 import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.handler.codec.http.QueryStringDecoder
 import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.io.OutputStream
-import java.net.HttpCookie
-import java.net.URI
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicReference
@@ -45,9 +37,8 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
         logger.debug("Request {} {}", request.method(), request.uri())
         val now = OffsetDateTime.now()
         val ref = AtomicReference<ApiContext>()
-        val outputStream = ByteArrayOutputStream()
-        val newRequest = ServerHttpRequest(request, objectMapper)
-        val newResponse = ServerHttpResponse(response, outputStream)
+        val newRequest = OasStubServerHttpRequest(request, response, objectMapper)
+        val newResponse = OasStubServerHttpResponse(response)
 
         return apiExecutionService.getApiContext(newRequest)
             .flatMap { context ->
@@ -55,8 +46,8 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
                 apiExecutionService.executeApi(context, newRequest, newResponse)
                     .transform { execution -> apiDelayService.delayMono(context, execution) }
             }.flatMap { responseContext ->
-                responseContext.emitResponse(newResponse)
-                Mono.just(response.sendHeaders().sendByteArray(Mono.just(outputStream.toByteArray())))
+                val content = responseContext.emitResponse(newResponse)
+                Mono.just(response.sendHeaders().sendByteArray(content))
                     .doOnSuccess {
                         ref.get()?.let { context ->
                             report(context, request, responseContext, now)
@@ -81,54 +72,6 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
                 rec()
             }
         } ?: rec()
-    }
-}
-
-private class ServerHttpRequest(private val request: HttpServerRequest, private val objectMapper: ObjectMapper): HttpRequest {
-    private val uri = URI.create(request.uri())
-    private val qp by lazy { QueryStringDecoder(request.uri()).parameters() }
-    override val requestURI: String
-        get() = uri.path
-    override val method: String
-        get() = request.method().name()
-    override val contentType: String?
-        get() = request.requestHeaders()[HttpHeaderNames.CONTENT_TYPE]
-    override val cookies: List<HttpCookie>
-        get() = request.cookies().flatMap { cookies ->
-            cookies.value.map { HttpCookie(it.name(), it.value()) }
-        }
-    override val queryString: String?
-        get() = uri.query
-    override val queryParameter: Map<String, List<String>>
-        get() = qp
-
-    override fun getHeader(name: String): String? = request.requestHeaders()[name]
-
-    override fun getHeaders(name: String): List<String> = request.requestHeaders().getAll(name)
-
-    override val headerNames: Collection<String>
-        get() = request.requestHeaders().names()
-
-    override fun bodyToInputStream(): Mono<InputStream> = request.bodyToInputStream()
-
-    override fun <T> bodyToMono(type: Class<T>): Mono<T> = bodyToInputStream()
-        .map { objectMapper.readValue(it, type) }
-}
-
-private class ServerHttpResponse(private val response: HttpServerResponse, override val outputStream: OutputStream): HttpResponse {
-    override var status: Int
-        get() = response.status().code()
-        set(value) {
-            response.status(value)
-        }
-    override var contentType: String
-        get() = HttpHeaderValues.APPLICATION_JSON.toString()
-        set(value) {
-            response.addHeader(HttpHeaderNames.CONTENT_TYPE, value)
-        }
-
-    override fun addHeader(name: String, value: String) {
-        response.addHeader(name, value)
     }
 }
 

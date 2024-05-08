@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.api.http
 
 import java.util.Optional
+import org.reactivestreams.Publisher
 
 /**
  * Response context interface.
@@ -42,7 +43,7 @@ interface ResponseContext {
      *
      * **WARNING** this method is not meant to be called in a plugin.
      */
-    fun emitResponse(response: HttpResponse)
+    fun emitResponse(response: HttpResponse): Publisher<ByteArray>
 
     /**
      * [ResponseContext] builder interface.
