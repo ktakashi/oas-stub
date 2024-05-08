@@ -1,8 +1,8 @@
 package plugins
 
-import io.github.ktakashi.oas.plugin.apis.ApiPlugin
-import io.github.ktakashi.oas.plugin.apis.PluginContext
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.api.plugin.ApiPlugin
+import io.github.ktakashi.oas.api.plugin.PluginContext
+import io.github.ktakashi.oas.api.http.ResponseContext
 import org.jetbrains.annotations.NotNull
 
 class PetStoreErrorPlugin implements ApiPlugin {

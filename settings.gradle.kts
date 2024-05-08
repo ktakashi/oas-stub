@@ -18,12 +18,12 @@ gradleEnterprise {
 
 rootProject.name = "oas-stub"
 
+include(":lib:oas-stub-api")
 include(":lib:oas-stub-model")
 include(":lib:oas-stub-storage-api")
 include(":lib:storages:oas-stub-inmemory-storage")
 include(":lib:storages:oas-stub-hazelcast-storage")
 include(":lib:storages:oas-stub-mongodb-storage")
-include(":lib:oas-stub-plugin")
 include(":lib:oas-stub-engine")
 include(":lib:oas-stub-web-api")
 include(":lib:oas-stub-web")

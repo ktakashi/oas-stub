@@ -1,5 +1,9 @@
 package io.github.ktakashi.oas.server.handlers
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.api.http.HttpRequest
+import io.github.ktakashi.oas.api.http.HttpResponse
+import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.engine.apis.ApiContext
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
@@ -7,12 +11,11 @@ import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiMetric
-import io.github.ktakashi.oas.plugin.apis.HttpRequest
-import io.github.ktakashi.oas.plugin.apis.HttpResponse
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
 import io.github.ktakashi.oas.server.io.bodyToInputStream
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.QueryStringDecoder
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -36,37 +39,35 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
     private val apiExecutionService by inject<ApiExecutionService>()
     private val apiObserver by inject<ApiObserver>()
     private val apiDelayService by inject<ApiDelayService>()
+    private val objectMapper by inject<ObjectMapper>()
 
     override fun apply(request: HttpServerRequest, response: HttpServerResponse): Publisher<Void> {
         logger.debug("Request {} {}", request.method(), request.uri())
         val now = OffsetDateTime.now()
         val ref = AtomicReference<ApiContext>()
         val outputStream = ByteArrayOutputStream()
+        val newRequest = ServerHttpRequest(request, objectMapper)
         val newResponse = ServerHttpResponse(response, outputStream)
 
-        return request.bodyToInputStream()
-            .map { inputStream -> ServerHttpRequest(request, inputStream) }
-            .flatMap { newRequest ->
-                apiExecutionService.getApiContext(newRequest)
-                    .flatMap { context ->
-                        ref.set(context)
-                        apiExecutionService.executeApi(context, newRequest, newResponse)
-                            .transform { execution -> apiDelayService.delayMono(context, execution) }
-                    }.flatMap { responseContext ->
-                        responseContext.emitResponse(newResponse)
-                        Mono.just(response.sendHeaders().sendByteArray(Mono.just(outputStream.toByteArray())))
-                            .doOnSuccess {
-                                ref.get()?.let { context ->
-                                    report(context, request, responseContext, now)
-                                }
-                            }.doOnError { e ->
-                                ref.get()?.let { context ->
-                                    report(context, request, responseContext, now, e)
-                                }
-                            }
-                    }.switchIfEmpty(Mono.defer { Mono.just(response.status(404).sendHeaders()) })
-                    .flatMap { outbound -> outbound.then() }
-            }
+        return apiExecutionService.getApiContext(newRequest)
+            .flatMap { context ->
+                ref.set(context)
+                apiExecutionService.executeApi(context, newRequest, newResponse)
+                    .transform { execution -> apiDelayService.delayMono(context, execution) }
+            }.flatMap { responseContext ->
+                responseContext.emitResponse(newResponse)
+                Mono.just(response.sendHeaders().sendByteArray(Mono.just(outputStream.toByteArray())))
+                    .doOnSuccess {
+                        ref.get()?.let { context ->
+                            report(context, request, responseContext, now)
+                        }
+                    }.doOnError { e ->
+                        ref.get()?.let { context ->
+                            report(context, request, responseContext, now, e)
+                        }
+                    }
+            }.switchIfEmpty(Mono.defer { Mono.just(response.status(HttpResponseStatus.NOT_FOUND).sendHeaders()) })
+            .flatMap { outbound -> outbound.then() }
     }
     private fun report(context: ApiContext, request: HttpServerRequest, response: ResponseContext, start: OffsetDateTime, e: Throwable? = null) {
         fun rec() {
@@ -83,8 +84,9 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
     }
 }
 
-private class ServerHttpRequest(private val request: HttpServerRequest, override val inputStream: InputStream): HttpRequest {
+private class ServerHttpRequest(private val request: HttpServerRequest, private val objectMapper: ObjectMapper): HttpRequest {
     private val uri = URI.create(request.uri())
+    private val qp by lazy { QueryStringDecoder(request.uri()).parameters() }
     override val requestURI: String
         get() = uri.path
     override val method: String
@@ -97,6 +99,8 @@ private class ServerHttpRequest(private val request: HttpServerRequest, override
         }
     override val queryString: String?
         get() = uri.query
+    override val queryParameter: Map<String, List<String>>
+        get() = qp
 
     override fun getHeader(name: String): String? = request.requestHeaders()[name]
 
@@ -104,6 +108,11 @@ private class ServerHttpRequest(private val request: HttpServerRequest, override
 
     override val headerNames: Collection<String>
         get() = request.requestHeaders().names()
+
+    override fun bodyToInputStream(): Mono<InputStream> = request.bodyToInputStream()
+
+    override fun <T> bodyToMono(type: Class<T>): Mono<T> = bodyToInputStream()
+        .map { objectMapper.readValue(it, type) }
 }
 
 private class ServerHttpResponse(private val response: HttpServerResponse, override val outputStream: OutputStream): HttpResponse {

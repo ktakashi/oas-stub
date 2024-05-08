@@ -8,8 +8,8 @@ plugins {
 description = "OAS stub engine"
 
 dependencies {
+    api(project(":lib:oas-stub-api"))
     api(project(":lib:oas-stub-model"))
-    api(project(":lib:oas-stub-plugin"))
     api(project(":lib:oas-stub-storage-api"))
 
     implementation(libs.kotlin.stdlib)

@@ -1,7 +1,10 @@
-package io.github.ktakashi.oas.plugin.apis
+package io.github.ktakashi.oas.api.plugin
 
 import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.databind.ObjectWriter
+import io.github.ktakashi.oas.api.http.RequestContext
+import io.github.ktakashi.oas.api.http.ResponseContext
+import io.github.ktakashi.oas.api.storage.Storage
 import java.util.Optional
 
 /**

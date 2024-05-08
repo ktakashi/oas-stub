@@ -13,12 +13,12 @@ javaPlatform {
 
 dependencies {
     constraints {
+        api(project(":lib:oas-stub-api"))
         api(project(":lib:oas-stub-model"))
         api(project(":lib:oas-stub-storage-api"))
         api(project(":lib:storages:oas-stub-inmemory-storage"))
         api(project(":lib:storages:oas-stub-hazelcast-storage"))
         api(project(":lib:storages:oas-stub-mongodb-storage"))
-        api(project(":lib:oas-stub-plugin"))
         api(project(":lib:oas-stub-engine"))
         api(project(":lib:oas-stub-web"))
         api(project(":app:spring:oas-stub-storage-autoconfigure-api"))

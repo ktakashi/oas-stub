@@ -1,4 +1,6 @@
-package io.github.ktakashi.oas.plugin.apis
+package io.github.ktakashi.oas.api.plugin
+
+import io.github.ktakashi.oas.api.http.ResponseContext
 
 /**
  * API Plugin

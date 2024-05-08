@@ -9,11 +9,11 @@ import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.PluginDefinition
-import io.github.ktakashi.oas.plugin.apis.ApiPlugin
-import io.github.ktakashi.oas.plugin.apis.PluginContext
-import io.github.ktakashi.oas.plugin.apis.RequestContext
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
-import io.github.ktakashi.oas.plugin.apis.Storage
+import io.github.ktakashi.oas.api.plugin.PluginContext
+import io.github.ktakashi.oas.api.http.RequestContext
+import io.github.ktakashi.oas.api.http.ResponseContext
+import io.github.ktakashi.oas.api.plugin.ApiPlugin
+import io.github.ktakashi.oas.api.storage.Storage
 import java.time.Duration
 import java.util.Optional
 import org.slf4j.LoggerFactory
@@ -53,7 +53,7 @@ data class PluginContextData(override val requestContext: RequestContext,
                              override val responseContext: ResponseContext,
                              override val sessionStorage: Storage,
                              private val apiData: Map<String, Any>,
-                             private val objectMapper: ObjectMapper) :PluginContext {
+                             private val objectMapper: ObjectMapper) : PluginContext {
     override val objectReader: ObjectReader
         get() = objectMapper.reader()
 

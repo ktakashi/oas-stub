@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.plugin.apis
+package io.github.ktakashi.oas.api.http
 
 import java.util.Optional
 

@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.plugin.apis
+package io.github.ktakashi.oas.api.storage
 
 import java.time.Duration
 import java.util.Optional

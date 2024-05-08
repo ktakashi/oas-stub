@@ -7,8 +7,8 @@ import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiMetric
-import io.github.ktakashi.oas.plugin.apis.HttpRequest
-import io.github.ktakashi.oas.plugin.apis.HttpResponse
+import io.github.ktakashi.oas.api.http.HttpRequest
+import io.github.ktakashi.oas.api.http.HttpResponse
 import io.github.ktakashi.oas.web.services.ExecutorProvider
 import jakarta.inject.Inject
 import jakarta.inject.Named

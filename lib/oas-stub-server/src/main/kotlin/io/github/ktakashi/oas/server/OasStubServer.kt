@@ -27,11 +27,11 @@ class OasStubServer(private val options: OasStubServerOptions) {
             startKoin {
                 modules(validatorModule)
                 modules(makeEngineModule(stubOptions))
-                modules(makeStorageModule(options.stubOptions.persistentStorage, options.stubOptions.sessionStorage))
+                modules(makeStorageModule(stubOptions.persistentStorage, stubOptions.sessionStorage))
             }
             oasStubApiHandler = OasStubApiHandler()
-            oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options)
-            oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options)
+            oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options.stubOptions)
+            oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options.stubOptions)
             koinInitialized = true
         }
         httpServer = createNettyServer(options.port).bindNow()

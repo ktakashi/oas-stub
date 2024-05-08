@@ -1,7 +1,7 @@
 package io.github.ktakashi.oas.engine.apis
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.api.http.ResponseContext
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Content

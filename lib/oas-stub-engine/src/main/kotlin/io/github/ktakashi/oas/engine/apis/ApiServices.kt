@@ -11,15 +11,16 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHttpError
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
-import io.github.ktakashi.oas.plugin.apis.HttpRequest
-import io.github.ktakashi.oas.plugin.apis.HttpResponse
-import io.github.ktakashi.oas.plugin.apis.RequestContext
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.api.http.HttpRequest
+import io.github.ktakashi.oas.api.http.HttpResponse
+import io.github.ktakashi.oas.api.http.RequestContext
+import io.github.ktakashi.oas.api.http.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.SpecVersion
 import java.io.IOException
+import java.io.InputStream
 import java.net.HttpCookie
 import java.net.URI
 import java.time.Duration
@@ -178,8 +179,8 @@ class DefaultApiService(private val storageService: StorageService,
             }.onErrorResume(ApiException::class.java) { e -> emitResponse(e.requestContext, e.responseContext) }
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpRequest, response: HttpResponse) =
-        Mono.defer {
-            Mono.just(apiContext.apiDefinitions.let { apiDefinitions ->
+        request.bodyToInputStream().map { inputStream ->
+            apiContext.apiDefinitions.let { apiDefinitions ->
                 ApiContextAwareRequestContext(
                     apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
                     apiOptions = ModelPropertyUtils.mergeProperty(
@@ -187,7 +188,7 @@ class DefaultApiService(private val storageService: StorageService,
                         apiDefinitions,
                         ApiCommonConfigurations<*>::options
                     ),
-                    content = readContent(request),
+                    content = readContent(request, inputStream),
                     contentType = Optional.ofNullable(request.contentType),
                     headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
                         ModelPropertyUtils.mergeProperty(
@@ -201,8 +202,9 @@ class DefaultApiService(private val storageService: StorageService,
                     method = request.method, queryParameters = parseQueryParameters(request.queryString),
                     rawRequest = request, rawResponse = response
                 )
-            })
+            }
         }
+
 
 
     private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext) =
@@ -285,11 +287,10 @@ private fun readHeaders(request: HttpRequest): Map<String, List<String>> = reque
     n to request.getHeaders(n).toList()
 }.toMap().toSortedMap(String.CASE_INSENSITIVE_ORDER)
 
-private fun readContent(request: HttpRequest): Optional<ByteArray> = when (request.method) {
+private fun readContent(request: HttpRequest, inputStream: InputStream): Optional<ByteArray> = when (request.method) {
     "GET", "DELETE", "HEAD", "OPTIONS" -> Optional.empty()
     else -> try {
         val size = request.getHeader("Content-Length")?.let(Integer::parseInt) ?: -1
-        val inputStream = request.inputStream
         if (size > 0) {
             Optional.of(inputStream.readNBytes(size))
         } else {
@@ -311,7 +312,8 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          override val cookies: Map<String, HttpCookie>,
                                          override val queryParameters: Map<String, List<String?>>,
                                          override val rawRequest: HttpRequest,
-                                         override val rawResponse: HttpResponse): RequestContext {
+                                         override val rawResponse: HttpResponse
+): RequestContext {
     override val applicationName
         get() = apiContext.context
 

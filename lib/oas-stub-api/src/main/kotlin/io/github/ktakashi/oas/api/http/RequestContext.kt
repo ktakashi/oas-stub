@@ -1,43 +1,7 @@
-package io.github.ktakashi.oas.plugin.apis
+package io.github.ktakashi.oas.api.http
 
-import java.io.InputStream
-import java.io.OutputStream
 import java.net.HttpCookie
 import java.util.Optional
-
-/**
- * Wrapper of native Http request
- */
-interface HttpRequest {
-    /**
-     * request URI
-     */
-    val requestURI: String
-
-    /**
-     * request method
-     */
-    val method: String
-    val contentType: String?
-    val cookies: List<HttpCookie>
-    val queryString: String?
-    val inputStream: InputStream
-
-    fun getHeader(name: String): String?
-    fun getHeaders(name: String): List<String>
-    val headerNames: Collection<String>
-}
-
-/**
- * Wrapper of native Http response
- */
-interface HttpResponse {
-    var status: Int
-    var contentType: String
-    fun addHeader(name: String, value: String)
-    val outputStream: OutputStream
-}
-
 
 /**
  * Request context.

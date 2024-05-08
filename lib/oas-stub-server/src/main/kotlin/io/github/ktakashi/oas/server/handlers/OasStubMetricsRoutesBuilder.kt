@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.server.handlers
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.server.options.OasStubServerOptions
+import io.github.ktakashi.oas.server.options.OasStubServerStubOptions
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -12,7 +13,7 @@ import reactor.core.publisher.Mono
 import reactor.netty.http.server.HttpServerResponse
 import reactor.netty.http.server.HttpServerRoutes
 
-class OasStubMetricsRoutesBuilder(private val options: OasStubServerOptions): KoinComponent {
+class OasStubMetricsRoutesBuilder(private val options: OasStubServerStubOptions): KoinComponent {
     private val apiObserver by inject<ApiObserver>()
     private val objectMapper by inject<ObjectMapper>()
 

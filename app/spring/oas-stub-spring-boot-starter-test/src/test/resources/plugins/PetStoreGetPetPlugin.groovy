@@ -3,8 +3,8 @@ package plugins
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.ktakashi.oas.plugin.apis.ApiPlugin
-import io.github.ktakashi.oas.plugin.apis.PluginContext
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.api.plugin.PluginContext
+import io.github.ktakashi.oas.api.http.ResponseContext
 
 class PetStoreGetPetPlugin implements ApiPlugin {
     def objectMapper = new ObjectMapper()

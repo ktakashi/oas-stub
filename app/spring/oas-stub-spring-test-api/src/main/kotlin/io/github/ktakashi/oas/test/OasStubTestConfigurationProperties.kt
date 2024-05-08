@@ -7,7 +7,7 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.api.http.ResponseContext
 import java.nio.charset.StandardCharsets
 import java.util.SortedMap
 import org.springframework.boot.context.properties.ConfigurationProperties

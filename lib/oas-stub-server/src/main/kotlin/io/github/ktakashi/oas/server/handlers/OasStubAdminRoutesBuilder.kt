@@ -8,7 +8,7 @@ import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.server.io.bodyToInputStream
 import io.github.ktakashi.oas.server.io.bodyToMono
-import io.github.ktakashi.oas.server.options.OasStubServerOptions
+import io.github.ktakashi.oas.server.options.OasStubServerStubOptions
 import io.netty.buffer.ByteBufAllocator
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
@@ -32,7 +32,7 @@ internal const val PATH_VARIABLE_NAME = "context"
 internal const val PATH_SEGMENT = "{$PATH_VARIABLE_NAME}"
 private const val PARAMETER_NAME = "api"
 
-class OasStubAdminRoutesBuilder(private val options: OasStubServerOptions): KoinComponent {
+class OasStubAdminRoutesBuilder(private val options: OasStubServerStubOptions): KoinComponent {
     private val apiRegistrationService: ApiRegistrationService by inject()
     private val objectMapper: ObjectMapper by inject()
     fun build(routes: HttpServerRoutes) {

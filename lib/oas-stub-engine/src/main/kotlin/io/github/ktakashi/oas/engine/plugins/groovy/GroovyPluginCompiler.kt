@@ -1,9 +1,9 @@
 package io.github.ktakashi.oas.engine.plugins.groovy
 
 import groovy.lang.GroovyClassLoader
+import io.github.ktakashi.oas.api.plugin.ApiPlugin
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
 import io.github.ktakashi.oas.model.PluginType
-import io.github.ktakashi.oas.plugin.apis.ApiPlugin
 
 class GroovyPluginCompiler: PluginCompiler(PluginType.GROOVY) {
     @Suppress("UNCHECKED_CAST")

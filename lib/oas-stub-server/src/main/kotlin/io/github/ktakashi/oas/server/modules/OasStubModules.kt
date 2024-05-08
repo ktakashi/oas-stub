@@ -34,8 +34,7 @@ import io.github.ktakashi.oas.engine.validators.LocalDateValidator
 import io.github.ktakashi.oas.engine.validators.OffsetDateValidator
 import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
-import io.github.ktakashi.oas.plugin.apis.Storage
-import io.github.ktakashi.oas.server.options.OasStubServerOptions
+import io.github.ktakashi.oas.api.storage.Storage
 import io.github.ktakashi.oas.server.options.OasStubServerStubOptions
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
