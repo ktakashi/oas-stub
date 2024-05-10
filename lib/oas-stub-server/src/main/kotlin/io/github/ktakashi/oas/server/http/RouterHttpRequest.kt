@@ -3,10 +3,6 @@ package io.github.ktakashi.oas.server.http
 import io.github.ktakashi.oas.api.http.HttpRequest
 import io.github.ktakashi.oas.api.http.HttpResponse
 
-enum class RouterHttpMethod {
-    GET, POST, PUT, PATCH, DELETE, HEAD
-}
-
 interface RouterHttpRequest: HttpRequest {
     fun param(name: String): String?
     fun responseBuilder(): HttpRouterResponseBuilder

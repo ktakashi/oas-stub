@@ -72,8 +72,8 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
         }
     }
 
-    private fun adminContext(method: RouterHttpMethod, request: RouterHttpRequest): Mono<RouterHttpResponse>  = when (method) {
-        RouterHttpMethod.GET -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+    private fun adminContext(request: RouterHttpRequest): Mono<RouterHttpResponse>  = when (request.method) {
+        "GET" -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).map { v ->
                 request.responseBuilder()
                     .ok()
@@ -81,7 +81,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
                     .body(v)
             }.switchIfEmpty(Mono.defer { notFound(request) })
         } ?: notFound(request)
-        RouterHttpMethod.POST -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+        "POST" -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             request.getHeader(HttpHeaderNames.CONTENT_TYPE.toString())?.let { ct ->
                 if (ct.startsWith("application/octet-stream") || ct.startsWith("text/plain")) {
                     request.bodyToInputStream()
@@ -98,13 +98,13 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
                 }
             }
         } ?: notFound(request)
-        RouterHttpMethod.PUT -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+        "PUT" -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             request.bodyToMono(ApiDefinitions::class.java)
                 .flatMap { apiRegistrationService.saveApiDefinitions(context, it) }
                 .map { request.responseBuilder().created("/$context").build() }
                 .switchIfEmpty(Mono.defer { notFound(request) })
         } ?: notFound(request)
-        RouterHttpMethod.DELETE -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+        "DELETE" -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.deleteApiDefinitions(context)
                 .map { request.responseBuilder().noContent().build() }
                 .switchIfEmpty(Mono.defer { notFound(request) })
@@ -118,21 +118,21 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
     private fun notFound(request: RouterHttpRequest) =
         Mono.just(request.responseBuilder().notFound().build())
 
-    private inline fun <reified T> adminContextApi(noinline retriever: (ApiDefinitions) -> T?, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) = OasStubPathRouteHandler { method, request ->
-        when (method) {
-            RouterHttpMethod.GET -> getApiDefinitionsProperty(request, retriever)
-            RouterHttpMethod.PUT -> putApiDefinitionsProperty(request, updater)
-            RouterHttpMethod.DELETE -> deleteApiDefinitionsProperty(request, updater)
+    private inline fun <reified T> adminContextApi(noinline retriever: (ApiDefinitions) -> T?, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) = OasStubRouteHandler { request ->
+        when (request.method) {
+            "GET" -> getApiDefinitionsProperty(request, retriever)
+            "PUT" -> putApiDefinitionsProperty(request, updater)
+            "DELETE" -> deleteApiDefinitionsProperty(request, updater)
             else -> methodNotAllowed(request)
         }
     }
 
-    private inline fun <reified T> adminConfigurationApi(noinline retriever: (ApiConfiguration) -> T?, noinline updater: (ApiConfiguration, T?) -> ApiConfiguration) = OasStubPathRouteHandler { method, request ->
+    private inline fun <reified T> adminConfigurationApi(noinline retriever: (ApiConfiguration) -> T?, noinline updater: (ApiConfiguration, T?) -> ApiConfiguration) = OasStubRouteHandler { request ->
         if (request.queryParameters.containsKey(PARAMETER_NAME)) {
-            when (method) {
-                RouterHttpMethod.GET -> getConfigurationProperty(request, retriever)
-                RouterHttpMethod.PUT -> putConfigurationProperty(request, updater)
-                RouterHttpMethod.DELETE -> deleteConfigurationProperty(request, updater)
+            when (request.method) {
+                "GET" -> getConfigurationProperty(request, retriever)
+                "PUT" -> putConfigurationProperty(request, updater)
+                "DELETE" -> deleteConfigurationProperty(request, updater)
                 else -> methodNotAllowed(request)
             }
         } else {
