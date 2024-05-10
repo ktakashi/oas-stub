@@ -35,7 +35,7 @@ import io.github.ktakashi.oas.engine.validators.OffsetDateValidator
 import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
 import io.github.ktakashi.oas.api.storage.Storage
-import io.github.ktakashi.oas.server.options.OasStubServerStubOptions
+import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import org.koin.core.module.dsl.bind
@@ -81,7 +81,7 @@ internal val validatorModule = module {
     }
 }
 
-fun makeEngineModule(options: OasStubServerStubOptions) = module {
+fun makeEngineModule(options: OasStubStubOptions) = module {
     singleOf(::ParsingService)
     singleOf(::StorageService)
     single { ApiContentDecider(getAll<ApiRequestValidator>().toSet(), get<ObjectMapper>()) }

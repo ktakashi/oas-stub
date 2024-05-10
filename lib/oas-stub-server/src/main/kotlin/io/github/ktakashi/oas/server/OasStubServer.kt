@@ -7,20 +7,21 @@ import io.github.ktakashi.oas.server.handlers.OasStubRoutes
 import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
-import io.github.ktakashi.oas.server.options.OasStubServerOptions
+import io.github.ktakashi.oas.server.options.OasStubOptions
 import java.util.function.Predicate
 import org.koin.core.context.startKoin
 import reactor.netty.DisposableServer
 import reactor.netty.http.server.HttpServer
 import reactor.netty.http.server.HttpServerRequest
 
-class OasStubServer(private val options: OasStubServerOptions) {
+class OasStubServer(private val options: OasStubOptions) {
     private var koinInitialized: Boolean = false
     private lateinit var oasStubApiHandler: OasStubApiHandler
     private lateinit var oasStubAdminRoutesBuilder: OasStubAdminRoutesBuilder
     private lateinit var oasStubMetricsRoutesBuilder: OasStubMetricsRoutesBuilder
     private var httpServer: DisposableServer? = null
     private var httpsServer: DisposableServer? = null
+    private val serverOptions = options.serverOptions
     private val stubOptions = options.stubOptions
 
     fun start() {
@@ -35,9 +36,9 @@ class OasStubServer(private val options: OasStubServerOptions) {
             oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options.stubOptions)
             koinInitialized = true
         }
-        httpServer = createNettyServer(options.port).bindNow()
-        if (options.httpsPort >= 0) {
-            httpsServer = createNettyServer(options.httpsPort).bindNow()
+        httpServer = createNettyServer(serverOptions.port).bindNow()
+        if (serverOptions.httpsPort >= 0) {
+            httpsServer = createNettyServer(serverOptions.httpsPort).bindNow()
         }
     }
 
@@ -57,7 +58,7 @@ class OasStubServer(private val options: OasStubServerOptions) {
     fun metricsPath() = stubOptions.metricsPath
 
     private fun createNettyServer(port: Int): HttpServer = HttpServer.create().port(port)
-        .accessLog(options.enableAccessLog)
+        .accessLog(serverOptions.enableAccessLog)
         .route { routes ->
             val oasStubRoutes = OasStubRoutes(routes, stubOptions.objectMapper)
             oasStubAdminRoutesBuilder.build(routes)

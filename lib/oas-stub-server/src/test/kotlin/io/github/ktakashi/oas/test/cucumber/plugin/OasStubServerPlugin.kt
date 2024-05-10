@@ -5,15 +5,16 @@ import io.cucumber.plugin.event.EventPublisher
 import io.cucumber.plugin.event.TestRunFinished
 import io.cucumber.plugin.event.TestRunStarted
 import io.github.ktakashi.oas.server.OasStubServer
+import io.github.ktakashi.oas.server.options.OasStubOptions
 import io.github.ktakashi.oas.server.options.OasStubServerOptions
 
 class OasStubServerPlugin: EventListener {
     companion object {
         lateinit var server: OasStubServer
-        lateinit var options: OasStubServerOptions
+        lateinit var options: OasStubOptions
     }
     private fun setup() {
-        options = OasStubServerOptions.builder().build()
+        options = OasStubOptions.builder().build()
         server = OasStubServer(options)
         server.start()
     }

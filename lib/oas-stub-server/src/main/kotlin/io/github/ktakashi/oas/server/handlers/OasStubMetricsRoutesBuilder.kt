@@ -1,14 +1,14 @@
 package io.github.ktakashi.oas.server.handlers
 
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
-import io.github.ktakashi.oas.server.options.OasStubServerStubOptions
+import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import reactor.core.publisher.Mono
 
-class OasStubMetricsRoutesBuilder(private val options: OasStubServerStubOptions): OasStubRoutesBuilder, KoinComponent {
+class OasStubMetricsRoutesBuilder(private val options: OasStubStubOptions): OasStubRoutesBuilder, KoinComponent {
     private val apiObserver by inject<ApiObserver>()
 
     override fun build(routes: OasStubRoutes) {
