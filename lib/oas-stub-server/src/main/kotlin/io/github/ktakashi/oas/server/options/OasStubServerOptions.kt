@@ -48,8 +48,8 @@ internal constructor(val port: Int,
         fun httpsPort(httpsPort: Int) = apply { this.httpsPort = httpsPort }
         fun enableAccessLog(enableAccessLog: Boolean) = apply { this.enableAccessLog = enableAccessLog }
         fun ssl() = ssl
-        fun stubOptions() = parent
-        fun build() = OasStubServerOptions(port, httpsPort, ssl.build(), enableAccessLog)
+        fun options() = parent
+        internal fun build() = OasStubServerOptions(port, httpsPort, ssl.build(), enableAccessLog)
     }
 
 }
@@ -90,8 +90,8 @@ internal constructor(internal val stubPath: String,
         fun sessionStorage(sessionStorage: SessionStorage) = apply { this.sessionStorage = sessionStorage }
         fun routesBuilders(routesBuilders: List<OasStubRoutesBuilder>) = apply { this.routesBuilders = routesBuilders.toMutableList() }
         fun addRoutesBuilder(routesBuilder: OasStubRoutesBuilder) = apply { this.routesBuilders.add(routesBuilder) }
-        fun stubOptions() = parent
-        fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, enableAdmin, enableMetrics,
+        fun options() = parent
+        internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, enableAdmin, enableMetrics,
             objectMapper, routesBuilders, persistentStorage, sessionStorage)
     }
 
@@ -125,7 +125,7 @@ internal constructor(internal val keyStore: KeyStore?,
 
         fun serverOptions() = parent
 
-        fun build() = OasStubServerSSLOptions(keyStore, keyAlias, keyStorePassword, keyPassword, trustStore, trustStorePassword)
+        internal fun build() = OasStubServerSSLOptions(keyStore, keyAlias, keyStorePassword, keyPassword, trustStore, trustStorePassword)
     }
 
 }

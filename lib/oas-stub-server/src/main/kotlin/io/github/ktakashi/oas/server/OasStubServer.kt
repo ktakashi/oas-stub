@@ -61,9 +61,9 @@ class OasStubServer(private val options: OasStubOptions) {
         .accessLog(serverOptions.enableAccessLog)
         .route { routes ->
             val oasStubRoutes = OasStubRoutes(routes, stubOptions.objectMapper)
-            oasStubAdminRoutesBuilder.build(routes)
+            oasStubAdminRoutesBuilder.build(oasStubRoutes)
             oasStubMetricsRoutesBuilder.build(oasStubRoutes)
-
+            stubOptions.routesBuilders.forEach { builder -> builder.build(oasStubRoutes) }
             routes.route(prefix(stubOptions.stubPath), oasStubApiHandler)
         }
 

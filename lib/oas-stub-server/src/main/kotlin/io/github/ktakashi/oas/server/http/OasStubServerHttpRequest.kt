@@ -29,7 +29,7 @@ internal class OasStubServerHttpRequest(private val request: HttpServerRequest,
         }
     override val queryString: String?
         get() = uri.query
-    override val queryParameter: Map<String, List<String>>
+    override val queryParameters: Map<String, List<String>>
         get() = qp
 
     override fun getHeader(name: String): String? = request.requestHeaders()[name]
@@ -58,7 +58,7 @@ internal class OasStubServerResponseBuilder(response: HttpServerResponse)
 
     override fun build(): RouterHttpResponse = buildingResponse
 
-    override fun body(body: Any): RouterHttpResponse = buildingResponse.apply {
+    override fun body(body: Any?): RouterHttpResponse = buildingResponse.apply {
         this.body = body
     }
 

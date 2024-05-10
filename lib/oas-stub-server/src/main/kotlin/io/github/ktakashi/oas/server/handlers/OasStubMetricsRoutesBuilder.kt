@@ -22,9 +22,9 @@ class OasStubMetricsRoutesBuilder(private val options: OasStubStubOptions): OasS
                             .body(metrics)
                     }.orElseGet { request.responseBuilder().notFound().build() }
                 } ?: request.responseBuilder().notFound().build())
-            }.delete("${options.adminPath}${options.metricsPath}") { _, response ->
+            }.delete("${options.adminPath}${options.metricsPath}") { request ->
                 apiObserver.clearApiMetrics()
-                sendNoContent(response)
+                Mono.just(request.responseBuilder().noContent().build())
             }
         }
     }

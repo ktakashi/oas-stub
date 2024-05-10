@@ -1,160 +1,162 @@
 package io.github.ktakashi.oas.server.handlers
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
-import io.github.ktakashi.oas.server.io.bodyToInputStream
-import io.github.ktakashi.oas.server.io.bodyToMono
+import io.github.ktakashi.oas.server.http.RouterHttpMethod
+import io.github.ktakashi.oas.server.http.RouterHttpRequest
+import io.github.ktakashi.oas.server.http.RouterHttpResponse
 import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import io.netty.buffer.ByteBufAllocator
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
-import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.handler.codec.http.QueryStringDecoder
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
-import reactor.netty.http.server.HttpServerRequest
-import reactor.netty.http.server.HttpServerResponse
-import reactor.netty.http.server.HttpServerRoutes
 
-
-private typealias AdminApiHandler = (HttpMethod, HttpServerRequest, HttpServerResponse) -> Publisher<Void>
 
 internal const val PATH_VARIABLE_NAME = "context"
 internal const val PATH_SEGMENT = "{$PATH_VARIABLE_NAME}"
 private const val PARAMETER_NAME = "api"
 
-class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): KoinComponent {
+class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStubRoutesBuilder, KoinComponent {
     private val apiRegistrationService: ApiRegistrationService by inject()
-    private val objectMapper: ObjectMapper by inject()
-    fun build(routes: HttpServerRoutes) {
-        if (options.enableAdmin) {
-            routes
-                .get(options.adminPath) { _, response ->
-                    response.header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .send(apiRegistrationService.getAllNames().map { ByteBufAllocator.DEFAULT.buffer().writeBytes(it.toByteArray()) })
-                }
-                .path("${options.adminPath}/$PATH_SEGMENT", ::adminContext)
-                .path("${options.adminPath}/$PATH_SEGMENT/options", adminContextApi(ApiDefinitions::options, ApiDefinitions::updateOptions))
-                .path("${options.adminPath}/$PATH_SEGMENT/configurations", adminContextApi(ApiDefinitions::configurations, ApiDefinitions::updateConfigurations))
-                .path("${options.adminPath}/$PATH_SEGMENT/headers", adminContextApi(ApiDefinitions::headers, ApiDefinitions::updateHeaders))
-                .path("${options.adminPath}/$PATH_SEGMENT/data", adminContextApi(ApiDefinitions::data, ApiDefinitions::updateData))
-                .path("${options.adminPath}/$PATH_SEGMENT/delay", adminContextApi(ApiDefinitions::delay, ApiDefinitions::updateDelay))
 
-                .path("${options.adminPath}/$PATH_SEGMENT/configurations/options", adminConfigurationApi(ApiConfiguration::options, ApiConfiguration::updateOptions))
-                .path("${options.adminPath}/$PATH_SEGMENT/configurations/headers", adminConfigurationApi(ApiConfiguration::headers, ApiConfiguration::updateHeaders))
-                .path("${options.adminPath}/$PATH_SEGMENT/configurations/data", adminConfigurationApi(ApiConfiguration::data, ApiConfiguration::updateData))
-                .path("${options.adminPath}/$PATH_SEGMENT/configurations/delay", adminConfigurationApi(ApiConfiguration::delay, ApiConfiguration::updateDelay))
-                .get("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request, response ->
-                    getConfigurationProperty(request, response, request.queryParameters(), ApiConfiguration::plugin)
+    override fun build(routes: OasStubRoutes) {
+        if (options.enableAdmin) {
+            routes {
+                get(options.adminPath) { request ->
+                    apiRegistrationService.getAllNames().map { ByteBufAllocator.DEFAULT.buffer().writeBytes(it.toByteArray()) }
+                        .collectList()
+                        .map { names ->
+                            request.responseBuilder()
+                                .ok()
+                                .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+                                .body(names)
+                        }
                 }
-                .delete("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request, response ->
-                    deleteConfigurationProperty( request, response, request.queryParameters(), ApiConfiguration::updatePlugin)
+                path("${options.adminPath}/$PATH_SEGMENT", ::adminContext)
+                path("${options.adminPath}/$PATH_SEGMENT/options", adminContextApi(ApiDefinitions::options, ApiDefinitions::updateOptions))
+                path("${options.adminPath}/$PATH_SEGMENT/configurations", adminContextApi(ApiDefinitions::configurations, ApiDefinitions::updateConfigurations))
+                path("${options.adminPath}/$PATH_SEGMENT/headers", adminContextApi(ApiDefinitions::headers, ApiDefinitions::updateHeaders))
+                path("${options.adminPath}/$PATH_SEGMENT/data", adminContextApi(ApiDefinitions::data, ApiDefinitions::updateData))
+                path("${options.adminPath}/$PATH_SEGMENT/delay", adminContextApi(ApiDefinitions::delay, ApiDefinitions::updateDelay))
+
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/options", adminConfigurationApi(ApiConfiguration::options, ApiConfiguration::updateOptions))
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/headers", adminConfigurationApi(ApiConfiguration::headers, ApiConfiguration::updateHeaders))
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/data", adminConfigurationApi(ApiConfiguration::data, ApiConfiguration::updateData))
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/delay", adminConfigurationApi(ApiConfiguration::delay, ApiConfiguration::updateDelay))
+                get("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request ->
+                    getConfigurationProperty(request, ApiConfiguration::plugin)
                 }
-                .put("${options.adminPath}/$PATH_SEGMENT/configurations/plugins/groovy") { request, response ->
+                delete("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request ->
+                    deleteConfigurationProperty( request, ApiConfiguration::updatePlugin)
+                }
+                put("${options.adminPath}/$PATH_SEGMENT/configurations/plugins/groovy") { request ->
                     request.bodyToInputStream().flatMap { body ->
-                        updateConfigurationProperty(request, request.queryParameters()) { configuration ->
+                        updateConfigurationProperty(request) { configuration ->
                             PluginDefinition(type = PluginType.GROOVY, script = body.reader().use { it.readText() }).let {
                                 configuration.updatePlugin(it)
                             }
-                        }.map { v -> ok(response, v) }
-                    }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-                        .flatMap { r -> r.then() }
+                        }.map { v -> request.responseBuilder().ok()
+                            .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+                            .body(v)
+                        }
+                    }.switchIfEmpty(Mono.defer { notFound(request) })
                 }
+            }
         }
     }
 
-    private fun adminContext(method: HttpMethod, request: HttpServerRequest, response: HttpServerResponse): Publisher<Void>  = when (method) {
-        HttpMethod.GET -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+    private fun adminContext(method: RouterHttpMethod, request: RouterHttpRequest): Mono<RouterHttpResponse>  = when (method) {
+        RouterHttpMethod.GET -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).map { v ->
-                response.header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .status(HttpResponseStatus.OK)
-                    .sendString(Mono.fromCallable { objectMapper.writeValueAsString(v) })
-            }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-                .flatMap { r -> r.then() }
-        } ?: sendNotFound(response)
-        HttpMethod.POST -> request.param(PATH_VARIABLE_NAME)?.let { context ->
-            val ct = request.requestHeaders()[HttpHeaderNames.CONTENT_TYPE]
-            if (ct != null && (ct.startsWith("application/octet-stream") || ct.startsWith("text/plain") )) {
-                request.bodyToInputStream()
-                    .flatMap { body -> apiRegistrationService.saveApiDefinitions(context, ApiDefinitions(body.reader().use { it.readText() })) }
-                    .map { response.status(HttpResponseStatus.CREATED).header(HttpHeaderNames.LOCATION, "/$context") }
-                    .switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-                    .flatMap { r -> r.send() }
-            } else {
-                sendNotFound(response)
+                request.responseBuilder()
+                    .ok()
+                    .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+                    .body(v)
+            }.switchIfEmpty(Mono.defer { notFound(request) })
+        } ?: notFound(request)
+        RouterHttpMethod.POST -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+            request.getHeader(HttpHeaderNames.CONTENT_TYPE.toString())?.let { ct ->
+                if (ct.startsWith("application/octet-stream") || ct.startsWith("text/plain")) {
+                    request.bodyToInputStream()
+                        .flatMap { body -> apiRegistrationService.saveApiDefinitions(context, ApiDefinitions(body.reader().use { it.readText() }) ) }
+                        .map { request.responseBuilder().created("/$context").build() }
+                        .switchIfEmpty(Mono.defer { notFound(request) })
+                } else if (ct.startsWith("application/json")) {
+                    request.bodyToMono(ApiDefinitions::class.java)
+                        .flatMap { body -> apiRegistrationService.saveApiDefinitions(context, body) }
+                        .map { request.responseBuilder().created("/$context").build() }
+                        .switchIfEmpty(Mono.defer { notFound(request) })
+                } else {
+                    notFound(request)
+                }
             }
-        } ?: sendNotFound(response)
-        HttpMethod.PUT -> request.param(PATH_VARIABLE_NAME)?.let { context ->
-            request.bodyToMono<ApiDefinitions>(objectMapper)
+        } ?: notFound(request)
+        RouterHttpMethod.PUT -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+            request.bodyToMono(ApiDefinitions::class.java)
                 .flatMap { apiRegistrationService.saveApiDefinitions(context, it) }
-                .map { response.status(HttpResponseStatus.CREATED)
-                    .header(HttpHeaderNames.LOCATION, "/$context")
-                }
-                .switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-                .flatMap { r -> r.send() }
-        } ?: sendNotFound(response)
-        HttpMethod.DELETE -> request.param(PATH_VARIABLE_NAME)?.let { context ->
+                .map { request.responseBuilder().created("/$context").build() }
+                .switchIfEmpty(Mono.defer { notFound(request) })
+        } ?: notFound(request)
+        RouterHttpMethod.DELETE -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.deleteApiDefinitions(context)
-                .map { noContent(response) }
-                .switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-                .flatMap { r -> r.send() }
-        } ?: sendNotFound(response)
-        else -> sendMethodNotAllowed(response)
+                .map { request.responseBuilder().noContent().build() }
+                .switchIfEmpty(Mono.defer { notFound(request) })
+        } ?: notFound(request)
+        else -> methodNotAllowed(request)
     }
 
-    private inline fun <reified T> adminContextApi(noinline retriever: (ApiDefinitions) -> T?, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions): AdminApiHandler {
-        return { method, request, response ->
+    private fun methodNotAllowed(request: RouterHttpRequest) =
+        Mono.just(request.responseBuilder().methodNotAllowed().build())
+
+    private fun notFound(request: RouterHttpRequest) =
+        Mono.just(request.responseBuilder().notFound().build())
+
+    private inline fun <reified T> adminContextApi(noinline retriever: (ApiDefinitions) -> T?, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) = OasStubPathRouteHandler { method, request ->
+        when (method) {
+            RouterHttpMethod.GET -> getApiDefinitionsProperty(request, retriever)
+            RouterHttpMethod.PUT -> putApiDefinitionsProperty(request, updater)
+            RouterHttpMethod.DELETE -> deleteApiDefinitionsProperty(request, updater)
+            else -> methodNotAllowed(request)
+        }
+    }
+
+    private inline fun <reified T> adminConfigurationApi(noinline retriever: (ApiConfiguration) -> T?, noinline updater: (ApiConfiguration, T?) -> ApiConfiguration) = OasStubPathRouteHandler { method, request ->
+        if (request.queryParameters.containsKey(PARAMETER_NAME)) {
             when (method) {
-                HttpMethod.GET -> getApiDefinitionsProperty(request, response, retriever)
-                HttpMethod.PUT -> putApiDefinitionsProperty(request, response, updater)
-                HttpMethod.DELETE -> deleteApiDefinitionsProperty(request, response, updater)
-                else -> sendMethodNotAllowed(response)
+                RouterHttpMethod.GET -> getConfigurationProperty(request, retriever)
+                RouterHttpMethod.PUT -> putConfigurationProperty(request, updater)
+                RouterHttpMethod.DELETE -> deleteConfigurationProperty(request, updater)
+                else -> methodNotAllowed(request)
             }
+        } else {
+            notFound(request)
         }
     }
 
-    private inline fun <reified T> adminConfigurationApi(noinline retriever: (ApiConfiguration) -> T?, noinline updater: (ApiConfiguration, T?) -> ApiConfiguration): AdminApiHandler {
-        return { method, request, response ->
-            val parameters = request.queryParameters()
-            if (parameters.containsKey(PARAMETER_NAME)) {
-                when (method) {
-                    HttpMethod.GET -> getConfigurationProperty(request, response, parameters, retriever)
-                    HttpMethod.PUT -> putConfigurationProperty(request, response, parameters, updater)
-                    HttpMethod.DELETE -> deleteConfigurationProperty(request, response, parameters, updater)
-                    else -> sendMethodNotAllowed(response)
-                }
-            } else {
-                sendNotFound(response)
-            }
-        }
-    }
+    private inline fun <reified T> putConfigurationProperty(request: RouterHttpRequest, noinline updater: (ApiConfiguration, T) -> ApiConfiguration) =
+        request.bodyToMono(T::class.java).flatMap { body ->
+            updateConfigurationProperty(request) { config -> updater(config, body) }
+                .map { v -> request.responseBuilder().ok()
+                    .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+                    .body(v) }
+        }.switchIfEmpty(Mono.defer { notFound(request) })
 
-    private inline fun <reified T> putConfigurationProperty(request: HttpServerRequest, response: HttpServerResponse, parameters: Map<String, List<String>>, noinline updater: (ApiConfiguration, T) -> ApiConfiguration) =
-        request.bodyToMono<T>(objectMapper).flatMap { body ->
-            updateConfigurationProperty(request, parameters) { config -> updater(config, body) }
-                .map { v -> ok(response, v) }
-        }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-            .flatMap { r -> r.then() }
+    private fun <T> deleteConfigurationProperty(request: RouterHttpRequest, updater: (ApiConfiguration, T?) -> ApiConfiguration) =
+        updateConfigurationProperty(request) { config -> updater(config, null) }
+            .map { request.responseBuilder().noContent().build() }
+            .switchIfEmpty(Mono.defer { notFound(request) })
 
-    private fun <T> deleteConfigurationProperty(request: HttpServerRequest, response: HttpServerResponse, parameters: Map<String, List<String>>, updater: (ApiConfiguration, T?) -> ApiConfiguration) =
-        updateConfigurationProperty(request, parameters) { config -> updater(config, null) }
-            .map { noContent(response) }
-            .switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-            .flatMap { r -> r.then() }
-
-    private fun updateConfigurationProperty(request: HttpServerRequest, parameters: Map<String, List<String>>, updater: (ApiConfiguration) -> ApiConfiguration) =
+    private fun updateConfigurationProperty(request: RouterHttpRequest, updater: (ApiConfiguration) -> ApiConfiguration) =
         request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).mapNotNull { def ->
-                parameters[PARAMETER_NAME]?.get(0)?.let {
+                request.queryParameters[PARAMETER_NAME]?.get(0)?.let {
                     apiRegistrationService.validPath(def, URLDecoder.decode(it, StandardCharsets.UTF_8)).map { api ->
                         val newDef = if (def.configurations == null) def.updateConfigurations(mapOf()) else def
                         updater(newDef.configurations?.get(api) ?: ApiConfiguration()).let { config ->
@@ -166,85 +168,48 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): KoinCo
             .flatMap { def -> apiRegistrationService.saveApiDefinitions(context, def) }
         } ?: Mono.empty()
 
-    private fun <T> getConfigurationProperty(request: HttpServerRequest, response: HttpServerResponse, parameters: Map<String, List<String>>, retriever: (ApiConfiguration) -> T?) =
+    private fun <T> getConfigurationProperty(request: RouterHttpRequest, retriever: (ApiConfiguration) -> T?) =
         request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).mapNotNull { def ->
-                parameters[PARAMETER_NAME]?.get(0)?.let {
+                request.queryParameters[PARAMETER_NAME]?.get(0)?.let {
                     val api = URLDecoder.decode(it, StandardCharsets.UTF_8)
                     def.configurations?.let { v -> v[api]?.let(retriever) }
                 }
-            }.map { v -> response.status(HttpResponseStatus.OK)
-                .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                .sendString(Mono.fromCallable { objectMapper.writeValueAsString(v) })
-            }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-                .flatMap { r -> r.then() }
-        } ?: sendNotFound(response)
+            }.map { v -> request.responseBuilder().ok()
+                .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+                .body(v)
+            }.switchIfEmpty(Mono.defer { notFound(request) })
+        } ?: notFound(request)
 
-    private inline fun <reified T> putApiDefinitionsProperty(request: HttpServerRequest, response: HttpServerResponse, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
-        request.bodyToMono<T>(objectMapper).flatMap { body ->
+    private inline fun <reified T> putApiDefinitionsProperty(request: RouterHttpRequest, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
+        request.bodyToMono(T::class.java).flatMap { body ->
             updateApiDefinitionProperty(request) { def -> updater(def, body) }
-                .map { v -> ok(response, v) }
-        }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-            .flatMap { r -> r.then() }
+                .map { v -> request.responseBuilder()
+                    .ok()
+                    .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+                    .body(v) }
+        }.switchIfEmpty(Mono.defer { notFound(request) })
 
-    private inline fun <reified T> deleteApiDefinitionsProperty(request: HttpServerRequest, response: HttpServerResponse, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
-        request.bodyToMono<T>(objectMapper).flatMap {
+    private inline fun <reified T> deleteApiDefinitionsProperty(request: RouterHttpRequest, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
+        request.bodyToMono(T::class.java).flatMap {
             updateApiDefinitionProperty(request) { def -> updater(def, null) }
-                .map { noContent(response) }
-        }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-            .flatMap { r -> r.then() }
+                .map { request.responseBuilder().noContent().build() }
+        }.switchIfEmpty(Mono.defer {  notFound(request) })
 
-    private fun updateApiDefinitionProperty(request: HttpServerRequest, updater: (ApiDefinitions) -> ApiDefinitions) =
+    private fun updateApiDefinitionProperty(request: RouterHttpRequest, updater: (ApiDefinitions) -> ApiDefinitions) =
         request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context)
                 .map(updater)
                 .flatMap { apiRegistrationService.saveApiDefinitions(context, it) }
         } ?: Mono.empty()
 
-    private fun <T> getApiDefinitionsProperty(request: HttpServerRequest, response: HttpServerResponse, retriever: (ApiDefinitions) -> T?) =
+    private fun <T> getApiDefinitionsProperty(request: RouterHttpRequest, retriever: (ApiDefinitions) -> T?) =
         request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context)
                 .mapNotNull(retriever)
-                .map { response.status(HttpResponseStatus.OK)
-                    .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .sendString(Mono.fromCallable { objectMapper.writeValueAsString(it) })
-                }.switchIfEmpty(Mono.defer { Mono.just(notFound(response)) })
-                .flatMap { r -> r.then() }
-        } ?: sendNotFound(response)
-
-    private fun ok(response: HttpServerResponse, v: ApiDefinitions) = response.status(HttpResponseStatus.OK)
-        .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-        .sendString(Mono.fromCallable { objectMapper.writeValueAsString(v) })
+                .map { request.responseBuilder().ok()
+                    .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+                    .body(it)
+                }.switchIfEmpty(Mono.defer { notFound(request) })
+        } ?:  notFound(request)
 }
-
-internal fun sendNotFound(response: HttpServerResponse) = notFound(response).send()
-
-internal fun sendMethodNotAllowed(response: HttpServerResponse) = methodNotAllowed(response).send()
-
-internal fun sendNoContent(response: HttpServerResponse) = noContent(response).send()
-
-internal fun notFound(response: HttpServerResponse): HttpServerResponse =
-    response.status(HttpResponseStatus.NOT_FOUND)
-internal fun noContent(response: HttpServerResponse): HttpServerResponse =
-    response.status(HttpResponseStatus.NO_CONTENT)
-internal fun methodNotAllowed(response: HttpServerResponse): HttpServerResponse =
-    response.status(HttpResponseStatus.METHOD_NOT_ALLOWED)
-
-private fun HttpServerRoutes.path(uri: String, init: AdminApiHandler): HttpServerRoutes {
-    get(uri) { request, response ->
-        init(HttpMethod.GET, request, response)
-    }
-    post(uri) { request, response ->
-        init(HttpMethod.POST, request, response)
-    }
-    put(uri) { request, response ->
-        init(HttpMethod.PUT, request, response)
-    }
-    delete(uri) { request, response ->
-        init(HttpMethod.DELETE, request, response)
-    }
-    // patch?
-    return this
-}
-
-private fun HttpServerRequest.queryParameters() = QueryStringDecoder(uri()).parameters()

@@ -20,7 +20,7 @@ interface HttpRequest {
     val contentType: String?
     val cookies: List<HttpCookie>
     val queryString: String?
-    val queryParameter: Map<String, List<String>>
+    val queryParameters: Map<String, List<String>>
 
     fun getHeader(name: String): String?
     fun getHeaders(name: String): List<String>
