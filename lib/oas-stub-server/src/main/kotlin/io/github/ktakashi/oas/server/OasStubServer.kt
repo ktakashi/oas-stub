@@ -60,7 +60,7 @@ class OasStubServer(private val options: OasStubOptions) {
     private fun createNettyServer(port: Int): HttpServer = HttpServer.create().port(port)
         .accessLog(serverOptions.enableAccessLog)
         .route { routes ->
-            val oasStubRoutes = OasStubRoutes(routes, stubOptions.objectMapper)
+            val oasStubRoutes = OasStubRoutes(routes)
             oasStubAdminRoutesBuilder.build(oasStubRoutes)
             oasStubMetricsRoutesBuilder.build(oasStubRoutes)
             stubOptions.routesBuilders.forEach { builder -> builder.build(oasStubRoutes) }

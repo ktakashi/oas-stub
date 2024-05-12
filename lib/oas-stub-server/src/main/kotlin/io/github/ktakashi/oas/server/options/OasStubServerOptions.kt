@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.server.options
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -92,7 +93,7 @@ internal constructor(internal val stubPath: String,
         fun addRoutesBuilder(routesBuilder: OasStubRoutesBuilder) = apply { this.routesBuilders.add(routesBuilder) }
         fun options() = parent
         internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, enableAdmin, enableMetrics,
-            objectMapper, routesBuilders, persistentStorage, sessionStorage)
+            objectMapper.copy().registerModules(KotlinModule.Builder().build()), routesBuilders, persistentStorage, sessionStorage)
     }
 
 }

@@ -1,6 +1,8 @@
 package io.github.ktakashi.oas.server.handlers
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
+import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.server.http.OasStubServerHttpRequest
 import io.github.ktakashi.oas.server.http.RouterHttpRequest
 import io.github.ktakashi.oas.server.http.RouterHttpResponse
@@ -9,6 +11,8 @@ import io.netty.handler.codec.http.HttpHeaderValues
 import java.util.concurrent.CompletionStage
 import java.util.function.BiFunction
 import java.util.function.Function
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -18,8 +22,8 @@ import reactor.netty.http.server.HttpServerRoutes
 
 fun interface OasStubRouteHandler: Function<RouterHttpRequest, Any>
 
-class OasStubRoutes(private val routes: HttpServerRoutes,
-                    private val objectMapper: ObjectMapper): (OasStubRoutes.() -> Unit) -> Unit {
+class OasStubRoutes(private val routes: HttpServerRoutes): (OasStubRoutes.() -> Unit) -> Unit, KoinComponent {
+    private val objectMapper: ObjectMapper by inject()
     fun get(path: String, handler: OasStubRouteHandler) = apply { routes.get(path, adjustHandler(handler)) }
     fun post(path: String, handler: OasStubRouteHandler) = apply { routes.post(path, adjustHandler(handler)) }
     fun put(path: String, handler: OasStubRouteHandler) = apply { routes.put(path, adjustHandler(handler)) }
@@ -70,8 +74,11 @@ class OasStubRoutes(private val routes: HttpServerRoutes,
     }
 }
 
-class ContextOasStubRoutes(private val context: String, private val routes: OasStubRoutes)
-    : (ContextOasStubRoutes.() -> Unit) -> Unit {
+class ContextOasStubRoutes(private val context: String,
+                           private val routes: OasStubRoutes)
+    : (ContextOasStubRoutes.() -> Unit) -> Unit, KoinComponent {
+    private val apiRegistrationService by inject<ApiRegistrationService>()
+
     fun get(path: String, handler: OasStubRouteHandler) = apply { routes.get(adjustPath(path), handler) }
     fun post(path: String, handler: OasStubRouteHandler) = apply { routes.post(adjustPath(path), handler) }
     fun put(path: String, handler: OasStubRouteHandler) = apply { routes.put(adjustPath(path), handler) }
@@ -84,12 +91,20 @@ class ContextOasStubRoutes(private val context: String, private val routes: OasS
         it.delete(adjustPath(path), handler)
     }
 
-    fun build() = routes
+    fun build(): OasStubRoutes {
+        saveContext()
+        return routes
+    }
 
     private fun adjustPath(path: String): String = "/$context/$path"
 
     override fun invoke(init: ContextOasStubRoutes.() -> Unit) {
         init()
+        saveContext()
+    }
+
+    private fun saveContext() {
+        apiRegistrationService.saveApiDefinitions(context, ApiDefinitions()).subscribe()
     }
 }
 
