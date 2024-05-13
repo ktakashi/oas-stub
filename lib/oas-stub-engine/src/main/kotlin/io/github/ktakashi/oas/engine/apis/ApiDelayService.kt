@@ -35,6 +35,16 @@ class ApiDelayService(private val storageService: StorageService) {
         } ?: mono
     }
 
+    fun <T> delayMono(context: String, path: String, mono: Mono<T>) = System.currentTimeMillis().let { start ->
+        storageService.getApiDefinitions(context).flatMap { def ->
+            ModelPropertyUtils.mergeProperty(path, def, ApiCommonConfigurations<*>::delay)?.let { config ->
+                computeDelay(config, System.currentTimeMillis() - start)?.let { (delay, timeUnit) ->
+                    mono.delayElement(Duration.of(delay, timeUnit.toChronoUnit()))
+                }
+            } ?: mono
+        }.switchIfEmpty(mono)
+    }
+
     fun computeDelay(context: String, path: String, processTime: Long) = storageService.getApiDefinitions(context).flatMap { def ->
         ModelPropertyUtils.mergeProperty(path, def, ApiCommonConfigurations<*>::delay)?.let { config ->
             Mono.justOrEmpty(computeDelay(config, processTime))

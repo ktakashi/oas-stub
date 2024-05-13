@@ -36,7 +36,7 @@ data class ApiContext(val context: String, val apiPath: String, val method: Stri
 class ApiException(val requestContext: ApiContextAwareRequestContext, val responseContext: ResponseContext): Exception()
 
 
-fun interface ApiContextService {
+interface ApiContextService {
     /**
      * Retrieves [ApiContext] from the [request]
      *
