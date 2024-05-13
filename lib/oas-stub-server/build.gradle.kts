@@ -19,6 +19,8 @@ dependencies {
     implementation(libs.swagger.core.annotations.jakarta)
     implementation(libs.projectreactor.reactor.core)
     implementation(libs.jackson.module.kotlin)
+    implementation(libs.bcpkix.jdk18on)
+    implementation(libs.bcprov.jdk18on)
 
     testImplementation(project(":test:cucumber-test"))
     testImplementation(libs.hazelcast)

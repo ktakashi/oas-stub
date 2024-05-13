@@ -36,11 +36,20 @@ class OasStubServerConfiguration(internal val properties: OasStubTestProperties,
 
     @PostConstruct
     fun init() {
-        oasStubServer = OasStubServer(properties.toOasStubOptions(objectMapper, sessionStorage, persistentStorage, oasStubRoutesBuilders))
-        oasStubServer.init()
-        oasStubTestService = OasStubTestService(properties, inject<ApiRegistrationService>().value, inject<ApiObserver>().value)
-        applicationContext.beanFactory.registerSingleton(OAS_STUB_TEST_SERVICE_BEAN_NAME, oasStubTestService)
-        applicationContext.beanFactory.registerSingleton(OAS_STUB_SERVER_BEAN_NAME, oasStubServer)
+        val beanFactory = applicationContext.beanFactory
+        if (!beanFactory.containsBean(OAS_STUB_SERVER_BEAN_NAME)) {
+            oasStubServer = OasStubServer(properties.toOasStubOptions(objectMapper, sessionStorage, persistentStorage, oasStubRoutesBuilders))
+            oasStubServer.init()
+            beanFactory.registerSingleton(OAS_STUB_SERVER_BEAN_NAME, oasStubServer)
+        } else {
+            oasStubServer = beanFactory.getBean(OasStubServer::class.java)
+        }
+        if (!beanFactory.containsBean(OAS_STUB_TEST_SERVICE_BEAN_NAME)) {
+            oasStubTestService = OasStubTestService(properties, inject<ApiRegistrationService>().value, inject<ApiObserver>().value)
+            beanFactory.registerSingleton(OAS_STUB_TEST_SERVICE_BEAN_NAME, oasStubTestService)
+        } else {
+            oasStubTestService = beanFactory.getBean(OasStubTestService::class.java)
+        }
     }
 
     override fun start() {

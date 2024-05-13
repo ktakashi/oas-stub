@@ -10,7 +10,7 @@ import org.junit.platform.suite.api.Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
 @ConfigurationParameter(key = Constants.PLUGIN_PUBLISH_ENABLED_PROPERTY_NAME, value = "true")
-@ConfigurationParameter(key = Constants.GLUE_PROPERTY_NAME, value = "io.github.ktakashi.oas.test.cucumber")
+@ConfigurationParameter(key = Constants.GLUE_PROPERTY_NAME, value = "io.github.ktakashi.oas.test.cucumber,io.github.ktakashi.oas.test.http.glue")
 @ConfigurationParameter(key = Constants.PLUGIN_PROPERTY_NAME, value = "pretty:build/cucumber/pretty.txt,pretty,io.github.ktakashi.oas.test.cucumber.plugins.HazelDbPlugin")
 @ConfigurationParameter(key = Constants.FILTER_TAGS_PROPERTY_NAME, value = "not @ignore")
 class HazelDbIntegrationTest

@@ -1,12 +1,13 @@
 package io.github.ktakashi.oas.test.listeners
 
 import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
-import io.github.ktakashi.oas.test.OAS_STUB_SERVER_BEAN_NAME
 import io.github.ktakashi.oas.test.OasStubTestProperties.Companion.OAS_STUB_SERVER_PROPERTY_PREFIX
 import io.github.ktakashi.oas.test.configurations.OasStubServerConfiguration
 import io.github.ktakashi.oas.test.findAvailableTcpPort
 import org.springframework.boot.context.event.ApplicationPreparedEvent
 import org.springframework.context.ApplicationListener
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.test.context.TestContext
@@ -15,7 +16,8 @@ import org.springframework.test.context.support.AbstractTestExecutionListener
 
 internal const val OAS_STUB_SERVER_CONFIGURATION_BEAN_NAME = "oasStubServerConfiguration"
 
-class OasStubTestApplicationListener:  ApplicationListener<ApplicationPreparedEvent> {
+@Order(Ordered.LOWEST_PRECEDENCE)
+class OasStubTestApplicationListener: ApplicationListener<ApplicationPreparedEvent> {
     override fun onApplicationEvent(event: ApplicationPreparedEvent) {
         registerPorts(event.applicationContext.environment)
     }
@@ -28,7 +30,7 @@ class OasStubTestApplicationListener:  ApplicationListener<ApplicationPreparedEv
                 it < 0 -> Unit
                 else -> registerPort(environment, httpPortProp, it)
             }
-        } ?: registerDynamicPort(environment, httpPortProp, 20000..22500)
+        }
 
         val httpsPortProp = "${OAS_STUB_SERVER_PROPERTY_PREFIX}.https-port"
         environment.getProperty(httpsPortProp, Int::class.java)?.let {
@@ -54,7 +56,7 @@ class OasStubTestApplicationListener:  ApplicationListener<ApplicationPreparedEv
     private fun getOasStubServerSource(environment: ConfigurableEnvironment): MutableMap<String, Any> {
         val propertySources = environment.propertySources
         if (propertySources.contains(OAS_STUB_SERVER_PROPERTY_PREFIX)) {
-            propertySources.remove(OAS_STUB_SERVER_BEAN_NAME)?.let {
+            propertySources.remove(OAS_STUB_SERVER_PROPERTY_PREFIX)?.let {
                 propertySources.addFirst(it)
             }
         } else {

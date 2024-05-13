@@ -1,6 +1,0 @@
-io.github.ktakashi.oas.configuration.AutoOasStorageConfiguration
-io.github.ktakashi.oas.configuration.AutoOasPluginConfiguration
-io.github.ktakashi.oas.configuration.AutoOasValidatorConfiguration
-io.github.ktakashi.oas.configuration.AutoOasApiConfiguration
-io.github.ktakashi.oas.configuration.AutoOasEngineConfiguration
-io.github.ktakashi.oas.configuration.AutoOasWebCoreConfiguration

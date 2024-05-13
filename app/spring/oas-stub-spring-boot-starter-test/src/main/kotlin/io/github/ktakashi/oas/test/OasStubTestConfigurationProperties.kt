@@ -68,38 +68,39 @@ data class OasStubTestProperties(
         .build()
 }
 
-data class OasStubTestServerProperties(
+data class OasStubTestServerProperties
+@JvmOverloads constructor(
     /**
      * OAS Stub server, stub path
      */
-    val stubPrefix: String = OasStubOptions.DEFAULT_STUB_PATH,
+    var stubPrefix: String = OasStubOptions.DEFAULT_STUB_PATH,
     /**
      * OAS Stub server, admin path
      */
-    val adminPrefix: String = OasStubOptions.DEFAULT_ADMIN_PATH,
+    var adminPrefix: String = OasStubOptions.DEFAULT_ADMIN_PATH,
     /**
      * OAS Stub server, metrics path
      *
      * This will be appended to admin path
      */
-    val metricsPrefix: String = OasStubOptions.DEFAULT_METRICS_PATH,
+    var metricsPrefix: String = OasStubOptions.DEFAULT_METRICS_PATH,
     /**
      * Flag to enable admin endpoints
      */
-    val enableAdmin : Boolean = true,
+    var enableAdmin : Boolean = true,
     /**
      * Flag to enable metrics endpoints
      */
-    val enableMetrics: Boolean = true,
+    var enableMetrics: Boolean = true,
     /**
      * HTTP port of the server. 0 means random
      */
-    val port: Int = 8080,
+    var port: Int = 8080,
     /**
      * HTTPS port of the server. 0 means random
      */
-    val httpsPort: Int = -1,
-    val resetConfigurationAfterEachTest: Boolean = false
+    var httpsPort: Int = -1,
+    var resetConfigurationAfterEachTest: Boolean = false
 )
 
 data class OasStubTestDefinitionProperties
