@@ -4,13 +4,13 @@ import io.cucumber.java.Before
 import io.cucumber.spring.CucumberContextConfiguration
 import io.github.ktakashi.oas.server.OasStubServer
 import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
+import io.github.ktakashi.oas.test.OasStubServerHttpsPort
 import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.cucumber.TestContext
 import io.github.ktakashi.oas.test.cucumber.TestContextSupplier
 import io.restassured.RestAssured
 import io.restassured.config.SSLConfig
 import java.security.KeyStore
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
@@ -25,8 +25,7 @@ class SslConfiguration(private val oasStubServer: OasStubServer) {
     @TestConfiguration
     class TestConfig {
         @Bean @Lazy
-        fun testContextSupplier(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.https-port}") localPort: Int,
-                                properties: OasStubTestProperties) = TestContextSupplier {
+        fun testContextSupplier(@OasStubServerHttpsPort localPort: Int, properties: OasStubTestProperties) = TestContextSupplier {
             TestContext("https://localhost:$localPort", properties.server.stubPrefix, properties.server.adminPrefix)
         }
     }
