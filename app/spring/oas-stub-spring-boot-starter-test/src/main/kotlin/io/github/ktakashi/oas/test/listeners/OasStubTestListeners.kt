@@ -30,7 +30,7 @@ class OasStubTestApplicationListener: ApplicationListener<ApplicationPreparedEve
                 it < 0 -> Unit
                 else -> registerPort(environment, httpPortProp, it)
             }
-        }
+        } ?: registerDynamicPort(environment, httpPortProp, 20000..22500)
 
         val httpsPortProp = "${OAS_STUB_SERVER_PROPERTY_PREFIX}.https-port"
         environment.getProperty(httpsPortProp, Int::class.java)?.let {

@@ -14,9 +14,8 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>guice</module>
+        <module>server</module>
         <module>petstore-broker</module>
-        <module>spring</module>
     </modules>
 
     <properties>

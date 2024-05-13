@@ -129,9 +129,9 @@ like below.
 The below example is the minimum implementation of the OAS stub
 server on top of Guice. (`import` clauses are omitted)
 
-[source, java]
+[source,java]
 ----
-package oas.example.guice;
+package oas.example.server;
 
 public class Main {
     public static void main(String[] args) {

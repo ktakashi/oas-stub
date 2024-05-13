@@ -21,7 +21,7 @@ import org.springframework.test.context.ActiveProfiles
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@AutoConfigureOasStubServer
+@AutoConfigureOasStubServer(port = 0)
 class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.port}") private val localPort: Int,
                              @Autowired private val oasStubTestService: OasStubTestService) {
     @Test

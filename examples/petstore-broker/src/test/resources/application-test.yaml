@@ -2,18 +2,18 @@ petstore:
   broker:
     services:
       petstore:
-        url: "http://localhost:${oas.stub.test.server.port}/${oas.stub.servlet.prefix}/petstore"
+        url: "http://localhost:${oas.stub.test.server.port}/stub/petstore"
       order:
-        url: "http://localhost:${oas.stub.test.server.port}/${oas.stub.servlet.prefix}/order"
+        url: "http://localhost:${oas.stub.test.server.port}/stub/order"
 
-oas.stub:
-  servlet.prefix: /stub
-  test:
-    definitions:
-      petstore:
-        specification: 'classpath:/schema/petstore-extended.yaml'
-        configurations:
-          '[/v2/pets]':
+oas.stub.test:
+  server:
+    stub-prefix: /stub
+  definitions:
+    petstore:
+      specification: 'classpath:/schema/petstore-extended.yaml'
+      configurations:
+        '[/v2/pets]':
             data:
               default:
                 status: 200
@@ -22,20 +22,20 @@ oas.stub:
                     {"id": 1, "name": "Tama", "tag": "cat"},
                     {"id": 2, "name": "Pochi", "tag": "dog"}
                   ]
-          '[/v2/pets/1]':
+        '[/v2/pets/1]':
             data:
               default:
                 response: >-
                   {"id": 1, "name": "Tama", "tag": "cat"}
-          '[/v2/pets/2]':
+        '[/v2/pets/2]':
             data:
               default:
                 response: >-
                   {"id": 2, "name": "Pochi", "tag": "dog"}
-      order:
-        specification: 'classpath:/schema/order.yaml'
-        configurations:
-          '[/v1/order]':
+    order:
+      specification: 'classpath:/schema/order.yaml'
+      configurations:
+        '[/v1/order]':
             plugin:
               script: 'classpath:/plugins/OrderPlugin.groovy'
             data:

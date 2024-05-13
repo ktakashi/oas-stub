@@ -29,7 +29,7 @@ data class OasStubTestProperties(
     /**
      * OAS API stub server configuration
      */
-    var server: OasStubTestServerProperties = OasStubTestServerProperties(),
+    @NestedConfigurationProperty var server: OasStubTestServerProperties = OasStubTestServerProperties(),
     /**
      * OAS API stub definition.
      *
