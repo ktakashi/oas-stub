@@ -2,7 +2,8 @@ package io.github.ktakashi.oas.example.test
 
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiHeaders
-import io.github.ktakashi.oas.test.AutoConfigureOasStub
+import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
+import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestResources
 import io.github.ktakashi.oas.test.OasStubTestService
 import io.restassured.RestAssured
@@ -19,9 +20,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
 @ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureOasStub
-class ExampleApplicationTest(@Value("\${local.server.port}") private val localPort: Int,
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@AutoConfigureOasStubServer
+class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.port}") private val localPort: Int,
                              @Autowired private val oasStubTestService: OasStubTestService) {
     @Test
     fun check() {

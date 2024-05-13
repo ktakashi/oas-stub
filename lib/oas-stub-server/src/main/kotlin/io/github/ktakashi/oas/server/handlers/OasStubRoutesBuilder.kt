@@ -12,8 +12,7 @@ import io.netty.handler.codec.http.HttpHeaderValues
 import java.util.concurrent.CompletionStage
 import java.util.function.BiFunction
 import java.util.function.Function
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import org.koin.core.Koin
 import org.reactivestreams.Publisher
 import reactor.core.CorePublisher
 import reactor.core.publisher.Flux
@@ -26,8 +25,9 @@ private typealias ReactorResponseHandler = BiFunction<HttpServerRequest, HttpSer
 
 fun interface OasStubRouteHandler: Function<RouterHttpRequest, Any>
 
-class OasStubRoutes(internal val routes: HttpServerRoutes): (OasStubRoutes.() -> Unit) -> Unit, KoinComponent {
-    private val objectMapper: ObjectMapper by inject()
+class OasStubRoutes(internal val routes: HttpServerRoutes,
+                    private val koin: Koin): (OasStubRoutes.() -> Unit) -> Unit {
+    private val objectMapper = koin.get<ObjectMapper>()
     fun get(path: String, handler: OasStubRouteHandler) = apply { routes.get(path, adjustHandler(handler, objectMapper)) }
     fun post(path: String, handler: OasStubRouteHandler) = apply { routes.post(path, adjustHandler(handler, objectMapper)) }
     fun put(path: String, handler: OasStubRouteHandler) = apply { routes.put(path, adjustHandler(handler, objectMapper)) }
@@ -42,8 +42,8 @@ class OasStubRoutes(internal val routes: HttpServerRoutes): (OasStubRoutes.() ->
         }
     }
 
-    fun context(context: String) = ContextOasStubRoutes(context, this)
-    fun context(context: String, init: ContextOasStubRoutes.() -> Unit) = ContextOasStubRoutes(context, this).invoke(init)
+    fun context(context: String) = ContextOasStubRoutes(context, this, koin)
+    fun context(context: String, init: ContextOasStubRoutes.() -> Unit) = ContextOasStubRoutes(context, this, koin).invoke(init)
 
     override fun invoke(init: OasStubRoutes.() -> Unit) {
         init()
@@ -51,11 +51,11 @@ class OasStubRoutes(internal val routes: HttpServerRoutes): (OasStubRoutes.() ->
 }
 
 class ContextOasStubRoutes(private val context: String,
-                           private val routes: OasStubRoutes)
-    : (ContextOasStubRoutes.() -> Unit) -> Unit, KoinComponent {
-    private val apiRegistrationService by inject<ApiRegistrationService>()
-    private val objectMapper by inject<ObjectMapper>()
-    private val delayService by inject<ApiDelayService>()
+                           private val routes: OasStubRoutes,
+                           koin: Koin): (ContextOasStubRoutes.() -> Unit) -> Unit {
+    private val apiRegistrationService by koin.inject<ApiRegistrationService>()
+    private val objectMapper by koin.inject<ObjectMapper>()
+    private val delayService by koin.inject<ApiDelayService>()
 
     fun get(path: String, handler: OasStubRouteHandler) = apply { routes.routes.get(adjustPath(path), optionAwareHandler(path, handler)) }
     fun post(path: String, handler: OasStubRouteHandler) = apply { routes.routes.post(adjustPath(path), optionAwareHandler(path, handler)) }

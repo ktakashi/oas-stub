@@ -17,7 +17,7 @@ class OasStubServerPlugin: EventListener {
         options = OasStubOptions.builder()
             .stubOptions()
             .addRoutesBuilder(CustomRoutes())
-            .options()
+            .parent()
             .build()
         server = OasStubServer(options)
         server.start()

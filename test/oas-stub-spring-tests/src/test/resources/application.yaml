@@ -1,0 +1,3 @@
+oas.stub.test:
+  server:
+    adminPrefix: /__admin0
