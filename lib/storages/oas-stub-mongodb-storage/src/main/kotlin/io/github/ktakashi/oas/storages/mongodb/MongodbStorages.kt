@@ -21,8 +21,8 @@ abstract class MongodbStorage(private val objectMapper: ObjectMapper,
                               mongoClient: MongoClient,
                               database: String,
                               collection: String) {
-    private val pojoCodevProvider = PojoCodecProvider.builder().automatic(true).build()
-    private val pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), CodecRegistries.fromProviders(pojoCodevProvider))
+    private val pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build()
+    private val pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), CodecRegistries.fromProviders(pojoCodecProvider))
     private val mongoDatabase = mongoClient.getDatabase(database).withCodecRegistry(pojoCodecRegistry)
     private val mongoCollection: MongoCollection<MongoEntry> = mongoDatabase.getCollection(collection, MongoEntry::class.java)
     private val updateOptions = UpdateOptions().upsert(true)

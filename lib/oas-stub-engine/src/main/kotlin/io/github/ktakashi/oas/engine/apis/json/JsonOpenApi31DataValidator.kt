@@ -17,17 +17,12 @@ import io.github.ktakashi.oas.engine.validators.Validator
 import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.JsonSchema
 import io.swagger.v3.oas.models.media.Schema
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import java.io.IOException
 import java.util.Optional
 import java.util.regex.Pattern
 
-@Named @Singleton
-class JsonOpenApi31DataValidator
-@Inject constructor(private val objectMapper: ObjectMapper,
-                    private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V31), JsonMediaSupport {
+class JsonOpenApi31DataValidator(private val objectMapper: ObjectMapper,
+                                 private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V31), JsonMediaSupport {
 
     override fun validate(input: ByteArray, schema: Schema<*>): ApiValidationResult = try {
         checkSchema(objectMapper.readTree(input), "$", schema as JsonSchema)

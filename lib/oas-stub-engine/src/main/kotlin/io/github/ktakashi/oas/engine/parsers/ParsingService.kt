@@ -5,10 +5,9 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.parser.OpenAPIV3Parser
 import io.swagger.v3.parser.converter.SwaggerConverter
 import io.swagger.v3.parser.core.models.ParseOptions
-import jakarta.inject.Named
-import jakarta.inject.Singleton
-import java.util.Optional
 import org.slf4j.LoggerFactory
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 
 private val parseOption = ParseOptions().apply {
     isResolve = true
@@ -19,26 +18,21 @@ private val swaggerParsers = listOf(::OpenAPIV3Parser, ::SwaggerConverter)
 
 private val logger = LoggerFactory.getLogger(ParsingService::class.java)
 
-@Named @Singleton
 class ParsingService {
-    fun parse(content: String): Optional<OpenAPI> =
-        Optional.ofNullable(swaggerParsers
-                .asSequence()
-                .map { v ->
-                    try {
-                        val result = v().readContents(content, null, parseOption)
-                        if (result.messages != null && result.messages.isNotEmpty()) {
-                            logger.warn("Parsing message(s): {}", result.messages)
-                        }
-                        result.openAPI
-                    } catch (e: Throwable) {
-                        logger.error("Failed to parse: {}", e.message, e)
-                        null
-                    }
+    fun parse(content: String): Mono<OpenAPI> = Flux.fromIterable(swaggerParsers)
+        .flatMap { v ->
+            try {
+                val result = v().readContents(content, null, parseOption)
+                if (result.messages != null && result.messages.isNotEmpty()) {
+                    logger.warn("Parsing message(s): {}", result.messages)
                 }
-                .firstOrNull { v -> v != null })
+                Mono.just(result.openAPI)
+            } catch (e: Throwable) {
+                logger.error("Failed to parse: {}", e.message, e)
+                Mono.empty()
+            }
+        }.next()
 
-    fun sanitize(content: String): Optional<String> = parse(content).map(Yaml::pretty)
 
-    fun toYaml(openAPI: OpenAPI): String = Yaml.pretty(openAPI)
+    fun toYaml(openAPI: OpenAPI): Mono<String> = Mono.defer { Mono.just(Yaml.pretty(openAPI)) }
 }

@@ -13,8 +13,6 @@ import io.github.ktakashi.oas.test.OasStubTestService;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import oas.example.petstore.broker.cucumber.context.TestContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,19 +23,17 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Singleton
 public class StepDefinitions {
     static {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
     }
     private final Integer localPort;
     private final TestContext testContext = new TestContext();
+    private final OasStubTestService oasStubTestService;
 
-    @Inject
-    private OasStubTestService oasStubTestService;
-
-    public StepDefinitions(@Value("${local.server.port}") Integer localPort) {
+    public StepDefinitions(@Value("${local.server.port}") Integer localPort, OasStubTestService oasStubTestService) {
         this.localPort = localPort;
+        this.oasStubTestService = oasStubTestService;
     }
 
     @Given("this pet is not found {long}")

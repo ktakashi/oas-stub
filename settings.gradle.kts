@@ -18,37 +18,22 @@ gradleEnterprise {
 
 rootProject.name = "oas-stub"
 
+include(":lib:oas-stub-api")
 include(":lib:oas-stub-model")
 include(":lib:oas-stub-storage-api")
 include(":lib:storages:oas-stub-inmemory-storage")
 include(":lib:storages:oas-stub-hazelcast-storage")
 include(":lib:storages:oas-stub-mongodb-storage")
-include(":lib:oas-stub-plugin")
 include(":lib:oas-stub-engine")
-include(":lib:oas-stub-web-api")
-include(":lib:oas-stub-web")
-include(":lib:oas-stub-web-reactive")
-
-include(":app:jersey:oas-stub-jersey-resource")
-
-include(":app:guice:oas-stub-storage-guice-module-api")
-include(":app:guice:oas-stub-guice-module")
-include(":app:guice:oas-stub-hazelcast-storage-guice-module")
-
+include(":lib:oas-stub-server")
 
 include(":app:spring:oas-stub-storage-autoconfigure-api")
 include(":app:spring:oas-stub-inmemory-storage-autoconfigure")
 include(":app:spring:oas-stub-mongodb-storage-autoconfigure")
 include(":app:spring:oas-stub-hazelcast-storage-autoconfigure")
-include(":app:spring:oas-stub-spring-boot-autoconfigure")
-include(":app:spring:oas-stub-spring-boot-starter-web")
-include(":app:spring:oas-stub-spring-boot-starter-web-reactive")
-include(":app:spring:oas-stub-spring-test-api")
 include(":app:spring:oas-stub-spring-boot-starter-test")
-include(":app:spring:oas-stub-spring-boot-starter-test-reactive")
-include(":app:spring:oas-stub-spring-stub-server")
-include(":app:spring:oas-stub-spring")
 
 include(":test:cucumber-test")
+include(":test:oas-stub-spring-tests")
 
 include(":bom:oas-stub-bom")

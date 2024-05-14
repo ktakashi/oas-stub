@@ -1,5 +1,0 @@
-oas.stub:
-  servlet:
-    adminPrefix: /__admin0
-  executors:
-    parallelism: 5

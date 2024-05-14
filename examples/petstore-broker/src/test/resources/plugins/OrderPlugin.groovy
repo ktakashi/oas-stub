@@ -1,9 +1,9 @@
 package plugins
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.ktakashi.oas.plugin.apis.ApiPlugin
-import io.github.ktakashi.oas.plugin.apis.PluginContext
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.api.http.ResponseContext
+import io.github.ktakashi.oas.api.plugin.ApiPlugin
+import io.github.ktakashi.oas.api.plugin.PluginContext
 import oas.example.petstore.broker.models.order.NewOrder
 import oas.example.petstore.broker.models.order.Order
 

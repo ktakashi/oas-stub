@@ -2,7 +2,7 @@ package io.github.ktakashi.oas.storages.apis
 
 import io.github.ktakashi.oas.model.ApiMetric
 import io.github.ktakashi.oas.model.ApiMetrics
-import io.github.ktakashi.oas.plugin.apis.Storage
+import io.github.ktakashi.oas.api.storage.Storage
 import java.util.Optional
 
 private const val API_METRICS_KEY = "*io.github.ktakashi.oas.api.metric*"

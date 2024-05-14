@@ -237,7 +237,7 @@ class ApiData
  *
  * [delegate] is the API data
  */
-@JvmOverloads constructor(private val delegate: Map<String, Any> = mutableMapOf()): Map<String, Any> by delegate, MergeableApiConfig<ApiData> {
+@JvmOverloads constructor(private val delegate: Map<String, Any> = mapOf()): Map<String, Any> by delegate, MergeableApiConfig<ApiData> {
     override fun merge(other: ApiData): ApiData = ApiData(other + this)
 
     /**

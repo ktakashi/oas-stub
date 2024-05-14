@@ -11,35 +11,38 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHttpError
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
-import io.github.ktakashi.oas.plugin.apis.HttpRequest
-import io.github.ktakashi.oas.plugin.apis.HttpResponse
-import io.github.ktakashi.oas.plugin.apis.RequestContext
-import io.github.ktakashi.oas.plugin.apis.ResponseContext
+import io.github.ktakashi.oas.api.http.HttpRequest
+import io.github.ktakashi.oas.api.http.HttpResponse
+import io.github.ktakashi.oas.api.http.RequestContext
+import io.github.ktakashi.oas.api.http.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.SpecVersion
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import java.io.IOException
+import java.io.InputStream
 import java.net.HttpCookie
 import java.net.URI
 import java.time.Duration
 import java.util.Optional
 import java.util.TreeMap
-import org.apache.http.HttpStatus
+import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.function.TupleUtils
 
 data class ApiContext(val context: String, val apiPath: String, val method: String, val openApi: OpenAPI, val apiDefinitions: ApiDefinitions)
 
+class ApiException(val requestContext: ApiContextAwareRequestContext, val responseContext: ResponseContext): Exception()
 
-fun interface ApiContextService {
+
+interface ApiContextService {
     /**
      * Retrieves [ApiContext] from the [request]
      *
      * If context is not found, then the result would be empty
      */
-    fun getApiContext(request: HttpRequest): Optional<ApiContext>
+    fun getApiContext(request: HttpRequest): Mono<ApiContext>
 }
 
 /**
@@ -73,7 +76,7 @@ interface ApiExecutionService: ApiContextService {
      *
      * The response is intact after the call, so users must call [ResponseContext.emitResponse]
      */
-    fun executeApi(apiContext: ApiContext, request: HttpRequest, response: HttpResponse): ResponseContext
+    fun executeApi(apiContext: ApiContext, request: HttpRequest, response: HttpResponse): Mono<ResponseContext>
 }
 
 /**
@@ -85,128 +88,155 @@ interface ApiRegistrationService {
     /**
      * Retrieves the [ApiDefinitions] associated to the [name]
      */
-    fun getApiDefinitions(name: String): Optional<ApiDefinitions>
+    fun getApiDefinitions(name: String): Mono<ApiDefinitions>
 
     /**
      * Saves the [apiDefinitions] with association to the [name]
      */
-    fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean
+    fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Mono<ApiDefinitions>
 
     /**
      * Deletes API definition from the [name]
      */
-    fun deleteApiDefinitions(name: String): Boolean
+    fun deleteApiDefinitions(name: String): Mono<Boolean>
 
     /**
      * Retrieves all the registered API names
      */
-    fun getAllNames(): Set<String>
+    fun getAllNames(): Flux<String>
+
+    fun validPath(definitions: ApiDefinitions, path: String): Mono<String>
 }
 
-@Named @Singleton
-class DefaultApiService
-@Inject constructor(private val storageService: StorageService,
-                    private val parsingService: ParsingService,
-                    private val apiPathService: ApiPathService,
-                    private val apiResultProvider: ApiResultProvider,
-                    private val pluginService: PluginService): ApiExecutionService, ApiRegistrationService {
-    override fun getApiContext(request: HttpRequest): Optional<ApiContext> =
-            apiPathService.extractApiNameAndPath(request.requestURI).flatMap { (context, api) ->
-                storageService.getApiDefinitions(context).flatMap { apiDefinitions ->
-                    storageService.getOpenApi(context)
-                            .map { def -> ApiContext(openApi = def,
-                                    context = context,
-                                    apiPath = api,
-                                    method = request.method,
-                                    apiDefinitions = apiDefinitions) }
-                }
-            }
+class DefaultApiRegistrationService(private val storageService: StorageService,
+                                    private val parsingService: ParsingService,) : ApiRegistrationService {
+    override fun getApiDefinitions(name: String): Mono<ApiDefinitions> = storageService.getApiDefinitions(name)
+    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Mono<ApiDefinitions> = apiDefinitions.specification?.let { spec ->
+        parsingService.parse(spec).flatMap { openApi ->
+            when (openApi.specVersion) {
+                // V31 isn't one-to-one mapping, so keep the original one
+                SpecVersion.V31 -> Mono.just(apiDefinitions)
+                else -> parsingService.toYaml(openApi).map(apiDefinitions::updateSpecification)
+            }.map { stripInvalidConfiguration(openApi, it) }
+        }.flatMap { def -> Mono.justOrEmpty(storageService.saveApiDefinitions(name, def)) }
+    } ?: Mono.defer { Mono.justOrEmpty(storageService.saveApiDefinitions(name, apiDefinitions)) }
 
-    override fun getApiDefinitions(name: String): Optional<ApiDefinitions> = storageService.getApiDefinitions(name)
-    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Boolean = apiDefinitions.specification?.let { spec ->
-        parsingService.parse(spec)
-                .filter { openApi ->
-                    apiDefinitions.configurations?.let {
-                        it.keys.all { path ->
-                            adjustBasePath(path, openApi).map { p -> findMatchingPath(p, openApi.paths.keys).isPresent }
-                                    .orElse(false)
-                        }
-                    } ?: true
-                }
-                .map { openApi ->
-                    when (openApi.specVersion) {
-                        // V31 isn't one-to-one mapping, so keep the original one
-                        SpecVersion.V31 -> apiDefinitions
-                        else -> apiDefinitions.updateSpecification(parsingService.toYaml(openApi))
-                    }
-                }.map { def -> storageService.saveApiDefinitions(name, def) }
-                .orElse(false)
-    } ?: storageService.saveApiDefinitions(name, apiDefinitions)
-    override fun deleteApiDefinitions(name: String): Boolean = storageService.deleteApiDefinitions(name)
+    override fun deleteApiDefinitions(name: String): Mono<Boolean> = Mono.defer { Mono.just(storageService.deleteApiDefinitions(name)) }
 
-    override fun getAllNames(): Set<String> = storageService.getApiNames()
+    override fun getAllNames(): Flux<String> = storageService.getApiNames()
 
-    override fun executeApi(apiContext: ApiContext, request: HttpRequest, response: HttpResponse): ResponseContext {
-        val path = apiContext.apiPath
-        val requestContext = makeRequestContext(apiContext, path, request, response)
-        val adjustedPath = adjustBasePath(requestContext.apiPath, apiContext.openApi)
-        val pathItem = adjustedPath.flatMap { v -> findMatchingPathValue(v, apiContext.openApi.paths) }
-        if (pathItem.isEmpty) {
-            return emitResponse(requestContext, makeErrorResponse(HttpStatus.SC_NOT_FOUND))
+    override fun validPath(definitions: ApiDefinitions, path: String): Mono<String> = definitions.specification?.let { spec ->
+        parsingService.parse(spec).flatMap { openApi ->
+            Mono.justOrEmpty(adjustBasePath(path, openApi).flatMap { p -> findMatchingPath(p, openApi.paths.keys) })
+                .map { path }
         }
-        val operation = getOperation(pathItem.get(), apiContext.method)
-        if (operation.isEmpty) {
-            return emitResponse(requestContext, makeErrorResponse(HttpStatus.SC_METHOD_NOT_ALLOWED))
+    } ?: Mono.just(path)
+
+    private fun stripInvalidConfiguration(openApi: OpenAPI, apiDefinitions: ApiDefinitions): ApiDefinitions {
+        val newConfig = apiDefinitions.configurations?.filterKeys { path ->
+            adjustBasePath(path, openApi).map { p -> findMatchingPath(p, openApi.paths.keys) }.isPresent
         }
-        val responseContext = apiResultProvider.provideResult(pathItem.get(), operation.get(), requestContext)
-        return emitResponse(requestContext, responseContext)
+        return apiDefinitions.updateConfigurations(newConfig)
     }
+
+}
+
+class DefaultApiService(private val storageService: StorageService,
+                        private val apiPathService: ApiPathService,
+                        private val apiResultProvider: ApiResultProvider,
+                        private val pluginService: PluginService): ApiExecutionService {
+    override fun getApiContext(request: HttpRequest): Mono<ApiContext> =
+        apiPathService.extractApiNameAndPath(request.requestURI).map { (context, api) ->
+            storageService.getApiDefinitions(context).flatMap { apiDefinitions ->
+                storageService.getOpenApi(context)
+                    .map { def ->
+                        ApiContext(
+                            openApi = def,
+                            context = context,
+                            apiPath = api,
+                            method = request.method,
+                            apiDefinitions = apiDefinitions
+                        )
+                    }
+            }
+        }.orElseGet { Mono.empty() }
+
+    override fun executeApi(apiContext: ApiContext, request: HttpRequest, response: HttpResponse): Mono<ResponseContext> =
+        makeRequestContext(apiContext, apiContext.apiPath, request, response)
+            .flatMap { context ->
+                Mono.justOrEmpty(adjustBasePath(context.apiPath, apiContext.openApi))
+                    .flatMap { v ->
+                        Mono.justOrEmpty(findMatchingPathValue(v, apiContext.openApi.paths))
+                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(404)) })
+                            .flatMap { path ->
+                                Mono.justOrEmpty(getOperation(path, apiContext.method)).zipWith(Mono.just(path))
+                            }
+                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(405)) })
+                            .flatMap(TupleUtils.function { operation, path ->
+                                apiResultProvider.provideResult(path, operation, context)
+                            })
+                            .flatMap { response -> emitResponse(context, response) }
+                    }
+            }.onErrorResume(ApiException::class.java) { e -> emitResponse(e.requestContext, e.responseContext) }
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpRequest, response: HttpResponse) =
+        request.bodyToInputStream().map { inputStream ->
             apiContext.apiDefinitions.let { apiDefinitions ->
                 ApiContextAwareRequestContext(
-                        apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
-                        apiOptions = ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::options),
-                        content = readContent(request),
-                        contentType = Optional.ofNullable(request.contentType),
-                        headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
-                            ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
-                            putAll(readHeaders(request))
-                        },
-                        cookies = request.cookies.associate { c -> c.name to HttpCookie(c.name, c.value) },
-                        method = request.method, queryParameters = parseQueryParameters(request.queryString),
-                        rawRequest = request, rawResponse = response)
+                    apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
+                    apiOptions = ModelPropertyUtils.mergeProperty(
+                        path,
+                        apiDefinitions,
+                        ApiCommonConfigurations<*>::options
+                    ),
+                    content = readContent(request, inputStream),
+                    contentType = Optional.ofNullable(request.contentType),
+                    headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
+                        ModelPropertyUtils.mergeProperty(
+                            path,
+                            apiDefinitions,
+                            ApiCommonConfigurations<*>::headers
+                        )?.request?.let { putAll(it) }
+                        putAll(readHeaders(request))
+                    },
+                    cookies = request.cookies.associate { c -> c.name to HttpCookie(c.name, c.value) },
+                    method = request.method, queryParameters = parseQueryParameters(request.queryString),
+                    rawRequest = request, rawResponse = response
+                )
             }
-
-    private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext): ResponseContext = if (requestContext.apiOptions?.failure != null) {
-        when (val f = requestContext.apiOptions.failure) {
-            is ApiProtocolFailure -> DefaultResponseContext(1000) // mustn't return out of range of [100, 500)
-            is ApiHttpError -> DefaultResponseContext(f.status, headers = responseContext.headers)
-            // None, won't fail then
-            else -> customizeResponse(responseContext, requestContext)
         }
-    } else {
-        customizeResponse(responseContext, requestContext)
-    }
 
-    private fun customizeResponse(responseContext: ResponseContext, requestContext: ApiContextAwareRequestContext) = responseContext.let { context ->
-        ModelPropertyUtils.mergeProperty(requestContext.apiPath, requestContext.apiDefinitions, ApiCommonConfigurations<*>::headers)?.response?.let { responseHeaders ->
-            val newHeaders = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
-                putAll(responseHeaders)
-                putAll(context.headers)
+
+
+    private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext) =
+        if (requestContext.apiOptions?.failure != null) {
+            when (val f = requestContext.apiOptions.failure) {
+                is ApiProtocolFailure -> Mono.just(DefaultResponseContext(1000)) // mustn't return out of range of [100, 500)
+                is ApiHttpError -> Mono.just(DefaultResponseContext(f.status, headers = responseContext.headers))
+                // None, won't fail then
+                else -> customizeResponse(responseContext, requestContext)
             }
-            context.mutate().headers(newHeaders).build()
-        } ?: context
-    }.customize(requestContext)
-
-    private fun ResponseContext.customize(requestContext: ApiContextAwareRequestContext) = pluginService.applyPlugin(requestContext, this).let {
-        val l = requestContext.apiOptions?.latency
-        if (l != null) {
-            HighLatencyResponseContext(it, l.toDuration())
         } else {
-            it
+            customizeResponse(responseContext, requestContext)
         }
-    }
+
+    private fun customizeResponse(responseContext: ResponseContext, requestContext: ApiContextAwareRequestContext) =
+        responseContext.let { context ->
+            ModelPropertyUtils.mergeProperty(requestContext.apiPath, requestContext.apiDefinitions, ApiCommonConfigurations<*>::headers)?.response?.let { responseHeaders ->
+                val newHeaders = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
+                    putAll(responseHeaders)
+                    putAll(context.headers)
+                }
+                context.mutate().headers(newHeaders).build()
+            } ?: context
+        }.customize(requestContext)
+
+    private fun ResponseContext.customize(requestContext: ApiContextAwareRequestContext) =
+        pluginService.applyPlugin(requestContext, this).map { responseContext ->
+            requestContext.apiOptions?.latency?.let {
+                HighLatencyResponseContext(responseContext, it.toDuration())
+            } ?: responseContext
+        }
 }
 
 private fun makeErrorResponse(status: Int): ResponseContext = DefaultResponseContext(status = status)
@@ -258,11 +288,10 @@ private fun readHeaders(request: HttpRequest): Map<String, List<String>> = reque
     n to request.getHeaders(n).toList()
 }.toMap().toSortedMap(String.CASE_INSENSITIVE_ORDER)
 
-private fun readContent(request: HttpRequest): Optional<ByteArray> = when (request.method) {
+private fun readContent(request: HttpRequest, inputStream: InputStream): Optional<ByteArray> = when (request.method) {
     "GET", "DELETE", "HEAD", "OPTIONS" -> Optional.empty()
     else -> try {
         val size = request.getHeader("Content-Length")?.let(Integer::parseInt) ?: -1
-        val inputStream = request.inputStream
         if (size > 0) {
             Optional.of(inputStream.readNBytes(size))
         } else {
@@ -284,7 +313,8 @@ data class ApiContextAwareRequestContext(val apiContext: ApiContext,
                                          override val cookies: Map<String, HttpCookie>,
                                          override val queryParameters: Map<String, List<String?>>,
                                          override val rawRequest: HttpRequest,
-                                         override val rawResponse: HttpResponse): RequestContext {
+                                         override val rawResponse: HttpResponse
+): RequestContext {
     override val applicationName
         get() = apiContext.context
 
@@ -296,14 +326,13 @@ internal data class DefaultResponseContext(override val status: Int,
                                            override val content: Optional<ByteArray> = Optional.empty(),
                                            override val contentType: Optional<String> = Optional.empty(),
                                            override val headers: Map<String, List<String>> = mapOf()): ResponseContext {
-    override fun emitResponse(response: HttpResponse) {
+    override fun emitResponse(response: HttpResponse): Publisher<ByteArray> {
         response.status = this.status
         headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
         contentType.ifPresent { t -> response.contentType = t }
-        content.ifPresent { v ->
-            response.outputStream.write(v)
-            response.outputStream.flush()
-        }
+        return content.map { v ->
+            Mono.just(v)
+        }.orElse(Mono.empty())
     }
 
     override fun mutate() = DefaultResponseContextBuilder(status, content, contentType, headers)
@@ -335,20 +364,15 @@ internal data class HighLatencyResponseContext(override val status: Int,
 
     override fun mutate(): ResponseContext.ResponseContextBuilder = throw UnsupportedOperationException("Mutation of this class is not allowed")
 
-    override fun emitResponse(response: HttpResponse) {
+    override fun emitResponse(response: HttpResponse): Publisher<ByteArray> {
         response.status = this.status
         contentType.ifPresent { t -> response.contentType = t }
         headers.forEach { (k, vs) -> vs.forEach { v -> response.addHeader(k, v) } }
-        val outputStream = response.outputStream
-        // flush first, after flush we can't emit header nor status
-        outputStream.flush()
+
         // now let's
-        content.ifPresent { ba ->
-            ba.forEach { b ->
-                Thread.sleep(interval.toMillis())
-                outputStream.write(b.toInt())
-            }
-        }
+        return content.map { ba ->
+            Flux.concat(ba.map { Flux.just(byteArrayOf(it)).delayElements(interval) })
+        }.orElse(Flux.empty())
     }
 
 }

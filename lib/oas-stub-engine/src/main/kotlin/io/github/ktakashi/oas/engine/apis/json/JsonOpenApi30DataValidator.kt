@@ -21,17 +21,12 @@ import io.swagger.v3.oas.models.media.NumberSchema
 import io.swagger.v3.oas.models.media.ObjectSchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.UUIDSchema
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 import java.io.IOException
 import java.util.Optional
 import java.util.regex.Pattern
 
-@Named @Singleton
-class JsonOpenApi30DataValidator
-@Inject constructor(private val objectMapper: ObjectMapper,
-                    private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V30), JsonMediaSupport {
+class JsonOpenApi30DataValidator(private val objectMapper: ObjectMapper,
+                                 private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V30), JsonMediaSupport {
     override fun validate(input: ByteArray, schema: Schema<*>): ApiValidationResult = try {
         checkSchema(objectMapper.readTree(input), "$", schema)
     } catch (e: IOException) {

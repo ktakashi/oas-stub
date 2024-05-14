@@ -5,19 +5,16 @@ import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiDelay
 import io.github.ktakashi.oas.model.ApiFixedDelay
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
+import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import kotlin.time.toTimeUnit
+import reactor.core.publisher.Mono
 
-@Named @Singleton
-class ApiDelayService
-@Inject constructor(private val storageService: StorageService) {
+class ApiDelayService(private val storageService: StorageService) {
     @JvmOverloads
     fun <T> delayFuture(apiContext: ApiContext, completableStage: CompletionStage<T>, executor: ExecutorService = ForkJoinPool.commonPool()) = System.currentTimeMillis().let { start ->
         ModelPropertyUtils.mergeProperty(apiContext.apiPath, apiContext.apiDefinitions, ApiCommonConfigurations<*>::delay)?.let { config ->
@@ -30,11 +27,29 @@ class ApiDelayService
         } ?: completableStage
     }
 
-    fun computeDelay(context: String, path: String, processTime: Long) = storageService.getApiDefinitions(context).map { def ->
+    fun <T> delayMono(apiContext: ApiContext, mono: Mono<T>) = System.currentTimeMillis().let { start ->
+        ModelPropertyUtils.mergeProperty(apiContext.apiPath, apiContext.apiDefinitions, ApiCommonConfigurations<*>::delay)?.let { config ->
+            computeDelay(config, System.currentTimeMillis() - start)?.let { (delay, timeUnit) ->
+                mono.delayElement(Duration.of(delay, timeUnit.toChronoUnit()))
+            }
+        } ?: mono
+    }
+
+    fun <T> delayMono(context: String, path: String, mono: Mono<T>) = System.currentTimeMillis().let { start ->
+        storageService.getApiDefinitions(context).flatMap { def ->
+            ModelPropertyUtils.mergeProperty(path, def, ApiCommonConfigurations<*>::delay)?.let { config ->
+                computeDelay(config, System.currentTimeMillis() - start)?.let { (delay, timeUnit) ->
+                    mono.delayElement(Duration.of(delay, timeUnit.toChronoUnit()))
+                }
+            } ?: mono
+        }.switchIfEmpty(mono)
+    }
+
+    fun computeDelay(context: String, path: String, processTime: Long) = storageService.getApiDefinitions(context).flatMap { def ->
         ModelPropertyUtils.mergeProperty(path, def, ApiCommonConfigurations<*>::delay)?.let { config ->
-            computeDelay(config, processTime)
-        }
-    }.orElse(null)
+            Mono.justOrEmpty(computeDelay(config, processTime))
+        } ?: Mono.empty()
+    }
 
     private fun computeDelay(config: ApiDelay, processTime: Long): Pair<Long, TimeUnit>? = when (config) {
         is ApiFixedDelay -> {

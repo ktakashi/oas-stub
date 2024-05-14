@@ -9,13 +9,8 @@ import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.JsonSchema
 import io.swagger.v3.oas.models.media.Schema
-import jakarta.inject.Inject
-import jakarta.inject.Named
-import jakarta.inject.Singleton
 
-@Named @Singleton
-class JsonOpenApi31DataPopulator
-@Inject constructor(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V31) {
+class JsonOpenApi31DataPopulator(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V31) {
     override fun populate(schema: Schema<*>): ByteArray = when (schema) {
         is JsonSchema -> objectMapper.writeValueAsBytes(populateNode(schema))
         else -> "null".toByteArray()
