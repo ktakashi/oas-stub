@@ -25,14 +25,39 @@ private typealias ReactorResponseHandler = BiFunction<HttpServerRequest, HttpSer
 
 fun interface OasStubRouteHandler: Function<RouterHttpRequest, Any>
 
-class OasStubRoutes(internal val routes: HttpServerRoutes,
-                    private val koin: Koin): (OasStubRoutes.() -> Unit) -> Unit {
+/**
+ * OAS Stub routes.
+ *
+ * A route is passed to builders
+ */
+class OasStubRoutes
+    internal constructor(internal val routes: HttpServerRoutes,
+                         private val koin: Koin): (OasStubRoutes.() -> Unit) -> Unit {
     private val objectMapper = koin.get<ObjectMapper>()
+
+    /**
+     * GET route
+     */
     fun get(path: String, handler: OasStubRouteHandler) = apply { routes.get(path, adjustHandler(handler, objectMapper)) }
+
+    /**
+     * POST route
+     */
     fun post(path: String, handler: OasStubRouteHandler) = apply { routes.post(path, adjustHandler(handler, objectMapper)) }
+
+    /**
+     * PUT route
+     */
     fun put(path: String, handler: OasStubRouteHandler) = apply { routes.put(path, adjustHandler(handler, objectMapper)) }
+
+    /**
+     * DELETE route
+     */
     fun delete(path: String, handler: OasStubRouteHandler) = apply { routes.delete(path, adjustHandler(handler, objectMapper)) }
 
+    /**
+     * Handling `GET`, `POST`, `PUT` and `DELETE` method in the given [path]
+     */
     fun path(path: String, handler: OasStubRouteHandler) = apply {
         routes.also {
             it.get(path, adjustHandler(handler, objectMapper))
@@ -42,7 +67,27 @@ class OasStubRoutes(internal val routes: HttpServerRoutes,
         }
     }
 
+    /**
+     * Creating a configurable route named [context]
+     *
+     * This method is more for Java
+     *
+     * Example:
+     * ```Java
+     * routes.context("custom")
+     *   .get("/ok", request -> request.responseBuilder().ok().build("OK"))
+     *   .build()
+     *   .context("custom2")
+     *   .get("/ok", request -> Mono.just("OK"))
+     *   .build()
+     * ```
+     */
     fun context(context: String) = ContextOasStubRoutes(context, this, koin)
+    /**
+     * Creating a configurable route named [context]
+     *
+     * This is a DSL for Kotlin.
+     */
     fun context(context: String, init: ContextOasStubRoutes.() -> Unit) = ContextOasStubRoutes(context, this, koin).invoke(init)
 
     override fun invoke(init: OasStubRoutes.() -> Unit) {
@@ -50,18 +95,37 @@ class OasStubRoutes(internal val routes: HttpServerRoutes,
     }
 }
 
-class ContextOasStubRoutes(private val context: String,
-                           private val routes: OasStubRoutes,
-                           koin: Koin): (ContextOasStubRoutes.() -> Unit) -> Unit {
+/**
+ * Configurable custom route
+ */
+class ContextOasStubRoutes
+internal constructor(private val context: String,
+                     private val routes: OasStubRoutes,
+                     koin: Koin): (ContextOasStubRoutes.() -> Unit) -> Unit {
     private val apiRegistrationService by koin.inject<ApiRegistrationService>()
     private val objectMapper by koin.inject<ObjectMapper>()
     private val delayService by koin.inject<ApiDelayService>()
 
+    /**
+     * GET route
+     */
     fun get(path: String, handler: OasStubRouteHandler) = apply { routes.routes.get(adjustPath(path), optionAwareHandler(path, handler)) }
+    /**
+     * POST route
+     */
     fun post(path: String, handler: OasStubRouteHandler) = apply { routes.routes.post(adjustPath(path), optionAwareHandler(path, handler)) }
+    /**
+     * PUT route
+     */
     fun put(path: String, handler: OasStubRouteHandler) = apply { routes.routes.put(adjustPath(path), optionAwareHandler(path, handler)) }
+    /**
+     * DELETE route
+     */
     fun delete(path: String, handler: OasStubRouteHandler) = apply { routes.routes.delete(adjustPath(path), optionAwareHandler(path, handler)) }
 
+    /**
+     * Handling `GET`, `POST`, `PUT` and `DELETE` method in the given [path]
+     */
     fun path(path: String, handler: OasStubRouteHandler) = apply {
         routes.routes.also {
             it.get(adjustPath(path), optionAwareHandler(path, handler))
@@ -71,6 +135,9 @@ class ContextOasStubRoutes(private val context: String,
         }
     }
 
+    /**
+     * Builds the routes and returns the root route.
+     */
     fun build(): OasStubRoutes {
         saveContext()
         return routes
@@ -151,6 +218,25 @@ private fun ensureResponse(newRequest: OasStubServerHttpRequest, v: Any?): Route
     }
 }
 
+/**
+ * Custom OAS Stub server route builder
+ */
 fun interface OasStubRoutesBuilder {
+    /**
+     * The entry point of the builder.
+     *
+     * Below is an example of creating a `/custom` context
+     * ```kotlin
+     * OasStubRoutesBuilder { routes ->
+     *     routes {
+     *         context("context") {
+     *             get("/ok") { request ->
+     *                 request.responseBuilder().ok().build("OK")
+     *             }
+     *         }
+     *     }
+     * }
+     * ```
+     */
     fun build(routes: OasStubRoutes)
 }

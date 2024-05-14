@@ -1,7 +1,6 @@
 package io.github.ktakashi.oas.server.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.ktakashi.oas.server.io.bodyToInputStream
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.QueryStringDecoder
 import java.io.InputStream
@@ -41,7 +40,10 @@ internal class OasStubServerHttpRequest(private val request: HttpServerRequest,
 
     override fun param(name: String) = request.param(name)
 
-    override fun bodyToInputStream(): Mono<InputStream> = request.bodyToInputStream()
+    override fun bodyToInputStream(): Mono<InputStream> = request.receive()
+        .aggregate()
+        .asInputStream()
+        .switchIfEmpty(Mono.just(InputStream.nullInputStream()))
 
     override fun <T> bodyToMono(type: Class<T>): Mono<T> = bodyToInputStream()
         .map { objectMapper.readValue(it, type) }

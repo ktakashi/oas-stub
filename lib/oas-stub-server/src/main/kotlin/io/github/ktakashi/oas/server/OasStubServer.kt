@@ -15,15 +15,28 @@ import java.util.function.Predicate
 import org.koin.core.Koin
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
 import reactor.netty.DisposableServer
 import reactor.netty.http.Http2SslContextSpec
 import reactor.netty.http.server.HttpServer
 import reactor.netty.http.server.HttpServerRequest
 
-
+/**
+ * OAS Stub server.
+ *
+ * The simplest server can be created and started like this.
+ *
+ * ```Kotlin
+ * OasStubServer(OasStubOptions.builder().build()).start()
+ * ```
+ *
+ * See [OasStubOptions] for the more options
+ */
 class OasStubServer(private val options: OasStubOptions) {
     companion object {
         private var koinInitialized: Boolean = false
+        @JvmStatic
+        private val selfSignedCertificate = SelfSignedCertificate()
     }
     private var initialized = false
     private lateinit var oasStubApiHandler: OasStubApiHandler
@@ -35,7 +48,14 @@ class OasStubServer(private val options: OasStubOptions) {
     private val serverOptions = options.serverOptions
     private val stubOptions = options.stubOptions
     private var certificate: X509Certificate? = null
+    private var privateKey: PrivateKey? = null
 
+    /**
+     * Initializes the server.
+     *
+     * It won't be bound to any ports after this method call.
+     * And this method is not needed to be called before [start].
+     */
     fun init() {
         if (!initialized) {
             if (!koinInitialized) {
@@ -52,14 +72,6 @@ class OasStubServer(private val options: OasStubOptions) {
             oasStubApiHandler = OasStubApiHandler()
             oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options.stubOptions)
             oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options.stubOptions)
-            initialized = true
-        }
-    }
-
-    fun start() {
-        init()
-        httpServer = createNettyServer(serverOptions.port).bindNow()
-        if (serverOptions.httpsPort >= 0) {
             val cert = serverOptions.ssl?.let { ssl ->
                 if (ssl.keyAlias != null && ssl.keyPassword != null) {
                     ssl.keyStore?.getKey(ssl.keyAlias, ssl.keyPassword.toCharArray())?.let { key ->
@@ -70,32 +82,87 @@ class OasStubServer(private val options: OasStubOptions) {
                 } else {
                     null
                 }
-            } ?: SelfSignedCertificate().let {
+            } ?: selfSignedCertificate.let {
                 it.cert() to it.key()
             }
-            httpsServer = createNettyServer(serverOptions.httpsPort)
-                .secure { spec -> spec.sslContext(Http2SslContextSpec.forServer(cert.second, cert.first)) }
-                .bindNow()
             certificate = cert.first
+            privateKey = cert.second
+            initialized = true
         }
     }
 
+    /**
+     * Starts the server
+     */
+    fun start() {
+        init()
+        httpServer = createNettyServer(serverOptions.port).bindNow()
+        if (serverOptions.httpsPort >= 0) {
+            httpsServer = createNettyServer(serverOptions.httpsPort)
+                .secure { spec -> spec.sslContext(Http2SslContextSpec.forServer(privateKey!!, certificate)) }
+                .bindNow()
+        }
+    }
 
+    /**
+     * Stops the server
+     */
     fun stop() {
         httpServer?.disposeNow()
         httpsServer?.disposeNow()
         httpServer = null
         httpsServer = null
+        stopKoin()
+        koinInitialized = false
+        initialized = false
     }
 
+    /**
+     * Returns port number.
+     *
+     * If the server is not started, then `-1`
+     */
     fun port() = httpServer?.port() ?: -1
+    /**
+     * Returns HTTPS port number.
+     *
+     * If the server is not started or HTTPS is not configured, then `-1`
+     */
     fun httpsPort() = httpsServer?.port() ?: -1
+
+    /***
+     * Returns `true` if the server is running.
+     */
     fun isRunning() = httpServer != null || httpsServer != null
+
+    /**
+     * Returns stub path of the server
+     */
     fun stubPath() = stubOptions.stubPath
+
+    /**
+     * Checks if the admin endpoints are enabled or not.
+     */
     fun adminEnabled() = stubOptions.enableAdmin
+
+    /**
+     * Returns admin path of the server
+     */
     fun adminPath() = stubOptions.adminPath
+
+    /**
+     * Checks if the metrics endpoints are enabled or not
+     */
     fun metricsEnabled() = stubOptions.enableMetrics
-    fun metricsPath() = stubOptions.metricsPath
+
+    /**
+     * Returns metrics path of the server
+     */
+    fun metricsPath() = "${stubOptions.adminPath}${stubOptions.metricsPath}"
+
+    /**
+     * Returns TLS certificate of the server, if configured
+     */
     fun certificate() = certificate
 
     private fun createNettyServer(port: Int): HttpServer = HttpServer.create().port(port)

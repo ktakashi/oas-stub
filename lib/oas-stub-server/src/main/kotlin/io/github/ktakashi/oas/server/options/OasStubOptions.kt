@@ -9,6 +9,9 @@ import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 import java.security.KeyStore
 
+/**
+ * OAS Stub options.
+ */
 data class OasStubOptions
 internal constructor(val serverOptions: OasStubServerOptions,
                      val stubOptions: OasStubStubOptions)
@@ -16,8 +19,20 @@ internal constructor(val serverOptions: OasStubServerOptions,
     companion object {
         @JvmStatic
         fun builder() = Builder()
+
+        /**
+         * Default stub path
+         */
         const val DEFAULT_STUB_PATH = "/oas"
+
+        /**
+         * Default admin path
+         */
         const val DEFAULT_ADMIN_PATH = "/__admin"
+
+        /**
+         * Default metrics path segment
+         */
         const val DEFAULT_METRICS_PATH = "/metrics"
     }
     class Builder internal constructor() {

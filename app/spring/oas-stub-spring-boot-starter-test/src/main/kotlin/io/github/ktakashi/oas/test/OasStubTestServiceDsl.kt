@@ -23,7 +23,7 @@ import org.springframework.core.io.Resource
  * Allow to update easily stub configuration
  *
  * Example:
- * ```
+ * ```kotlin
  * oasStubTestService("petstore") {
  *     headers {
  *         request {
