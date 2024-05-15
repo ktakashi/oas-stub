@@ -9,22 +9,11 @@ group = "$group.test.spring"
 description = "OAS stub test server tests for Spring"
 
 dependencies {
-    api(project(":lib:spring:oas-stub-spring-boot-starter-test"))
-    api(project(":lib:spring:oas-stub-storage-autoconfigure-api"))
-    implementation(libs.slf4j.api)
-    implementation(libs.spring.boot.autoconfigure)
-    implementation(libs.spring.cloud.starter.bootstrap) {
-        exclude(group = "org.springframework.boot")
-        exclude(group = "com.fasterxml.jackson.core")
-        exclude(group = "com.fasterxml.jackson.module")
-    }
-    implementation(libs.spring.cloud.starter.config) {
-        exclude(group = "org.springframework.boot")
-        exclude(group = "com.fasterxml.jackson.core")
-        exclude(group = "com.fasterxml.jackson.module")
-    }
-
+    testImplementation(project(":lib:spring:oas-stub-spring-boot-starter-test"))
+    testImplementation(project(":lib:spring:oas-stub-storage-autoconfigure-api"))
     testImplementation(project(":test:cucumber-test"))
+    testImplementation(libs.slf4j.api)
+    testImplementation(libs.spring.boot.autoconfigure)
     testImplementation(libs.hazelcast)
     testImplementation(libs.mongodb.driver.sync)
     testImplementation(enforcedPlatform(libs.cucumber.bom))
@@ -35,13 +24,6 @@ dependencies {
     testImplementation("io.cucumber:cucumber-junit-platform-engine")
     testImplementation("io.cucumber:cucumber-spring")
     testImplementation(libs.spring.boot.starter.test)
-    testImplementation(libs.spring.web)
     testImplementation(libs.projectreactor.reactor.core)
-    testImplementation(libs.rest.assured) {
-        exclude(group = "org.apache.groovy")
-    }
-    testImplementation(libs.groovy.xml)
-    testImplementation(libs.groovy.json)
-    testImplementation(libs.awaitility)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

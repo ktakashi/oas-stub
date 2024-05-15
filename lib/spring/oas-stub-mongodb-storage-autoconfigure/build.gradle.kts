@@ -17,7 +17,6 @@ tasks.dokkaHtml {
 dependencies {
     api(project(":lib:spring:oas-stub-storage-autoconfigure-api"))
     api(project(":lib:storages:oas-stub-mongodb-storage"))
-    implementation(libs.spring.web)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.kotlin.stdlib)
     implementation(libs.jackson.databind.core)

@@ -30,4 +30,6 @@ oas.stub.test:
         password: password
         type: PKCS12
 
-
+spring:
+  jackson:
+    default-property-inclusion: non_null

@@ -19,6 +19,7 @@ class OasStubServerPlugin: EventListener {
             .addRoutesBuilder(CustomRoutes())
             .parent()
             .serverOptions()
+            .port(0)
             .httpsPort(0)
             .parent()
             .build()

@@ -20,13 +20,12 @@ dependencies {
     implementation(libs.jersey.client)
     implementation(libs.mail.api)
     implementation(libs.validation.api)
-    implementation(libs.swagger.core.annotations.jakarta)
     implementation(libs.swagger.perser) {
-        exclude(group = "io.swagger.core.v3", module = "swagger-core")
+        exclude(group = "commons-codec")
         exclude(group = "com.google.guava")
     }
+    implementation(libs.commons.codec)
     implementation(libs.guava)
-    implementation(libs.swagger.core.jakarta)
     implementation(libs.caffeine)
     implementation(libs.groovy.core)
     implementation(libs.slf4j.api)

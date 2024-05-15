@@ -16,17 +16,13 @@ import io.restassured.http.ContentType
 import io.restassured.http.Header
 import io.restassured.http.Headers
 import io.restassured.response.Response
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
 import java.net.URI
 import java.util.function.Supplier
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.equalTo
-import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.greaterThanOrEqualTo
-import org.hamcrest.Matchers.lessThan
 import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -46,12 +42,10 @@ data class TestContext(var applicationUrl: String,
 
 fun interface TestContextSupplier: Supplier<TestContext>
 
-@Singleton
 @Suppress("UNCHECKED_CAST")
-class StepDefinitions
-@Inject constructor(private val persistentStorage: PersistentStorage,
-                    private val sessionStorage: SessionStorage,
-                    private val testContextSupplier: TestContextSupplier) {
+class StepDefinitions(private val persistentStorage: PersistentStorage,
+                      private val sessionStorage: SessionStorage,
+                      private val testContextSupplier: TestContextSupplier) {
 
     private lateinit var testContext: TestContext
     companion object {
