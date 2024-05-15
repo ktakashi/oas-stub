@@ -19,7 +19,23 @@ we support the followings:
 - Hazelcast
 - MongoDB
 
-All the storages are located in separate modules.
+All the storages are located in separate modules as listed below:
+
+- `io.github.ktakashi.oas.stub:oas-stub-inmemory-storage`
+- `io.github.ktakashi.oas.stub:oas-stub-hazelcast-storage`
+- `io.github.ktakashi.oas.stub:oas-stub-mongodb-storage`
+
+Passing the storage to `OasStubOptions` is done like this:
+
+[source, java]
+----
+OasStubOptions.builder()
+  .stubOptions()
+  .sessionStorage(${SessionStorage instance})
+  .persistentStorage(${PersistentStorage instance})
+  .parent()
+  .build();
+----
 
 === Choice of storage
 
@@ -38,13 +54,6 @@ perform fast, ACID storage can also be an option.
 `in-memory` storage can also be used as long as the application
 doesn't have to scale out or restart periodically.
 
-=== For Spring Boot users
-
-If you are using `oas-stub-starter-web` module, then `in-memory`
-storage is used by default but the other storage auto-configurations
-are also loaded. To enable the other storages, you need to specify
-the storage type and put the relevant libraries into your classpath.
-
 ==== Hazelcast storage
 
 To enable Hazelcast storage, you need to add Hazelcast library
@@ -60,6 +69,56 @@ version `5.3.2`. It should work with other version as long as it's
     <version>5.3.2</version>
 </dependency>
 ----
+
+To create a Hazelcast storage, you can write code like this:
+
+[source, java]
+----
+// Suppose, you have your own ObjectMapper and HazelcastInstance
+var hazelcastStorage = new HazelcastStorage(objectMapper, hazelcastInstance, "map-name");
+// For session storage
+var hazelcastSessionStorage = new HazelcastSessionStorage(hazelcastStorage);
+// For persistent storage
+var hazelcastPersistentStorage = new HazelcastPersistentStorage(hazelcastStorage);
+----
+
+==== MongoDB storage
+
+To enable Hazelcast storage, you need to add MongoDB library
+into your classpath. We test with `org.mongodb:mongodb-driver-sync` of
+version `4.10.2`. It should work with other version as long as it's
+`4.x.x`.
+
+NOTE: It has to be the sync library. We don't support async or reactive.
+
+[source, xml]
+----
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver-sync</artifactId>
+    <version>4.10.2</version>
+</dependency>
+----
+
+To create a MongoDB storage, you can write code like this:
+
+[source, java]
+----
+// Suppose, you have your own ObjectMapper and MongoClient
+// for session storage
+var mongodbSessionStorage = new MongodbSessionStorage(objectMapper, mongoClient, "dababase", "collection");
+// for persistent storage
+var mongodbPersistentStorage = new MongodbPersistentStorage(objectMapper, mongoClient, "dababase", "collection");
+----
+
+=== Using OAS Stub Spring Boot test starter
+
+If you are using `io.github.ktakashi.oas.stub.spring:oas-stub-spring-boot-starter-test`,
+then you can use Spring Boot configuration to configure storages,
+instead of creating by yourself as the module autoconfigure the
+storage.
+
+==== Hazelcast storage
 
 After you put the Hazelcast dependency, then you need to add the
 below configuration to your `application.(yaml|properties)`.
@@ -103,23 +162,7 @@ it's one of the serializers.
 
 ==== MongoDB storage
 
-To enable Hazelcast storage, you need to add MongoDB library
-into your classpath. We test with `org.mongodb:mongodb-driver-sync` of
-version `4.10.2`. It should work with other version as long as it's
-`4.x.x`.
-
-NOTE: It has to be the sync library. We don't support async or reactive.
-
-[source, xml]
-----
-<dependency>
-    <groupId>org.mongodb</groupId>
-    <artifactId>mongodb-driver-sync</artifactId>
-    <version>4.10.2</version>
-</dependency>
-----
-
-After you put the Hazelcast dependency, then you need to add the
+After you put the MongoDB dependency, then you need to add the
 below configuration to your `application.(yaml|properties)`.
 
 [source, yaml]

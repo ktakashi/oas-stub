@@ -27,7 +27,7 @@ can look simply like this:
 
 [source, groovy]
 ----
-import io.github.ktakashi.oas.plugin.apis.ApiPlugin
+import io.github.ktakashi.oas.api.plugin.ApiPlugin
 
 class PetstoreGetPetPlugin implements ApiPlugin {
     @Override
@@ -39,10 +39,8 @@ class PetstoreGetPetPlugin implements ApiPlugin {
 }
 ----
 
-:use-swagger-ui: footnote:[You can also use Swagger UI to do it]
-
 You save this plugin to `PetstoreGetPetPlugin.groovy`, then upload
-it with `curl` like this{use-swagger-ui}:
+it with `curl` like this:
 
 [source, shell]
 ----
