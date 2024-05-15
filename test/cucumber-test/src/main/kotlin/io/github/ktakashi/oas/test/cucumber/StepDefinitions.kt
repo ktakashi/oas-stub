@@ -25,7 +25,9 @@ import kotlin.time.toTimeUnit
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.greaterThanOrEqualTo
 import org.hamcrest.Matchers.lessThan
+import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -271,13 +273,13 @@ class StepDefinitions
     @Then("I waited at least {long} {string}")
     fun `I waited at least {int} {string}`(duration: Long, unit: String) {
         val durationUnit = DurationUnit.valueOf(unit.uppercase())
-        testContext.response?.then()?.time(greaterThan(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
+        testContext.response?.then()?.time(greaterThanOrEqualTo(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
     }
 
     @Then("I waited at most {long} {string}")
     fun `I waited at most {int} {string}`(duration: Long, unit: String) {
         val durationUnit = DurationUnit.valueOf(unit.uppercase())
-        testContext.response?.then()?.time(lessThan(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
+        testContext.response?.then()?.time(lessThanOrEqualTo(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
     }
 
     @Then("Reading response took at least {long} {string}")
