@@ -9,8 +9,8 @@ group = "$group.test.spring"
 description = "OAS stub test server tests for Spring"
 
 dependencies {
-    api(project(":app:spring:oas-stub-spring-boot-starter-test"))
-    api(project(":app:spring:oas-stub-storage-autoconfigure-api"))
+    api(project(":lib:spring:oas-stub-spring-boot-starter-test"))
+    api(project(":lib:spring:oas-stub-storage-autoconfigure-api"))
     implementation(libs.slf4j.api)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.cloud.starter.bootstrap) {

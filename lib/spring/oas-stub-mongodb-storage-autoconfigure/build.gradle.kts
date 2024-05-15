@@ -8,19 +8,20 @@ plugins {
 }
 
 group = "$group.spring"
-description = "OAS stub hazelcast storage starter"
+description = "OAS stub mongodb storage starter"
 
 tasks.dokkaHtml {
     dependsOn(tasks.findByName("kaptKotlin"))
 }
 
 dependencies {
-    api(project(":app:spring:oas-stub-storage-autoconfigure-api"))
-    api(project(":lib:storages:oas-stub-hazelcast-storage"))
+    api(project(":lib:spring:oas-stub-storage-autoconfigure-api"))
+    api(project(":lib:storages:oas-stub-mongodb-storage"))
+    implementation(libs.spring.web)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.kotlin.stdlib)
     implementation(libs.jackson.databind.core)
-    compileOnly(libs.hazelcast)
+    compileOnly(libs.mongodb.driver.sync)
 
     kapt(libs.spring.boot.configuration.processor)
 }

@@ -8,9 +8,17 @@ import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
 import io.github.ktakashi.oas.server.options.OasStubOptions
+import io.netty.handler.codec.http2.Http2SecurityUtil
+import io.netty.handler.ssl.ApplicationProtocolConfig
+import io.netty.handler.ssl.ApplicationProtocolNames
+import io.netty.handler.ssl.ClientAuth
+import io.netty.handler.ssl.SslContextBuilder
+import io.netty.handler.ssl.SslProvider
+import io.netty.handler.ssl.SupportedCipherSuiteFilter
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.util.function.Consumer
 import java.util.function.Predicate
 import org.koin.core.Koin
 import org.koin.core.context.GlobalContext
@@ -20,6 +28,8 @@ import reactor.netty.DisposableServer
 import reactor.netty.http.Http2SslContextSpec
 import reactor.netty.http.server.HttpServer
 import reactor.netty.http.server.HttpServerRequest
+import reactor.netty.tcp.AbstractProtocolSslContextSpec
+
 
 /**
  * OAS Stub server.
@@ -99,8 +109,18 @@ class OasStubServer(private val options: OasStubOptions) {
         httpServer = createNettyServer(serverOptions.port).bindNow()
         if (serverOptions.httpsPort >= 0) {
             httpsServer = createNettyServer(serverOptions.httpsPort)
-                .secure { spec -> spec.sslContext(Http2SslContextSpec.forServer(privateKey!!, certificate)) }
-                .bindNow()
+                .secure { spec -> spec.sslContext(SslContextSpec(SslContextBuilder.forServer(privateKey!!, certificate)
+                    .also { builder ->
+                        serverOptions.ssl?.let { ssl ->
+                            ssl.trustStore?.let { trustStore ->
+                                builder.trustManager(trustStore.aliases().asSequence().mapNotNull { alias ->
+                                    trustStore.getCertificate(alias) as X509Certificate
+                                }.toList())
+                            }
+                            builder.clientAuth(ClientAuth.valueOf(ssl.clientAuth.name))
+                        }
+                    }))
+                }.bindNow()
         }
     }
 
@@ -177,5 +197,28 @@ class OasStubServer(private val options: OasStubOptions) {
 
     private fun prefix(path: String): Predicate<in HttpServerRequest> =
         Predicate<HttpServerRequest> { request -> request.uri().startsWith(path) }
+
+    private class SslContextSpec(sslContextBuilder: SslContextBuilder): AbstractProtocolSslContextSpec<SslContextSpec>(sslContextBuilder) {
+        companion object {
+            internal val DEFAULT_CONFIGURATOR: Consumer<SslContextBuilder> =
+                Consumer<SslContextBuilder> { sslCtxBuilder: SslContextBuilder ->
+                    sslCtxBuilder.sslProvider(if (SslProvider.isAlpnSupported(SslProvider.OPENSSL)) SslProvider.OPENSSL else SslProvider.JDK)
+                        .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
+                        .applicationProtocolConfig(
+                            ApplicationProtocolConfig(
+                                ApplicationProtocolConfig.Protocol.ALPN,
+                                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+                                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                                ApplicationProtocolNames.HTTP_2,
+                                ApplicationProtocolNames.HTTP_1_1
+                            )
+                        )
+                }
+        }
+        override fun get(): SslContextSpec = this
+
+        override fun defaultConfiguration(): Consumer<SslContextBuilder> = DEFAULT_CONFIGURATOR
+
+    }
 }
 

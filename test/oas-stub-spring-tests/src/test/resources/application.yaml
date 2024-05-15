@@ -1,3 +1,33 @@
 oas.stub.test:
   server:
-    adminPrefix: /__admin0
+    admin-prefix: /__admin0
+    ssl:
+      client-auth: require
+      keystore:
+        location: "classpath:/keystore.p12"
+        password: password
+        type: PKCS12
+        key-alias: oas-stub
+        key-password: password
+      truststore:
+        # Trusted certificate is extracted from the 'keystore.p12'
+        # We use the same keystore on both server and client, due to my laziness
+        base64: |
+          MIIDEgIBAzCCArwGCSqGSIb3DQEHAaCCAq0EggKpMIICpTCCAqEGCSqGSIb3DQEHBqCCApIwggKO
+          AgEAMIIChwYJKoZIhvcNAQcBMGYGCSqGSIb3DQEFDTBZMDgGCSqGSIb3DQEFDDArBBSm4MVm9B3p
+          scZof9hvurlzv+K5uwICJxACASAwDAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEEIbtYYr9Wtj+
+          Kpdz6afEZLKAggIQZK4XNHMo64eqggSeFo2Yq/YOAzE0gSch27bapx0+xGkW3R0CFcI5m5gzL+oE
+          QNJL0NOhdYLkB0XNXKuY/SXGSR1UDUXZ99FvXcKc51Ro9ys/h5Eb3OrLJwqsg0DovTfpkXVCDqWx
+          iyQxmAXURuLpJRxYzfoyYJI11whNQuU34NK1XN4lsfKjBDHbOfBv5wQ6tNy0OOTah5USpJqw0tgr
+          ngNhgTk09owJ+VeWbwBpgMews98XQWmtb++AroKZKJKaKe6boelVt3kFbdxhvh+MqqvL+FcW341C
+          sRJbVv/hkO4+P+rU66RvmsVBzt7hHpJ/zSNdY92T3QGfz0/rCfqYVF28qCFpwO9xYz2Kun4DTefY
+          AvG00tIB/eUHsU6x2ZTMp//Pcd5JNOeAo20wLcffjBwFr7cwPV5xENdB/22PhX4p5cd845hORTfZ
+          qO7hzy+839BkoNVmyTRRLQF9FShb+qLSaKzO5Z4tYUN9rOp81d8U2QbAojQLt7VjY0JcqJByEHTY
+          3MqEMnjm5JK0IhDKZbnqVAycOSqL/gomDixuXYrBGsYFTNrrzjQ+b/DqE0se/muJ/kBtlt7vvNvI
+          o9gMW+vRRZDhXDJav/RSxXg2J7rvznxBjo+yG4SRv8iaGUewy9W7tyE1ZGmI+kTYYihuI4d1AzKU
+          UAEH2qzsZ6OsjqZxU48FAxbQadkxdX3pNAxoME0wMTANBglghkgBZQMEAgEFAAQgUDv+34eMMsyH
+          qBSujabb2tSS+txG98rvBS1Wm3JHjvgEFBU3CQTfRNvS8BRnOIla3fzyFpKAAgInEA==
+        password: password
+        type: PKCS12
+
+

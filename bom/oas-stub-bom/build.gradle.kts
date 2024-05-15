@@ -21,11 +21,11 @@ dependencies {
         api(project(":lib:storages:oas-stub-mongodb-storage"))
         api(project(":lib:oas-stub-engine"))
         api(project(":lib:oas-stub-server"))
-        api(project(":app:spring:oas-stub-storage-autoconfigure-api"))
-        api(project(":app:spring:oas-stub-inmemory-storage-autoconfigure"))
-        api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
-        api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
-        api(project(":app:spring:oas-stub-spring-boot-starter-test"))
+        api(project(":lib:spring:oas-stub-storage-autoconfigure-api"))
+        api(project(":lib:spring:oas-stub-inmemory-storage-autoconfigure"))
+        api(project(":lib:spring:oas-stub-mongodb-storage-autoconfigure"))
+        api(project(":lib:spring:oas-stub-hazelcast-storage-autoconfigure"))
+        api(project(":lib:spring:oas-stub-spring-boot-starter-test"))
     }
 }
 

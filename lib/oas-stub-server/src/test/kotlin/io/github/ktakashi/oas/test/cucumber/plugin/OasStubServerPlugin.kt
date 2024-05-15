@@ -11,12 +11,15 @@ import io.github.ktakashi.oas.test.cucumber.CustomRoutes
 class OasStubServerPlugin: EventListener {
     companion object {
         lateinit var server: OasStubServer
-        lateinit var options: OasStubOptions
+        private lateinit var options: OasStubOptions
     }
     private fun setup() {
         options = OasStubOptions.builder()
             .stubOptions()
             .addRoutesBuilder(CustomRoutes())
+            .parent()
+            .serverOptions()
+            .httpsPort(0)
             .parent()
             .build()
         server = OasStubServer(options)

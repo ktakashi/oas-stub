@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Lazy
+import org.springframework.core.io.ClassPathResource
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @EnableAutoConfiguration
@@ -36,6 +37,8 @@ class SslConfiguration(private val oasStubServer: OasStubServer) {
         ks.load(null)
         ks.setCertificateEntry("oas-stub", oasStubServer.certificate())
         val sslConfig = SSLConfig().trustStore(ks)
+            .keyStore(ClassPathResource("/keystore.p12").file, "password")
+            .keystoreType("PKCS12")
         RestAssured.config = RestAssured.config().sslConfig(sslConfig)
     }
 }

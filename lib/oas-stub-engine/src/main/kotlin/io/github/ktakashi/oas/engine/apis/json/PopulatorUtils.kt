@@ -52,7 +52,7 @@ internal fun populateBooleanNode(schema: Schema<*>): JsonNode = handleExample(sc
 internal fun populateIntNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> IntNode.valueOf(NumberInput.parseInt(v.toString())) }
     ?: handleRange(schema)
 
-internal fun populateDoubleNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> DoubleNode.valueOf(NumberInput.parseDouble(v.toString())) }
+internal fun populateDoubleNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> DoubleNode.valueOf(NumberInput.parseDouble(v.toString(), false)) }
     ?: handleRange(schema)
 
 internal fun populateTextNode(schema: Schema<*>): JsonNode = handleExample(schema) { v ->  TextNode.valueOf(v.toString()) }

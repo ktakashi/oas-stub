@@ -1,4 +1,4 @@
-package io.github.ktakashi.oas.test.cucumber.glue
+package io.github.ktakashi.oas.test.glue.http
 
 import io.cucumber.spring.CucumberContextConfiguration
 import io.github.ktakashi.oas.storages.apis.PersistentStorage

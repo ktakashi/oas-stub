@@ -12,9 +12,9 @@ description = "OAS stub for testing"
 
 dependencies {
     api(project(":lib:oas-stub-server"))
-    api(project(":app:spring:oas-stub-inmemory-storage-autoconfigure"))
-    api(project(":app:spring:oas-stub-hazelcast-storage-autoconfigure"))
-    api(project(":app:spring:oas-stub-mongodb-storage-autoconfigure"))
+    api(project(":lib:spring:oas-stub-inmemory-storage-autoconfigure"))
+    api(project(":lib:spring:oas-stub-hazelcast-storage-autoconfigure"))
+    api(project(":lib:spring:oas-stub-mongodb-storage-autoconfigure"))
     api(libs.spring.boot.starter.test)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)

@@ -27,11 +27,12 @@ include(":lib:storages:oas-stub-mongodb-storage")
 include(":lib:oas-stub-engine")
 include(":lib:oas-stub-server")
 
-include(":app:spring:oas-stub-storage-autoconfigure-api")
-include(":app:spring:oas-stub-inmemory-storage-autoconfigure")
-include(":app:spring:oas-stub-mongodb-storage-autoconfigure")
-include(":app:spring:oas-stub-hazelcast-storage-autoconfigure")
-include(":app:spring:oas-stub-spring-boot-starter-test")
+// Spring Boot libraries
+include(":lib:spring:oas-stub-storage-autoconfigure-api")
+include(":lib:spring:oas-stub-inmemory-storage-autoconfigure")
+include(":lib:spring:oas-stub-mongodb-storage-autoconfigure")
+include(":lib:spring:oas-stub-hazelcast-storage-autoconfigure")
+include(":lib:spring:oas-stub-spring-boot-starter-test")
 
 include(":test:cucumber-test")
 include(":test:oas-stub-spring-tests")

@@ -11,9 +11,12 @@ import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.server.options.OasStubOptions
+import io.github.ktakashi.oas.server.options.OasStubServerSSLOptions
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import java.nio.charset.StandardCharsets
+import java.security.KeyStore
+import java.util.Base64
 import java.util.SortedMap
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
@@ -45,12 +48,10 @@ data class OasStubTestProperties(
         const val OAS_STUB_SERVER_PROPERTY_PREFIX = "${OAS_STUB_TEST_PROPERTY_PREFIX}.server"
     }
 
-    fun toOasStubOptions(
-        objectMapper: ObjectMapper,
-        sessionStorage: SessionStorage,
-        persistentStorage: PersistentStorage,
-        oasStubRoutesBuilders: Set<OasStubRoutesBuilder>
-    ) = OasStubOptions.builder()
+    fun toOasStubOptions(objectMapper: ObjectMapper,
+                         sessionStorage: SessionStorage,
+                         persistentStorage: PersistentStorage,
+                         oasStubRoutesBuilders: Set<OasStubRoutesBuilder>) = OasStubOptions.builder()
         .stubOptions()
         .stubPath(server.stubPrefix)
         .adminPath(server.adminPrefix)
@@ -64,6 +65,18 @@ data class OasStubTestProperties(
         .serverOptions()
         .port(server.port)
         .httpsPort(server.httpsPort)
+        .ssl().also { ssl ->
+            server.ssl?.let {
+                it.keystore?.let { ks ->
+                    ssl.keyAlias(ks.keyAlias)
+                        .keyStore(ks.toKeyStore())
+                }
+                it.truststore?.let { ks ->
+                    ssl.trustStore(ks.toKeyStore())
+                }
+                ssl.clientAuth(it.clientAuth)
+            }
+        }.parent()
         .parent()
         .build()
 }
@@ -100,8 +113,89 @@ data class OasStubTestServerProperties
      * HTTPS port of the server. 0 means random
      */
     var httpsPort: Int = -1,
-    var resetConfigurationAfterEachTest: Boolean = false
+    /**
+     * Resets stub configuration on each test execution.
+     */
+    var resetConfigurationAfterEachTest: Boolean = false,
+    /**
+     * SSL configuration
+     */
+    @NestedConfigurationProperty var  ssl: OasStubServerSSLProperties? = null,
+
 )
+
+data class OasStubServerSSLProperties
+@JvmOverloads constructor(
+    /**
+     * HTTPS keystore
+     */
+    @NestedConfigurationProperty var keystore: OasStubKeyStoreProperties? = null,
+    /**
+     * HTTPS truststore
+     */
+    @NestedConfigurationProperty var truststore: OasStubTrustStoreProperties? = null,
+    /**
+     * Client authentication type.
+     */
+    var clientAuth: OasStubServerSSLOptions.ClientAuth = OasStubServerSSLOptions.ClientAuth.NONE,
+)
+
+interface OasStubKeyStore {
+    /**
+     * Key store location.
+     *
+     * If this is provided, the value is used even if [base64] is provided
+     */
+    var location: Resource?
+
+    /**
+     * Base64 encoded key store
+     */
+    var base64: String?
+
+    /**
+     * Key store password
+     */
+    var password: String
+
+    /**
+     * Key store type. Default `JKS`
+     */
+    var type: String
+
+    fun toKeyStore(): KeyStore {
+        val inputStream = location?.inputStream
+            ?: base64?.let { Base64.getMimeDecoder().wrap(it.byteInputStream()) }
+            ?: throw IllegalStateException("Either location or base64 must be provided")
+        val ks = KeyStore.getInstance(type)
+        ks.load(inputStream, password.toCharArray())
+        return ks
+    }
+}
+
+data class OasStubKeyStoreProperties
+@JvmOverloads constructor(
+    override var location: Resource? = null,
+    override var base64: String? = null,
+    override var password: String,
+    override var type: String = "JKS",
+    /**
+     * Key alias
+     */
+    var keyAlias: String,
+    /**
+     * Key password of the above alias
+     */
+    var keyPassword: String,
+): OasStubKeyStore
+
+data class OasStubTrustStoreProperties
+@JvmOverloads constructor(
+    override var location: Resource? = null,
+    override var base64: String? = null,
+    override var password: String,
+    override var type: String = "JKS",
+): OasStubKeyStore
 
 data class OasStubTestDefinitionProperties
 @JvmOverloads constructor(
