@@ -50,9 +50,10 @@ fun interface MergeableApiConfig<T: MergeableApiConfig<T>> {
         property = "type"
 )
 @JsonSubTypes(
-        JsonSubTypes.Type(value = ApiFailureNone::class, name = "none"),
-        JsonSubTypes.Type(value = ApiProtocolFailure::class, name = "protocol"),
-        JsonSubTypes.Type(value = ApiHttpError::class, name = "http")
+    JsonSubTypes.Type(value = ApiFailureNone::class, name = "none"),
+    JsonSubTypes.Type(value = ApiProtocolFailure::class, name = "protocol"),
+    JsonSubTypes.Type(value = ApiHttpError::class, name = "http"),
+    JsonSubTypes.Type(value = ApiConnectionError::class, name = "connection")
 )
 sealed interface ApiFailure
 
@@ -74,6 +75,8 @@ data object ApiProtocolFailure: ApiFailure
  * The API will return the [status] code, default `500`
  */
 data class ApiHttpError(val status: Int = 500): ApiFailure
+
+data object ApiConnectionError: ApiFailure
 
 /**
  * API Latency

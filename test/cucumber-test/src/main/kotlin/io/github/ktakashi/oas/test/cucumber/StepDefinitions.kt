@@ -16,6 +16,7 @@ import io.restassured.http.ContentType
 import io.restassured.http.Header
 import io.restassured.http.Headers
 import io.restassured.response.Response
+import java.io.IOException
 import java.net.URI
 import java.util.function.Supplier
 import kotlin.time.DurationUnit
@@ -189,6 +190,12 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     fun protocolError(method: String, path: String, content: String, contentType: String) {
         // Either client exception or illegal argument exception, but can't say which one for some weird reason
         assertThrows<Exception> { requestApi(path, contentType, content, method) }
+    }
+
+    @Then("[Connection Error] I {string} to {string} with {string} as {string}")
+    fun connectionError(method: String, path: String, content: String, contentType: String) {
+        // Either client exception or illegal argument exception, but can't say which one for some weird reason
+        assertThrows<IOException> { requestApi(path, contentType, content, method) }
     }
 
     private fun requestApi(path: String, contentType: String, content: String, method: String) {

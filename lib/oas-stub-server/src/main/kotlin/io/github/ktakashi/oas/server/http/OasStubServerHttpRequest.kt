@@ -1,20 +1,32 @@
 package io.github.ktakashi.oas.server.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.api.http.Connection
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.QueryStringDecoder
 import java.io.InputStream
 import java.net.HttpCookie
 import java.net.URI
+import java.util.concurrent.CompletableFuture
+import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 import reactor.netty.http.server.HttpServerRequest
 import reactor.netty.http.server.HttpServerResponse
+
+private typealias NConnection = reactor.netty.Connection
+
+internal class OasStubServerConnection(private val connection: NConnection): Connection {
+    override fun close() {
+        connection.dispose()
+    }
+}
 
 internal class OasStubServerHttpRequest(private val request: HttpServerRequest,
                                         private val response: HttpServerResponse,
                                         private val objectMapper: ObjectMapper): RouterHttpRequest {
     private val uri = URI.create(request.uri())
     private val qp by lazy { QueryStringDecoder(request.uri()).parameters() }
+    override val connection by lazy { OasStubServerConnection(request as NConnection) }
 
     override val requestURI: String
         get() = uri.path

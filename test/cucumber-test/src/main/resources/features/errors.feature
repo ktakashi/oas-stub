@@ -54,3 +54,18 @@ Feature: Error cases
     Examples:
       | failure                                                | status | least |
       | {"latency": {"interval": 100, "unit": "MILLISECONDS"}} | 200    | 1500  |
+
+  @error @failure @connection
+  Scenario Outline: Connection error
+    Given this API definition '/schema/test-api.yaml'
+    Given these HTTP headers
+      | name       | value                                |
+      | Request-ID | cca43b93-a4ff-46cf-8564-d8e4f3899657 |
+    When I create 'test-api' API definition
+    And I update API definition with '<failure>' via '/options' of content type 'application/json'
+    Then I get http status 200
+    Then [Connection Error] I 'GET' to '/profiles/1' with '' as ''
+    And I get http status <status>
+    Examples:
+      | failure                             | status |
+      | {"failure": {"type": "connection"}} | 200    |

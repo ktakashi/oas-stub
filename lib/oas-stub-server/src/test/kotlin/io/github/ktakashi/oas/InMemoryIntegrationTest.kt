@@ -13,5 +13,5 @@ import org.junit.platform.suite.api.Suite
 @ConfigurationParameter(key = Constants.PLUGIN_PUBLISH_ENABLED_PROPERTY_NAME, value = "false")
 @ConfigurationParameter(key = Constants.GLUE_PROPERTY_NAME, value = "io.github.ktakashi.oas.test.cucumber,io.github.ktakashi.oas.test.glue.http")
 @ConfigurationParameter(key = Constants.PLUGIN_PROPERTY_NAME, value = "pretty:build/cucumber/pretty.txt,pretty,io.github.ktakashi.oas.test.cucumber.plugin.OasStubServerPlugin")
-@ConfigurationParameter(key = Constants.FILTER_TAGS_PROPERTY_NAME, value = "not @ignore")
+@ConfigurationParameter(key = Constants.FILTER_TAGS_PROPERTY_NAME, value = "@connection and not @ignore")
 class InMemoryIntegrationTest

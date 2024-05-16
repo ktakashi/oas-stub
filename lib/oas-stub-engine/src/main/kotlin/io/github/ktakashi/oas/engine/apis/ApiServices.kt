@@ -36,7 +36,7 @@ data class ApiContext(val context: String, val apiPath: String, val method: Stri
 class ApiException(val requestContext: ApiContextAwareRequestContext, val responseContext: ResponseContext): Exception()
 
 
-interface ApiContextService {
+fun interface ApiContextService {
     /**
      * Retrieves [ApiContext] from the [request]
      *
@@ -144,6 +144,7 @@ class DefaultApiRegistrationService(private val storageService: StorageService,
 class DefaultApiService(private val storageService: StorageService,
                         private val apiPathService: ApiPathService,
                         private val apiResultProvider: ApiResultProvider,
+                        private val apiFailureService: ApiFailureService,
                         private val pluginService: PluginService): ApiExecutionService {
     override fun getApiContext(request: HttpRequest): Mono<ApiContext> =
         apiPathService.extractApiNameAndPath(request.requestURI).map { (context, api) ->
@@ -179,46 +180,28 @@ class DefaultApiService(private val storageService: StorageService,
                     }
             }.onErrorResume(ApiException::class.java) { e -> emitResponse(e.requestContext, e.responseContext) }
 
-    private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpRequest, response: HttpResponse) =
+    private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpRequest, response: HttpResponse) = apiContext.apiDefinitions.let { apiDefinitions ->
+        val apiOptions = ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::options)
         request.bodyToInputStream().map { inputStream ->
-            apiContext.apiDefinitions.let { apiDefinitions ->
-                ApiContextAwareRequestContext(
-                    apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
-                    apiOptions = ModelPropertyUtils.mergeProperty(
-                        path,
-                        apiDefinitions,
-                        ApiCommonConfigurations<*>::options
-                    ),
-                    content = readContent(request, inputStream),
-                    contentType = Optional.ofNullable(request.contentType),
-                    headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
-                        ModelPropertyUtils.mergeProperty(
-                            path,
-                            apiDefinitions,
-                            ApiCommonConfigurations<*>::headers
-                        )?.request?.let { putAll(it) }
-                        putAll(readHeaders(request))
-                    },
-                    cookies = request.cookies.associate { c -> c.name to HttpCookie(c.name, c.value) },
-                    method = request.method, queryParameters = parseQueryParameters(request.queryString),
-                    rawRequest = request, rawResponse = response
-                )
-            }
+            ApiContextAwareRequestContext(
+                apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
+                apiOptions = apiOptions,
+                content = readContent(request, inputStream),
+                contentType = Optional.ofNullable(request.contentType),
+                headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
+                    ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
+                    putAll(readHeaders(request))
+                },
+                cookies = request.cookies.associate { c -> c.name to HttpCookie(c.name, c.value) },
+                method = request.method, queryParameters = request.queryParameters,
+                rawRequest = request, rawResponse = response
+            )
         }
-
-
+    }
 
     private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext) =
-        if (requestContext.apiOptions?.failure != null) {
-            when (val f = requestContext.apiOptions.failure) {
-                is ApiProtocolFailure -> Mono.just(DefaultResponseContext(1000)) // mustn't return out of range of [100, 500)
-                is ApiHttpError -> Mono.just(DefaultResponseContext(f.status, headers = responseContext.headers))
-                // None, won't fail then
-                else -> customizeResponse(responseContext, requestContext)
-            }
-        } else {
-            customizeResponse(responseContext, requestContext)
-        }
+        apiFailureService.checkFailure(requestContext, responseContext.headers)
+            .switchIfEmpty(Mono.defer { customizeResponse(responseContext, requestContext) })
 
     private fun customizeResponse(responseContext: ResponseContext, requestContext: ApiContextAwareRequestContext) =
         responseContext.let { context ->
@@ -276,14 +259,6 @@ internal fun adjustBasePath(path: String, api: OpenAPI): Optional<String> {
     return Optional.ofNullable(maybePath)
 }
 
-private val QUERY_PARAM_PATTERN = Regex("([^&=]+)(=?)([^&]+)?")
-private fun parseQueryParameters(s: String?): Map<String, List<String?>> = s?.let {
-    QUERY_PARAM_PATTERN.findAll(it).map { m ->
-        val n = m.groupValues[1]
-        val eq = m.groups[2]?.value
-        n to (m.groups[3]?.value ?: if (!eq.isNullOrEmpty()) "" else null)
-    }
-}?.groupBy({ p -> p.first }, { p -> p.second }) ?: mapOf()
 private fun readHeaders(request: HttpRequest): Map<String, List<String>> = request.headerNames.asSequence().map { n ->
     n to request.getHeaders(n).toList()
 }.toMap().toSortedMap(String.CASE_INSENSITIVE_ORDER)
