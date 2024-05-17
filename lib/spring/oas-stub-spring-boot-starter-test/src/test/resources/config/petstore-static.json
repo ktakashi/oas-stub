@@ -1,0 +1,28 @@
+{
+  "specification": "classpath:/schema/petstore.yaml",
+  "configurations": {
+    "/v1/pets/1": {
+      "plugin": {
+        "type": "GROOVY",
+        "script": "classpath:/oas/stub/plugins/StaticStubPlugin.groovy"
+      },
+      "data": {
+        "status": 200,
+        "response": "classpath:/json/pet1.json"
+      }
+    },
+    "/v1/pets/{id}": {
+      "plugin": {
+        "type": "GROOVY",
+        "script": "classpath:/oas/stub/plugins/StaticStubPlugin.groovy"
+      },
+      "data": {
+        "status": 404,
+        "response": {
+          "status": 404,
+          "message": "No pet found"
+        }
+      }
+    }
+  }
+}

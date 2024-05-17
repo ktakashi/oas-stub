@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Import
 @MustBeDocumented
 @Import(OasStubServerConfiguration::class)
 @PropertyMapping(value = OAS_STUB_SERVER_PROPERTY_PREFIX, skip = SkipPropertyMapping.ON_DEFAULT_VALUE)
-annotation class AutoConfigureOasStubServer(val port: Int = 0, val httpsPort: Int = -1)
+annotation class AutoConfigureOasStubServer(val port: Int = 0, val httpsPort: Int = -1, val stubConfigurations: Array<String> = [])
 
 /**
  * Convenient annotation to retrieve HTTP port from the OAS Stub server.

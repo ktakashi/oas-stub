@@ -61,6 +61,7 @@ data class OasStubTestProperties(
         .sessionStorage(sessionStorage)
         .persistentStorage(persistentStorage)
         .routesBuilders(oasStubRoutesBuilders)
+        .staticConfigurations(server.stubConfigurations)
         .parent()
         .serverOptions()
         .port(server.port)
@@ -113,6 +114,10 @@ data class OasStubTestServerProperties
      * HTTPS port of the server. 0 means random
      */
     var httpsPort: Int = -1,
+    /**
+     * Static stub configuration locations.
+     */
+    var stubConfigurations: List<String> = listOf(),
     /**
      * Resets stub configuration on each test execution.
      */

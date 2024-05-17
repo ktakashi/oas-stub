@@ -60,15 +60,20 @@ data class PluginContextData(override val requestContext: RequestContext,
     override val objectWriter: ObjectWriter
         get() = objectMapper.writer()
 
-    override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T & Any> =
-            Optional.ofNullable(apiData[label]?.let { v ->
-                clazz.cast(when (v) {
-                    is String -> if (String::class.java.isAssignableFrom(clazz)) v else null
-                    is Number -> if (Number::class.java.isAssignableFrom(clazz)) v else null
-                    is ByteArray -> if (ByteArray::class.java.isAssignableFrom(clazz)) v else null
-                    is Map<*, *> -> objectMapper.convertValue(v, clazz)
-                    else -> if (v.javaClass.isAssignableFrom(clazz)) v else null
-                })
-            })
+    override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T & Any> = Optional.ofNullable(apiData[label]?.let { v ->
+        clazz.cast(if (clazz.isAssignableFrom(v.javaClass)) {
+            v // super class
+        } else {
+            checkSubclass(v, clazz)
+        })
+    })
+
+    private fun <T> checkSubclass(v: Any, clazz: Class<T>) = when (v) {
+        is String -> if (String::class.java.isAssignableFrom(clazz)) v else null
+        is Number -> if (Number::class.java.isAssignableFrom(clazz)) v else null
+        is ByteArray -> if (ByteArray::class.java.isAssignableFrom(clazz)) v else null
+        is Map<*, *> -> objectMapper.convertValue(v, clazz)
+        else -> if (v.javaClass.isAssignableFrom(clazz)) v else null
+    }
 
 }

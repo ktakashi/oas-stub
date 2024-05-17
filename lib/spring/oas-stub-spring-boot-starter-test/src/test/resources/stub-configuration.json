@@ -1,0 +1,3 @@
+{
+  "petstore-static": "classpath:/config/petstore-static.json"
+}

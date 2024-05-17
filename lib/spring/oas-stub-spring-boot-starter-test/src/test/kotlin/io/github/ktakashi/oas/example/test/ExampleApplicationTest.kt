@@ -21,29 +21,16 @@ import org.springframework.test.context.ActiveProfiles
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@AutoConfigureOasStubServer(port = 0)
+@AutoConfigureOasStubServer(port = 0, stubConfigurations = ["classpath:/stub-configuration.json"])
 class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.port}") private val localPort: Int,
                              @Autowired private val oasStubTestService: OasStubTestService) {
     @Test
-    fun check() {
-        RestAssured.filters(RequestLoggingFilter(), ResponseLoggingFilter())
+    fun testPetstore() {
+        val name = "petstore"
+        check(name)
 
-        given().get(URI.create("http://localhost:$localPort/oas/petstore/v1/pets/1"))
-                .then()
-                .statusCode(200)
-                .body("id", equalTo(1))
-        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").byPath("/v1/pets/1").count())
-
-        given().get(URI.create("http://localhost:$localPort/oas/petstore/v1/pets/2"))
-                .then()
-                .statusCode(404)
-                .body("message", equalTo("No pet found"))
-        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").byStatus(200).count())
-        assertEquals(1, oasStubTestService.getTestApiMetrics("petstore").byStatus(404).count())
-        assertEquals(2, oasStubTestService.getTestApiMetrics("petstore").filter { m -> m.httpMethod == "GET"}.count())
-
-        val context = oasStubTestService.getTestApiContext("petstore")
-                .updateHeaders(ApiHeaders(response = sortedMapOf("Extra-Header" to listOf("extra-value"))))
+        val context = oasStubTestService.getTestApiContext(name)
+            .updateHeaders(ApiHeaders(response = sortedMapOf("Extra-Header" to listOf("extra-value"))))
         context.getApiConfiguration("/v1/pets/{id}").ifPresent { config ->
             val value = OasStubTestResources.DefaultResponseModel(status = 200, response = """{"id": 2,"name": "Pochi","tag": "dog"}""")
             val map = config.data?.asMap()?.toMutableMap()
@@ -51,10 +38,33 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
             context.updateApi("/v1/pets/{id}", config.updateData(ApiData(map!!))).save()
         }
 
-        given().get(URI.create("http://localhost:$localPort/oas/petstore/v1/pets/2"))
+        given().get(URI.create("http://localhost:$localPort/oas/$name/v1/pets/2"))
+            .then()
+            .statusCode(200)
+            .header("Extra-Header", equalTo("extra-value"))
+            .body("id", equalTo(2))
+    }
+
+    @Test
+    fun testPetstoreStatic() {
+        check("petstore-static")
+    }
+
+    fun check(name: String) {
+        RestAssured.filters(RequestLoggingFilter(), ResponseLoggingFilter())
+
+        given().get(URI.create("http://localhost:$localPort/oas/$name/v1/pets/1"))
                 .then()
                 .statusCode(200)
-                .header("Extra-Header", equalTo("extra-value"))
-                .body("id", equalTo(2))
+                .body("id", equalTo(1))
+        assertEquals(1, oasStubTestService.getTestApiMetrics(name).byPath("/v1/pets/1").count())
+
+        given().get(URI.create("http://localhost:$localPort/oas/$name/v1/pets/2"))
+                .then()
+                .statusCode(404)
+                .body("message", equalTo("No pet found"))
+        assertEquals(1, oasStubTestService.getTestApiMetrics(name).byStatus(200).count())
+        assertEquals(1, oasStubTestService.getTestApiMetrics(name).byStatus(404).count())
+        assertEquals(2, oasStubTestService.getTestApiMetrics(name).filter { m -> m.httpMethod == "GET"}.count())
     }
 }

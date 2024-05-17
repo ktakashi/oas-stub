@@ -48,10 +48,11 @@ private fun URI.load() = this.path.let { path ->
 }
 
 private fun URI.readYaml() = Yaml().let { yaml ->
-    val map: Map<String, Any> = yaml.load(this.openStream())
+    val map: Map<String, Any> = this.openStream()?.let(yaml::load) ?: throw IllegalArgumentException("$this doesn't exists")
     OasStubStaticConfigParser.objectMapper.valueToTree<JsonNode>(map)
 }
-private fun URI.readJson() = OasStubStaticConfigParser.objectMapper.readTree(this.openStream())
+private fun URI.readJson() = this.openStream()?.let { OasStubStaticConfigParser.objectMapper.readTree(it) }
+    ?: throw IllegalArgumentException("$this doesn't exists")
 
 private fun URI.openStream(): InputStream? = when (this.scheme) {
     "classpath" -> OasStubStaticConfigParser::class.java.getResourceAsStream(this.path)
