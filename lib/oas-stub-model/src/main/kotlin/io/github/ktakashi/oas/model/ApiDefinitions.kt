@@ -337,6 +337,8 @@ data class ApiConfiguration
     override fun updateData(data: ApiData?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin)
     override fun updateDelay(delay: ApiDelay?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin)
 
+    fun mutate(): Builder = Builder(headers, options, data, delay, plugin)
+
     companion object {
         /**
          * Creates a builder
@@ -345,18 +347,12 @@ data class ApiConfiguration
         fun builder() = Builder()
     }
 
-    class Builder {
-        var headers: ApiHeaders? = null
-            private set
-        var options: ApiOptions? = null
-            private set
-        var data: ApiData? = null
-            private set
-        var delay: ApiDelay? = null
-            private set
-        var plugin: PluginDefinition? = null
-            private set
-
+    class Builder
+    internal constructor(internal var headers: ApiHeaders? = null,
+                         internal var options: ApiOptions? = null,
+                         internal var data: ApiData? = null,
+                         internal var delay: ApiDelay? = null,
+                         internal var plugin: PluginDefinition? = null){
         /**
          * Sets [headers]
          */
@@ -455,6 +451,8 @@ data class ApiDefinitions
     override fun updateData(data: ApiData?) = ApiDefinitions(specification, configurations, headers, options, data, delay)
     override fun updateDelay(delay: ApiDelay?) = ApiDefinitions(specification, configurations, headers, options, data, delay)
 
+    fun mutate(): Builder = Builder(specification, configurations?.toMutableMap(), headers, options, data, delay)
+
     companion object {
         /**
          * Returns a builder object
@@ -463,20 +461,13 @@ data class ApiDefinitions
         fun builder() = Builder()
     }
 
-    class Builder {
-        var specification: String? = null
-            private set
-        var configurations: Map<String, ApiConfiguration>? = null
-            private set
-        var headers: ApiHeaders? = null
-            private set
-        var options: ApiOptions? = null
-            private set
-        var data: ApiData? = null
-            private set
-        var delay: ApiDelay? = null
-            private set
-
+    class Builder
+        internal constructor(var specification: String? = null,
+                             var configurations: MutableMap<String, ApiConfiguration>? = null,
+                             var headers: ApiHeaders? = null,
+                             var options: ApiOptions? = null,
+                             var data: ApiData? = null,
+                             var delay: ApiDelay? = null){
         /**
          * Sets [specification]
          */
@@ -485,17 +476,16 @@ data class ApiDefinitions
         /**
          * Sets [configurations]
          */
-        fun configurations(configurations: Map<String, ApiConfiguration>?) = apply { this.configurations = configurations }
+        fun configurations(configurations: Map<String, ApiConfiguration>?) = apply { this.configurations = configurations?.toMutableMap() }
 
         /**
          * Associates [path] and [configuration] and updates [configurations]
          */
         fun configuration(path: String, configuration: ApiConfiguration) = apply {
-            configurations = if (configurations == null) {
-                mapOf(path to configuration)
-            } else {
-                configurations!! + (path to configuration)
+            if (configurations == null) {
+                configurations = mutableMapOf()
             }
+            configurations!![path] = configuration
         }
 
         /**

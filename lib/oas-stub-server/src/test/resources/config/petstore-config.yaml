@@ -1,0 +1,28 @@
+specification: "classpath:/schema/v3/petstore.yaml"
+
+headers:
+  request:
+    X-Root-Name: [root]
+  response:
+    X-Trace-Id: [trace-id]
+
+options:
+  shouldValidate: true
+
+data:
+
+delay:
+  type: fixed
+  delay: 1
+  delayUnit: MILLISECONDS
+
+configurations:
+  '/v1/pets/{petId}':
+    headers:
+      response:
+        X-Pets-Trace-Id: [pet-trace-id]
+    plugin:
+      type: GROOVY
+      script: "classpath:/plugins/PetStoreGetPetPlugin.groovy"
+  # invalid config, filtered out
+  '/v1/pets':

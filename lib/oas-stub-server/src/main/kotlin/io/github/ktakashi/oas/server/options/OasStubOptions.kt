@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.server.options
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -118,7 +119,8 @@ internal constructor(internal val stubPath: String,
                      internal val objectMapper: ObjectMapper,
                      internal val routesBuilders: List<OasStubRoutesBuilder>,
                      internal val persistentStorage: PersistentStorage,
-                     internal val sessionStorage: SessionStorage)
+                     internal val sessionStorage: SessionStorage,
+                     internal val staticConfigurations: List<String>)
 {
     companion object {
         @JvmStatic
@@ -134,7 +136,8 @@ internal constructor(internal val stubPath: String,
                   private var routesBuilders: MutableList<OasStubRoutesBuilder> = mutableListOf(),
                   private var objectMapper: ObjectMapper = ObjectMapper().findAndRegisterModules(),
                   private var persistentStorage: PersistentStorage = InMemoryPersistentStorage(),
-                  private var sessionStorage: SessionStorage = InMemorySessionStorage()) {
+                  private var sessionStorage: SessionStorage = InMemorySessionStorage(),
+                  private var staticConfigurations: MutableList<String> = mutableListOf()) {
         /**
          * Sets the stub path. Default value is [OasStubOptions.DEFAULT_STUB_PATH]
          */
@@ -179,6 +182,15 @@ internal constructor(internal val stubPath: String,
         fun sessionStorage(sessionStorage: SessionStorage) = apply { this.sessionStorage = sessionStorage }
 
         /**
+         * Locations of static configuration
+         */
+        fun staticConfigurations(staticConfigurations: List<String>) = apply { this.staticConfigurations = staticConfigurations.toMutableList() }
+
+        /**
+         * Adds a static configuration location
+         */
+        fun addStaticConfiguration(configuration: String) = apply { this.staticConfigurations.add(configuration) }
+        /**
          * Sets custom routes builders.
          *
          * This replaces the entire builders
@@ -195,7 +207,8 @@ internal constructor(internal val stubPath: String,
          */
         fun parent() = parent
         internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, enableAdmin, enableMetrics,
-            objectMapper.copy().registerModules(KotlinModule.Builder().build()), routesBuilders, persistentStorage, sessionStorage)
+            objectMapper.copy().registerModules(KotlinModule.Builder().build()), routesBuilders,
+            persistentStorage, sessionStorage, staticConfigurations)
     }
 
 }

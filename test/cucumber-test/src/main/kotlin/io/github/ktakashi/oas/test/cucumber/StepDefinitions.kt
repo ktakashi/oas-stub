@@ -66,6 +66,11 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
         testContext.apiDefinitionPath = path
     }
 
+    @Given("this static stub {string}")
+    fun thisStaticStub(context: String) {
+        testContext.apiName = context
+    }
+
     @Given("these HTTP headers")
     fun `these HTTP headers`(table: DataTable) {
         table.asMaps(String::class.java, String::class.java).forEach { m ->

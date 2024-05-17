@@ -1,0 +1,2 @@
+petstore-static: "classpath:/config/petstore-config.yaml"
+test-api-static: "classpath:/config/test-api-config.yaml"

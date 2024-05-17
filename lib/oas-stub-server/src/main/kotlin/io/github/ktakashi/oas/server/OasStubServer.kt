@@ -1,5 +1,7 @@
 package io.github.ktakashi.oas.server
 
+import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
+import io.github.ktakashi.oas.server.config.OasStubStaticConfigParser
 import io.github.ktakashi.oas.server.handlers.OasStubAdminRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubApiHandler
 import io.github.ktakashi.oas.server.handlers.OasStubMetricsRoutesBuilder
@@ -16,6 +18,7 @@ import io.netty.handler.ssl.SslContextBuilder
 import io.netty.handler.ssl.SslProvider
 import io.netty.handler.ssl.SupportedCipherSuiteFilter
 import io.netty.handler.ssl.util.SelfSignedCertificate
+import java.net.URI
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.function.Consumer
@@ -52,6 +55,7 @@ class OasStubServer(private val options: OasStubOptions) {
     private lateinit var oasStubApiHandler: OasStubApiHandler
     private lateinit var oasStubAdminRoutesBuilder: OasStubAdminRoutesBuilder
     private lateinit var oasStubMetricsRoutesBuilder: OasStubMetricsRoutesBuilder
+    private lateinit var apiRegistrationService: ApiRegistrationService
     private lateinit var koin: Koin
     private var httpServer: DisposableServer? = null
     private var httpsServer: DisposableServer? = null
@@ -82,6 +86,7 @@ class OasStubServer(private val options: OasStubOptions) {
             oasStubApiHandler = OasStubApiHandler()
             oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options.stubOptions)
             oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options.stubOptions)
+            apiRegistrationService = koin.get<ApiRegistrationService>()
             val cert = serverOptions.ssl?.let { ssl ->
                 if (ssl.keyAlias != null && ssl.keyPassword != null) {
                     ssl.keyStore?.getKey(ssl.keyAlias, ssl.keyPassword.toCharArray())?.let { key ->
@@ -94,6 +99,13 @@ class OasStubServer(private val options: OasStubOptions) {
                 }
             } ?: selfSignedCertificate.let {
                 it.cert() to it.key()
+            }
+            stubOptions.staticConfigurations.map { location ->
+                OasStubStaticConfigParser.parse(URI.create(location))
+            }.forEach { config ->
+                config.forEach { (context, definition) ->
+                    apiRegistrationService.saveApiDefinitions(context, definition).subscribe()
+                }
             }
             certificate = cert.first
             privateKey = cert.second
