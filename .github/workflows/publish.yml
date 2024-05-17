@@ -52,7 +52,7 @@ jobs:
           content=`cat gradle.properties | sed -E 's/version=.+/version=${{ inputs.version }}/'`
           echo "$content" > gradle.properties
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
       - name: Build
         run: ./gradlew build -x test
       - name: Publish
