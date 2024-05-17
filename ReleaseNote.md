@@ -5,11 +5,18 @@ Release Notes
 Version 2.0.0
 ---
 
-Overall architecture change which includes;
+### Overall architecture change which includes;
 - Servlet to reactive
 - Netty as underlying server
 - Remove purpose specific modules, such as reactive, guice et al.
 - Backward incompatible API changes, e.g. plugins
+
+### Connection error failure option
+`/options` endpoint with `{"type": "connection"}`
+
+### Static configuration
+Allow users to predefine own stub during server start up
+instead of calling admin endpoints.
 
 Version 1.3.0
 ---
