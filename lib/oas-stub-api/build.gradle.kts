@@ -5,7 +5,7 @@ plugins {
     id("io.github.ktakashi.oas.deployed")
 }
 
-description = "OAS stub plugin APIs"
+description = "OAS stub APIs"
 
 dependencies {
     implementation(libs.kotlin.stdlib)

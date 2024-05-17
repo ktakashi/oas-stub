@@ -6,7 +6,6 @@ import org.reactivestreams.Publisher
 /**
  * Response context interface.
  *
- * This context can be retrieved via [PluginContext].
  * The initial context contains default values of the response.
  * e.g. the [status] might be 200 or 4xx, if the request validation failed.
  *

@@ -57,8 +57,6 @@ interface RequestContext {
     val rawRequest: HttpRequest
     /**
      * Raw response
-     *
-     * CAUTION: Modifying the response will affect the result. e.g. write value to [HttpServletResponse.getOutputStream]
      */
     val rawResponse: HttpResponse
 }
