@@ -23,9 +23,6 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 
-const val OAS_STUB_SERVER_BEAN_NAME = "oasStubServer"
-const val OAS_STUB_TEST_SERVICE_BEAN_NAME = "oasStubTestService"
-
 
 @ConfigurationProperties(prefix = OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX)
 data class OasStubTestProperties(
@@ -66,6 +63,7 @@ data class OasStubTestProperties(
         .serverOptions()
         .port(server.port)
         .httpsPort(server.httpsPort)
+        .enableAccessLog(server.enableAccessLog)
         .ssl().also { ssl ->
             server.ssl?.let {
                 it.keystore?.let { ks ->
@@ -107,6 +105,10 @@ data class OasStubTestServerProperties
      */
     var enableMetrics: Boolean = true,
     /**
+     * Enables access log
+     */
+    var enableAccessLog: Boolean = false,
+    /**
      * HTTP port of the server. 0 means random
      */
     var port: Int = 8080,
@@ -125,8 +127,7 @@ data class OasStubTestServerProperties
     /**
      * SSL configuration
      */
-    @NestedConfigurationProperty var  ssl: OasStubServerSSLProperties? = null,
-
+    @NestedConfigurationProperty var  ssl: OasStubServerSSLProperties? = null
 )
 
 data class OasStubServerSSLProperties

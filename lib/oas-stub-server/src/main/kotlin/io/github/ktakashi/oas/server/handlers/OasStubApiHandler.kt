@@ -46,6 +46,7 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
                 apiExecutionService.executeApi(context, newRequest, newResponse)
                     .transform { execution -> apiDelayService.delayMono(context, execution) }
             }.flatMap { responseContext ->
+                logger.debug("Response: {}", responseContext)
                 val content = responseContext.emitResponse(newResponse)
                 Mono.just(response.sendHeaders().sendByteArray(content))
                     .doOnSuccess {

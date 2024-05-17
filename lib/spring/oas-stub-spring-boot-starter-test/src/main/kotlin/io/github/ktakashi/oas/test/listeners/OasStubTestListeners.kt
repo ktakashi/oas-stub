@@ -71,9 +71,6 @@ class OasStubServerTestExecutionListener: AbstractTestExecutionListener() {
     override fun prepareTestInstance(testContext: TestContext) {
         if (isTarget(testContext)) {
             val config = oasStubServerConfiguration(testContext)
-            if (!config.isRunning) {
-                config.init()
-            }
             config.start()
         }
     }
