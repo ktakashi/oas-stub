@@ -1,7 +1,9 @@
 package io.github.ktakashi.oas.server.handlers
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.engine.apis.ApiConnectionException
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
+import io.github.ktakashi.oas.engine.apis.ApiFailureService
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.server.http.OasStubServerHttpRequest
@@ -14,6 +16,7 @@ import java.util.function.BiFunction
 import java.util.function.Function
 import org.koin.core.Koin
 import org.reactivestreams.Publisher
+import org.slf4j.LoggerFactory
 import reactor.core.CorePublisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -24,6 +27,8 @@ import reactor.netty.http.server.HttpServerRoutes
 private typealias ReactorResponseHandler = BiFunction<HttpServerRequest, HttpServerResponse, Publisher<Void>>
 
 fun interface OasStubRouteHandler: Function<RouterHttpRequest, Any>
+
+private val logger = LoggerFactory.getLogger(OasStubRoutes::class.java)
 
 /**
  * OAS Stub routes.
@@ -105,6 +110,7 @@ internal constructor(private val context: String,
     private val apiRegistrationService by koin.inject<ApiRegistrationService>()
     private val objectMapper by koin.inject<ObjectMapper>()
     private val delayService by koin.inject<ApiDelayService>()
+    private val failureService by koin.inject<ApiFailureService>()
 
     /**
      * GET route
@@ -145,8 +151,17 @@ internal constructor(private val context: String,
 
     private fun adjustPath(path: String): String = "/$context$path"
     private fun optionAwareHandler(path: String, handler: OasStubRouteHandler): ReactorResponseHandler {
-        return adjustHandler(handler, objectMapper) { execution ->
+        return adjustHandler(handler, objectMapper, checkFailure(path)) { execution ->
             delayService.delayMono(context, path, execution)
+        }
+    }
+
+    private fun checkFailure(path: String): (RouterHttpRequest) -> Mono<RouterHttpResponse> = { request ->
+        failureService.checkFailure(context, path) { responseContext ->
+            request.responseBuilder().status(responseContext.status).build()
+        }.doOnError(ApiConnectionException::class.java) { e ->
+            logger.error(e.message)
+            request.connection.close()
         }
     }
 
@@ -163,19 +178,27 @@ internal constructor(private val context: String,
 private fun <T> defaultDelayTransformer(corePublisher: Mono<CorePublisher<T>>): Mono<CorePublisher<T>> = corePublisher
 private typealias ResponseTransformer = (Mono<CorePublisher<ByteArray>>) -> Mono<CorePublisher<ByteArray>>
 
-private fun adjustHandler(handler: OasStubRouteHandler, objectMapper: ObjectMapper, delayTransformer: ResponseTransformer = ::defaultDelayTransformer)
+private val defaultFailureHandler: (RouterHttpRequest) -> Mono<RouterHttpResponse> = { Mono.empty() }
+
+private fun adjustHandler(handler: OasStubRouteHandler,
+                          objectMapper: ObjectMapper,
+                          failureHandler: (RouterHttpRequest) -> Mono<RouterHttpResponse> = defaultFailureHandler,
+                          delayTransformer: ResponseTransformer = ::defaultDelayTransformer)
         : ReactorResponseHandler {
     return BiFunction { request: HttpServerRequest, response: HttpServerResponse ->
         val newRequest = OasStubServerHttpRequest(request, response, objectMapper)
-        (when (val r = handler.apply(newRequest)) {
-            is Mono<*> -> r.map { v -> ensureResponse(newRequest, v) }
-            else -> Mono.just(ensureResponse(newRequest, r))
-
-        }).map { resp -> toMonoByteArray(resp, objectMapper)}
+        failureHandler(newRequest).switchIfEmpty(Mono.defer { invokeHandler(handler, newRequest) })
+            .map { resp -> toMonoByteArray(resp, objectMapper) }
+            .switchIfEmpty(Mono.just(Mono.just(byteArrayOf())))
             .transform(delayTransformer)
             .flatMap { resp -> emitResponse(resp, response) }
     }
 }
+
+private fun invokeHandler(handler: OasStubRouteHandler, newRequest: OasStubServerHttpRequest) = (when (val r = handler.apply(newRequest)) {
+    is Mono<*> -> r.map { v -> ensureResponse(newRequest, v) }
+    else -> Mono.just(ensureResponse(newRequest, r))
+})
 
 private fun emitResponse(content: CorePublisher<ByteArray>, response: HttpServerResponse): Mono<Void> {
     return response.sendByteArray(content).then()

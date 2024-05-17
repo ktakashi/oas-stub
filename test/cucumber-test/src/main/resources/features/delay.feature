@@ -37,4 +37,3 @@ Feature: Delaying
       | /ok1 | classpath:/json/fixed-delay.json | /ok3 | 200   | 300  |
       | /ok4 | classpath:/json/fixed-delay.json | /ok4 | 500   | 600  |
       | /ok1 | classpath:/json/fixed-delay.json | /ok4 | 200   | 300  |
-

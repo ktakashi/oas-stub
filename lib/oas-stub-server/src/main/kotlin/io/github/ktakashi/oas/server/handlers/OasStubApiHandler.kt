@@ -59,7 +59,10 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
                     }
             }.switchIfEmpty(Mono.defer { Mono.just(response.status(HttpResponseStatus.NOT_FOUND).sendHeaders()) })
             .flatMap { outbound -> outbound.then() }
+            // Return 500 if the connection is still alive (we don't have to check)
+            .onErrorResume { response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).send() }
     }
+
     private fun report(context: ApiContext, request: HttpServerRequest, response: ResponseContext, start: OffsetDateTime, e: Throwable? = null) {
         fun rec() {
             val end = OffsetDateTime.now()

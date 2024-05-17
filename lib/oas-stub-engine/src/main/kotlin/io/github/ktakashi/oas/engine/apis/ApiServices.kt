@@ -27,6 +27,7 @@ import java.time.Duration
 import java.util.Optional
 import java.util.TreeMap
 import org.reactivestreams.Publisher
+import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.function.TupleUtils
@@ -108,6 +109,8 @@ interface ApiRegistrationService {
     fun validPath(definitions: ApiDefinitions, path: String): Mono<String>
 }
 
+private val logger = LoggerFactory.getLogger(ApiExecutionService::class.java)
+
 class DefaultApiRegistrationService(private val storageService: StorageService,
                                     private val parsingService: ParsingService,) : ApiRegistrationService {
     override fun getApiDefinitions(name: String): Mono<ApiDefinitions> = storageService.getApiDefinitions(name)
@@ -179,6 +182,7 @@ class DefaultApiService(private val storageService: StorageService,
                             .flatMap { response -> emitResponse(context, response) }
                     }
             }.onErrorResume(ApiException::class.java) { e -> emitResponse(e.requestContext, e.responseContext) }
+            .doOnError { e -> logger.error(e.message) }
 
     private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpRequest, response: HttpResponse) = apiContext.apiDefinitions.let { apiDefinitions ->
         val apiOptions = ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::options)
