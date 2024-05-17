@@ -1,0 +1,74 @@
+[#static]
+== Static configuration
+
+When you create a server, you may want to predefine stubs
+instead of calling admin endpoints. To do that, you can
+specify `stubConfigurations` option during the OAS Stub
+options building. Below is a simple example.
+
+[source, java]
+----
+OasStubOptions.builder()
+  .stubOptions()
+  .addStaticConfiguration("classpath:/static-config.yaml")
+  .build();
+----
+
+The location must be a proper URI. `classpath` scheme has
+a special treatment during the option build, other schemes
+are passed to `java.net.URL`.
+
+The configuration file can be either YAML or JSON, and it
+has to be a stub name and specification location key value
+pair.
+
+.YAML example of static configuration
+[source, YAML]
+----
+petstore: "classpath:/config/petstore-definition.yaml"
+petstore-extended: "classpath:/config/petstore-extended-definition.json"
+----
+
+.JSON example of static configuration
+[source, JSON]
+----
+{
+  "petstore": "classpath:/config/petstore-definition.yaml",
+  "petstore-extended": "classpath:/config/petstore-extended-definition.json"
+}
+----
+
+The definition file can also be YAML or JSON, it has to be
+deserializable to `ApiDefinitions` by using `ObjectMapper`.
+Below are examples.
+
+.YAML example of definition file
+[source, YAML]
+----
+specification: "classpath:/schema/petstore.yaml"
+configurations:
+  '/v1/pets/1':
+    plugin: /oas/stub/plugins/StatusStubPlugin.groovy
+    data:
+      status: 200
+      response: "classpath:/json/pet1.json"
+----
+
+.JSON example of definition file
+[source, JSON]
+----
+{
+  "specification": "classpath:/schema/petstore.yaml",
+  "configurations": {
+    "/v1/pets/1": {
+      "plugin": "/oas/stub/plugins/StatusStubPlugin.groovy",
+      "data": {
+        "status": 200,
+        "response": "classpath:/json/pet1.json"
+      }
+    }
+  }
+}
+----
+
+NOTE: `/oas/stub/plugins/StatusStubPlugin.groovy` is a provided plugin.

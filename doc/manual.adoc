@@ -10,4 +10,5 @@ This is a Users' reference manual for OAS stub.
 - <<options.adoc#options, Options>>
 - <<delay.adoc#delay, Delay>>
 - <<storages.adoc#storages, Storages>>
+- <<static.adoc#static, Static configuration>>
 - <<testing.adoc#testing, Testing module>>
