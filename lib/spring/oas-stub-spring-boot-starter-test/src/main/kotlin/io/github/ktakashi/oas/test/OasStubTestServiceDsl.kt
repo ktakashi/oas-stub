@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.test
 
 import io.github.ktakashi.oas.model.ApiConfiguration
+import io.github.ktakashi.oas.model.ApiConnectionError
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiDelay
 import io.github.ktakashi.oas.model.ApiFailure
@@ -277,6 +278,9 @@ class OasStubApiFailureDsl internal constructor(private val init: OasStubApiFail
     }
     fun status(status: Int) {
         failure = ApiHttpError(status)
+    }
+    fun connection() {
+        failure = ApiConnectionError
     }
     internal fun save(): ApiFailure {
         init()
