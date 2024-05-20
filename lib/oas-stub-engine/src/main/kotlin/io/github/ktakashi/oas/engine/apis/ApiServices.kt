@@ -22,6 +22,7 @@ import io.swagger.v3.oas.models.SpecVersion
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpCookie
+import java.net.HttpURLConnection
 import java.net.URI
 import java.time.Duration
 import java.util.Optional
@@ -171,11 +172,11 @@ class DefaultApiService(private val storageService: StorageService,
                 Mono.justOrEmpty(adjustBasePath(context.apiPath, apiContext.openApi))
                     .flatMap { v ->
                         Mono.justOrEmpty(findMatchingPathValue(v, apiContext.openApi.paths))
-                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(404)) })
+                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(HttpURLConnection.HTTP_NOT_FOUND)) })
                             .flatMap { path ->
                                 Mono.justOrEmpty(getOperation(path, apiContext.method)).zipWith(Mono.just(path))
                             }
-                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(405)) })
+                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(HttpURLConnection.HTTP_BAD_METHOD)) })
                             .flatMap(TupleUtils.function { operation, path ->
                                 apiResultProvider.provideResult(path, operation, context)
                             })
