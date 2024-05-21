@@ -10,6 +10,7 @@ import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
+import io.restassured.config.RedirectConfig
 import io.restassured.filter.log.RequestLoggingFilter
 import io.restassured.filter.log.ResponseLoggingFilter
 import io.restassured.http.ContentType
@@ -59,6 +60,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     fun setup() {
         testContext = testContextSupplier.get()
         sessionStorage.clearApiMetrics()
+        RestAssured.config = RestAssured.config().redirect(RedirectConfig().followRedirects(false))
     }
 
     @Given("this API definition {string}")
