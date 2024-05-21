@@ -56,7 +56,14 @@ private fun getMostExpectedMedia(content: Content, request: RequestContext): Opt
     }
 
 private val DELIMITER = Regex("\\s*,\\s*")
-fun getAccepts(request: RequestContext): List<MediaType> = request.headers["Accept"]
+private fun getAccepts(request: RequestContext): List<MediaType> = request.headers["Accept"]
     ?.flatMap { value -> value.split(DELIMITER) }
-    ?.map { v -> MediaType.valueOf(v) }
+    ?.map { v ->
+        // MediaType#valueOf can't handle '*', so handle it manually
+        if (v == "*") {
+            MediaType.WILDCARD_TYPE
+        } else {
+            MediaType.valueOf(v)
+        }
+    }
     ?: listOf()
