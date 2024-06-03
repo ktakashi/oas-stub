@@ -14,19 +14,21 @@ private val parseOption = ParseOptions().apply {
     isResolveFully = true
 }
 
+private val nonResolveOption = ParseOptions()
+
 private val swaggerParsers = listOf(::OpenAPIV3Parser, ::SwaggerConverter)
 
 private val logger = LoggerFactory.getLogger(ParsingService::class.java)
 
 class ParsingService {
-    fun parse(content: String): Mono<OpenAPI> = Flux.fromIterable(swaggerParsers)
+    fun parse(content: String, resolve: Boolean = true): Mono<OpenAPI> = Flux.fromIterable(swaggerParsers)
         .flatMap { v ->
             try {
-                val result = v().readContents(content, null, parseOption)
+                val result = v().readContents(content, null, if (resolve) parseOption else nonResolveOption)
                 if (result.messages != null && result.messages.isNotEmpty()) {
                     logger.warn("Parsing message(s): {}", result.messages)
                 }
-                Mono.just(result.openAPI)
+                Mono.justOrEmpty(result.openAPI)
             } catch (e: Throwable) {
                 logger.error("Failed to parse: {}", e.message, e)
                 Mono.empty()

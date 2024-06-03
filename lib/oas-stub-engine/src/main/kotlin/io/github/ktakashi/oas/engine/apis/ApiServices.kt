@@ -116,7 +116,7 @@ class DefaultApiRegistrationService(private val storageService: StorageService,
                                     private val parsingService: ParsingService,) : ApiRegistrationService {
     override fun getApiDefinitions(name: String): Mono<ApiDefinitions> = storageService.getApiDefinitions(name)
     override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Mono<ApiDefinitions> = apiDefinitions.specification?.let { spec ->
-        parsingService.parse(spec).flatMap { openApi ->
+        parsingService.parse(spec, false).flatMap { openApi ->
             when (openApi.specVersion) {
                 // V31 isn't one-to-one mapping, so keep the original one
                 SpecVersion.V31 -> Mono.just(apiDefinitions)
