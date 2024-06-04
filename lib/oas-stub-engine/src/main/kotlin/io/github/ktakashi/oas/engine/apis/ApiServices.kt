@@ -1,5 +1,9 @@
 package io.github.ktakashi.oas.engine.apis
 
+import io.github.ktakashi.oas.api.http.HttpRequest
+import io.github.ktakashi.oas.api.http.HttpResponse
+import io.github.ktakashi.oas.api.http.RequestContext
+import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.paths.findMatchingPath
@@ -8,13 +12,7 @@ import io.github.ktakashi.oas.engine.plugins.PluginService
 import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiDefinitions
-import io.github.ktakashi.oas.model.ApiHttpError
 import io.github.ktakashi.oas.model.ApiOptions
-import io.github.ktakashi.oas.model.ApiProtocolFailure
-import io.github.ktakashi.oas.api.http.HttpRequest
-import io.github.ktakashi.oas.api.http.HttpResponse
-import io.github.ktakashi.oas.api.http.RequestContext
-import io.github.ktakashi.oas.api.http.ResponseContext
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem

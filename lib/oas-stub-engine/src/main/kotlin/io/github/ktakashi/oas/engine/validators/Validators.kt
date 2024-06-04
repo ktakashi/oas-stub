@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.engine.validators
 
-import jakarta.mail.internet.AddressException
 import jakarta.mail.internet.InternetAddress
 import java.time.DateTimeException
 import java.time.LocalDate
@@ -61,7 +60,7 @@ class EmailValidator: StringFormatValidator(null, "email") {
             val emailAddr = InternetAddress(context.target)
             emailAddr.validate()
             true
-        } catch (e: AddressException) {
+        } catch (e: Exception) {
             false
         }
     } else false

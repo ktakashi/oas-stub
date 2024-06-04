@@ -7,7 +7,6 @@ import io.github.ktakashi.oas.engine.storages.StorageService
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiConnectionError
 import io.github.ktakashi.oas.model.ApiHttpError
-import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
 import reactor.core.publisher.Mono
 

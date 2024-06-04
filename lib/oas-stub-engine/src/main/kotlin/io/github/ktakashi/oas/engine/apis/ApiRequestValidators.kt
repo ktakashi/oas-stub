@@ -184,7 +184,7 @@ class ApiRequestSecurityValidator: ApiRequestValidator {
         }
 
     private fun checkAuthorization( headers: Map<String, List<String>>, key: String): ApiValidationResult =
-        if (headers["Authorization"]?.firstOrNull { v -> v.startsWith(key) } != null) {
+        if (headers["Authorization"]?.any { v -> v.startsWith(key) } == true) {
             success
         } else {
             failedResult("'Authorization: $key' header must exist", key, ApiValidationResultType.SECURITY)

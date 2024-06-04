@@ -5,8 +5,8 @@ import io.github.ktakashi.oas.api.http.ResponseContext
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Content
+import java.net.HttpURLConnection
 import java.util.Optional
-import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
 
 sealed interface ContentDecision
@@ -31,9 +31,9 @@ class ApiContentDecider(private val validators: Set<ApiRequestValidator>,
             logger.info("Validation failed: {}", result)
         }
         val baseStatus = when (result.resultType) {
-            ApiValidationResultType.SUCCESS -> HttpStatus.SC_OK
-            ApiValidationResultType.VALIDATION_ERROR -> HttpStatus.SC_BAD_REQUEST
-            ApiValidationResultType.SECURITY -> HttpStatus.SC_UNAUTHORIZED
+            ApiValidationResultType.SUCCESS -> HttpURLConnection.HTTP_OK
+            ApiValidationResultType.VALIDATION_ERROR -> HttpURLConnection.HTTP_BAD_REQUEST
+            ApiValidationResultType.SECURITY ->HttpURLConnection.HTTP_UNAUTHORIZED
         }
 
         return operation.responses.map { (k, _) -> k }
@@ -48,7 +48,7 @@ class ApiContentDecider(private val validators: Set<ApiRequestValidator>,
                                     contentType = contentType))
                 } ?: operation.responses["default"]?.let { ContentFound(baseStatus, Optional.ofNullable(it.content)) }
         ?: ContentNotFound(DefaultResponseContext(
-                status = HttpStatus.SC_BAD_REQUEST,
+                status = HttpURLConnection.HTTP_BAD_REQUEST,
                 content = result.toJsonProblemDetails(baseStatus, objectMapper),
                 contentType = contentType))
     }

@@ -7,8 +7,8 @@ import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.media.Content
 import io.swagger.v3.oas.models.media.Schema
 import jakarta.ws.rs.core.MediaType
+import java.net.HttpURLConnection
 import java.util.Optional
-import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
 
@@ -34,7 +34,7 @@ class ApiResultProvider(private val contentDecider: ApiContentDecider,
                         DefaultResponseContext(status = status, content = Optional.ofNullable(data), contentType = Optional.of(mediaType))
                     }
                 }.orElseGet {
-                    DefaultResponseContext(status = HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                    DefaultResponseContext(status = HttpURLConnection.HTTP_INTERNAL_ERROR)
                 }
     }
 
@@ -49,8 +49,8 @@ private fun getMostExpectedMedia(content: Content, request: RequestContext): Opt
     .map { m -> "${m.type}/${m.subtype}" }
     .firstOrNull { m -> content.containsKey(m) }
     ?.let { m -> Optional.of(m) }
-    ?: if (content.containsKey(MediaType.APPLICATION_JSON)) {
-        Optional.of(MediaType.APPLICATION_JSON)
+    ?: if (content.containsKey(APPLICATION_JSON)) {
+        Optional.of(APPLICATION_JSON)
     } else {
         Optional.ofNullable(content.keys.firstOrNull())
     }
