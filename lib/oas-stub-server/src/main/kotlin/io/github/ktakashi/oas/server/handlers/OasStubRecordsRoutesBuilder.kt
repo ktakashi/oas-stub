@@ -19,7 +19,7 @@ class OasStubRecordsRoutesBuilder(private val options: OasStubStubOptions): OasS
 
     override fun build(routes: OasStubRoutes) {
         if (options.enableRecord) {
-            routes.get("${options.adminPath}${options.recordPath}/$PATH_SEGMENT") { request ->
+            routes.get("${options.adminPath}${options.recordsPath}/$PATH_SEGMENT") { request ->
                 Mono.justOrEmpty(request.param(PATH_VARIABLE_NAME)?.let { context ->
                     sessionStorage.getApiRecords(context).map { records ->
                         request.responseBuilder()
@@ -28,7 +28,7 @@ class OasStubRecordsRoutesBuilder(private val options: OasStubStubOptions): OasS
                             .body(records.records.map { toResponse(it) })
                     }
                 }).switchIfEmpty(Mono.defer { Mono.just(request.responseBuilder().notFound().build())})
-            }.delete("${options.adminPath}${options.recordPath}/$PATH_SEGMENT") { request ->
+            }.delete("${options.adminPath}${options.recordsPath}/$PATH_SEGMENT") { request ->
                 Mono.just(request.param(PATH_VARIABLE_NAME)?.let {
                     sessionStorage.clearApiRecords(it)
                     request.responseBuilder().noContent().build()

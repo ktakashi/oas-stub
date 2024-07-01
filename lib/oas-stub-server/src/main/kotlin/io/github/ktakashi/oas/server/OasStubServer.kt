@@ -1,13 +1,13 @@
 package io.github.ktakashi.oas.server
 
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
+import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.server.config.OasStubStaticConfigParser
 import io.github.ktakashi.oas.server.handlers.OasStubAdminRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubApiHandler
 import io.github.ktakashi.oas.server.handlers.OasStubMetricsRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubRecordsRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubRoutes
-import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
@@ -30,7 +30,6 @@ import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import reactor.netty.DisposableServer
-import reactor.netty.http.Http2SslContextSpec
 import reactor.netty.http.server.HttpServer
 import reactor.netty.http.server.HttpServerRequest
 import reactor.netty.tcp.AbstractProtocolSslContextSpec
@@ -108,7 +107,7 @@ class OasStubServer(private val options: OasStubOptions) {
                 OasStubStaticConfigParser.parse(URI.create(location))
             }.forEach { config ->
                 config.forEach { (context, definition) ->
-                    apiRegistrationService.saveApiDefinitions(context, definition).subscribe()
+                    registerStub(context, definition)
                 }
             }
             certificate = cert.first
@@ -153,6 +152,10 @@ class OasStubServer(private val options: OasStubOptions) {
         initialized = false
     }
 
+    fun registerStub(name: String, definitions: ApiDefinitions) {
+        apiRegistrationService.saveApiDefinitions(name, definitions).subscribe()
+    }
+
     /**
      * Returns port number.
      *
@@ -195,6 +198,16 @@ class OasStubServer(private val options: OasStubOptions) {
      * Returns metrics path of the server
      */
     fun metricsPath() = "${stubOptions.adminPath}${stubOptions.metricsPath}"
+
+    /**
+     * Check if the records endpoints are enabled or not
+     */
+    fun recordsEnabled() = stubOptions.enableRecord
+
+    /**
+     * Returns records path of the server
+     */
+    fun recordsPath() = "${stubOptions.adminPath}${stubOptions.recordsPath}"
 
     /**
      * Returns TLS certificate of the server, if configured

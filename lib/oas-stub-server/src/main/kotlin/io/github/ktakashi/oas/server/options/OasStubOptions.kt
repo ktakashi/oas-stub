@@ -3,7 +3,6 @@ package io.github.ktakashi.oas.server.options
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -120,7 +119,7 @@ data class OasStubStubOptions
 internal constructor(internal val stubPath: String,
                      internal val adminPath: String,
                      internal val metricsPath: String,
-                     internal val recordPath: String,
+                     internal val recordsPath: String,
                      internal val enableAdmin: Boolean,
                      internal val enableMetrics: Boolean,
                      internal val enableRecord: Boolean,
@@ -139,10 +138,10 @@ internal constructor(internal val stubPath: String,
                   private var stubPath: String = OasStubOptions.DEFAULT_STUB_PATH,
                   private var adminPath: String = OasStubOptions.DEFAULT_ADMIN_PATH,
                   private var metricsPath: String = OasStubOptions.DEFAULT_METRICS_PATH,
-                  private var recordPath: String = OasStubOptions.DEFAULT_RECORDS_PATH,
+                  private var recordsPath: String = OasStubOptions.DEFAULT_RECORDS_PATH,
                   private var enableAdmin: Boolean = true,
                   private var enableMetrics: Boolean = true,
-                  private var enableRecord: Boolean = false,
+                  private var enableRecords: Boolean = false,
                   private var routesBuilders: MutableList<OasStubRoutesBuilder> = mutableListOf(),
                   private var objectMapper: ObjectMapper = ObjectMapper().findAndRegisterModules(),
                   private var persistentStorage: PersistentStorage = InMemoryPersistentStorage(),
@@ -166,7 +165,7 @@ internal constructor(internal val stubPath: String,
         /**
          * Sets the records path segment. Default value is [OasStubOptions.DEFAULT_RECORDS_PATH]
          */
-        fun recordPath(recordPath: String) = apply { this.recordPath = recordPath }
+        fun recordsPath(recordsPath: String) = apply { this.recordsPath = recordsPath }
 
         /**
          * Enabling admin endpoints. Default value is `true`
@@ -181,7 +180,7 @@ internal constructor(internal val stubPath: String,
         /**
          * Enabling records endpoints. Default value is `false`
          */
-        fun enableRecord(enableRecord: Boolean) = apply { this.enableRecord = enableRecord }
+        fun enableRecords(enableRecords: Boolean) = apply { this.enableRecords = enableRecords }
 
         /**
          * Sets object mapper to be used.
@@ -226,8 +225,8 @@ internal constructor(internal val stubPath: String,
          * Returns the parent options builder.
          */
         fun parent() = parent
-        internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, recordPath,
-            enableAdmin, enableMetrics, enableRecord,
+        internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, recordsPath,
+            enableAdmin, enableMetrics, enableRecords,
             objectMapper.copy().registerModules(KotlinModule.Builder().build(), Jdk8Module()),
             routesBuilders,
             persistentStorage, sessionStorage, staticConfigurations)
