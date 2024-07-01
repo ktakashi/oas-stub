@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.test
 
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
+import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiDefinitions
@@ -9,6 +10,7 @@ import io.github.ktakashi.oas.model.ApiDelay
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.ApiMetric
 import io.github.ktakashi.oas.model.ApiOptions
+import io.github.ktakashi.oas.model.ApiRecord
 import java.util.Optional
 import java.util.function.Predicate
 import org.springframework.core.io.Resource
@@ -22,7 +24,8 @@ import reactor.core.publisher.Mono
  */
 class OasStubTestService(private val properties: OasStubTestProperties,
                          private val apiRegistrationService: ApiRegistrationService,
-                         private val apiObserver: ApiObserver) {
+                         private val apiObserver: ApiObserver,
+                         private val apiRecorder: ApiRecorder) {
     fun setup() {
         clear()
         properties.definitions.forEach { (k, v) ->
@@ -35,6 +38,7 @@ class OasStubTestService(private val properties: OasStubTestProperties,
             apiRegistrationService.deleteApiDefinitions(name)
         }.subscribe()
         apiObserver.clearApiMetrics()
+        apiRecorder.clearAllApiRecords()
     }
 
     /**
@@ -78,6 +82,12 @@ class OasStubTestService(private val properties: OasStubTestProperties,
      * Clears all the API metrics
      */
     fun clearTestApiMetrics() = apiObserver.clearApiMetrics()
+
+    fun getTestApiRecords(name: String): List<ApiRecord> = apiRecorder.getApiRecords(name).map<List<ApiRecord>> { it.records }.orElseGet { listOf() }
+
+    fun clearTestApiRecords(name: String) = apiRecorder.clearApiRecords(name)
+
+    fun clearAllTestApiRecords() = apiRecorder.clearAllApiRecords()
 }
 
 /**

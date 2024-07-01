@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.test.configurations
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
+import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.server.OasStubServer
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
@@ -37,7 +38,10 @@ class OasStubServerConfiguration(internal val properties: OasStubTestProperties,
 
     @Bean
     fun oasStubTestService(oasStubServer: OasStubServer): OasStubTestService {
-        oasStubTestService = OasStubTestService(properties, inject<ApiRegistrationService>().value, inject<ApiObserver>().value)
+        oasStubTestService = OasStubTestService(properties,
+            inject<ApiRegistrationService>().value,
+            inject<ApiObserver>().value,
+            inject<ApiRecorder>().value)
         return oasStubTestService
     }
 

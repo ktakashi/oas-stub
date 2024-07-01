@@ -116,7 +116,7 @@ data class OasStubTestServerProperties
     /**
      * Flag to enable records endpoints
      */
-    var enableRecords: Boolean = false,
+    var enableRecords: Boolean = true,
     /**
      * Enables access log
      */

@@ -25,6 +25,7 @@ import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataValidator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataPopulator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataValidator
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
+import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
 import io.github.ktakashi.oas.engine.plugins.PluginService
@@ -94,6 +95,7 @@ fun makeEngineModule(options: OasStubStubOptions) = module {
         bind<ApiRegistrationService>()
     }
     singleOf(::ApiObserver)
+    singleOf(::ApiRecorder)
     singleOf(::ApiDelayService)
     singleOf(::ApiFailureService)
 

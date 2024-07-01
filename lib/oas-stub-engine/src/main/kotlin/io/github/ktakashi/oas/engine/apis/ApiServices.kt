@@ -4,6 +4,7 @@ import io.github.ktakashi.oas.api.http.HttpRequest
 import io.github.ktakashi.oas.api.http.HttpResponse
 import io.github.ktakashi.oas.api.http.RequestContext
 import io.github.ktakashi.oas.api.http.ResponseContext
+import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.paths.findMatchingPath
@@ -150,6 +151,7 @@ class DefaultApiService(private val storageService: StorageService,
                         private val apiPathService: ApiPathService,
                         private val apiResultProvider: ApiResultProvider,
                         private val apiFailureService: ApiFailureService,
+                        private val apiRecorder: ApiRecorder,
                         private val pluginService: PluginService): ApiExecutionService {
     override fun getApiContext(request: HttpRequest): Mono<ApiContext> =
         apiPathService.extractApiNameAndPath(request.requestURI).map { (context, api) ->
@@ -232,7 +234,7 @@ class DefaultApiService(private val storageService: StorageService,
         val context = request.apiContext
         ModelPropertyUtils.mergeProperty(context.apiPath, context.apiDefinitions, ApiCommonConfigurations<*>::options)?.let { options ->
             if (options.shouldRecord == true) {
-                storageService.sessionStorage.addApiRecord(request.applicationName, request, response)
+                apiRecorder.addApiRecord(request.applicationName, request, response)
             }
         }
     }

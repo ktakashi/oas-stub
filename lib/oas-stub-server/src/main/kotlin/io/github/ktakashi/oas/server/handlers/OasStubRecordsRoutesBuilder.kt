@@ -3,9 +3,9 @@ package io.github.ktakashi.oas.server.handlers
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.APPLICATION_JSON
 import io.github.ktakashi.oas.engine.apis.APPLICATION_PROBLEM_JSON
+import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.model.ApiRecord
 import io.github.ktakashi.oas.server.options.OasStubStubOptions
-import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import java.util.Optional
@@ -14,14 +14,14 @@ import org.koin.core.component.inject
 import reactor.core.publisher.Mono
 
 class OasStubRecordsRoutesBuilder(private val options: OasStubStubOptions): OasStubRoutesBuilder, KoinComponent {
-    private val sessionStorage by inject<SessionStorage>()
+    private val apiRecorder by inject<ApiRecorder>()
     private val objectMapper by inject<ObjectMapper>()
 
     override fun build(routes: OasStubRoutes) {
         if (options.enableRecord) {
             routes.get("${options.adminPath}${options.recordsPath}/$PATH_SEGMENT") { request ->
                 Mono.justOrEmpty(request.param(PATH_VARIABLE_NAME)?.let { context ->
-                    sessionStorage.getApiRecords(context).map { records ->
+                    apiRecorder.getApiRecords(context).map { records ->
                         request.responseBuilder()
                             .ok()
                             .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
@@ -30,7 +30,7 @@ class OasStubRecordsRoutesBuilder(private val options: OasStubStubOptions): OasS
                 }).switchIfEmpty(Mono.defer { Mono.just(request.responseBuilder().notFound().build())})
             }.delete("${options.adminPath}${options.recordsPath}/$PATH_SEGMENT") { request ->
                 Mono.just(request.param(PATH_VARIABLE_NAME)?.let {
-                    sessionStorage.clearApiRecords(it)
+                    apiRecorder.clearApiRecords(it)
                     request.responseBuilder().noContent().build()
                 } ?: request.responseBuilder().notFound().build())
             }
