@@ -1,6 +1,7 @@
 oas.stub.test:
   server:
     admin-prefix: /__admin0
+    enable-records: true
     ssl:
       client-auth: require
       keystore:

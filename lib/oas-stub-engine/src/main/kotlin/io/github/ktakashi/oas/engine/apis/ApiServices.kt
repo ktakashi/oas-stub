@@ -25,6 +25,7 @@ import java.net.URI
 import java.time.Duration
 import java.util.Optional
 import java.util.TreeMap
+import java.util.UUID
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
@@ -111,7 +112,7 @@ interface ApiRegistrationService {
 private val logger = LoggerFactory.getLogger(ApiExecutionService::class.java)
 
 class DefaultApiRegistrationService(private val storageService: StorageService,
-                                    private val parsingService: ParsingService,) : ApiRegistrationService {
+                                    private val parsingService: ParsingService) : ApiRegistrationService {
     override fun getApiDefinitions(name: String): Mono<ApiDefinitions> = storageService.getApiDefinitions(name)
     override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Mono<ApiDefinitions> = apiDefinitions.specification?.let { spec ->
         parsingService.parse(spec, false).flatMap { openApi ->
@@ -142,6 +143,8 @@ class DefaultApiRegistrationService(private val storageService: StorageService,
     }
 
 }
+
+private val uniqueTag = UUID.randomUUID().toString()
 
 class DefaultApiService(private val storageService: StorageService,
                         private val apiPathService: ApiPathService,
@@ -205,6 +208,7 @@ class DefaultApiService(private val storageService: StorageService,
     private fun emitResponse(requestContext: ApiContextAwareRequestContext, responseContext: ResponseContext) =
         apiFailureService.checkFailure(requestContext, responseContext.headers)
             .switchIfEmpty(Mono.defer { customizeResponse(responseContext, requestContext) })
+            .doOnNext { resp -> recordRequestResponse(requestContext, resp) }
 
     private fun customizeResponse(responseContext: ResponseContext, requestContext: ApiContextAwareRequestContext) =
         responseContext.let { context ->
@@ -223,6 +227,15 @@ class DefaultApiService(private val storageService: StorageService,
                 HighLatencyResponseContext(responseContext, it.toDuration())
             } ?: responseContext
         }
+
+    private fun recordRequestResponse(request: ApiContextAwareRequestContext, response: ResponseContext) {
+        val context = request.apiContext
+        ModelPropertyUtils.mergeProperty(context.apiPath, context.apiDefinitions, ApiCommonConfigurations<*>::options)?.let { options ->
+            if (options.shouldRecord == true) {
+                storageService.sessionStorage.addApiRecord(request.applicationName, request, response)
+            }
+        }
+    }
 }
 
 private fun makeErrorResponse(status: Int): ResponseContext = DefaultResponseContext(status = status)

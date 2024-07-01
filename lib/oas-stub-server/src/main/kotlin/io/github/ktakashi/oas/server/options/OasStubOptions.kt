@@ -1,6 +1,7 @@
 package io.github.ktakashi.oas.server.options
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
@@ -38,6 +39,11 @@ internal constructor(val serverOptions: OasStubServerOptions,
          * Default metrics path segment
          */
         const val DEFAULT_METRICS_PATH = "/metrics"
+
+        /**
+         * Default records path segment
+         */
+        const val DEFAULT_RECORDS_PATH = "/records"
     }
     class Builder internal constructor() {
         private val server: OasStubServerOptions.Builder = OasStubServerOptions.builder(this)
@@ -114,8 +120,10 @@ data class OasStubStubOptions
 internal constructor(internal val stubPath: String,
                      internal val adminPath: String,
                      internal val metricsPath: String,
+                     internal val recordPath: String,
                      internal val enableAdmin: Boolean,
                      internal val enableMetrics: Boolean,
+                     internal val enableRecord: Boolean,
                      internal val objectMapper: ObjectMapper,
                      internal val routesBuilders: List<OasStubRoutesBuilder>,
                      internal val persistentStorage: PersistentStorage,
@@ -131,8 +139,10 @@ internal constructor(internal val stubPath: String,
                   private var stubPath: String = OasStubOptions.DEFAULT_STUB_PATH,
                   private var adminPath: String = OasStubOptions.DEFAULT_ADMIN_PATH,
                   private var metricsPath: String = OasStubOptions.DEFAULT_METRICS_PATH,
+                  private var recordPath: String = OasStubOptions.DEFAULT_RECORDS_PATH,
                   private var enableAdmin: Boolean = true,
                   private var enableMetrics: Boolean = true,
+                  private var enableRecord: Boolean = false,
                   private var routesBuilders: MutableList<OasStubRoutesBuilder> = mutableListOf(),
                   private var objectMapper: ObjectMapper = ObjectMapper().findAndRegisterModules(),
                   private var persistentStorage: PersistentStorage = InMemoryPersistentStorage(),
@@ -154,6 +164,11 @@ internal constructor(internal val stubPath: String,
         fun metricsPath(metricsPath: String) = apply { this.metricsPath = metricsPath }
 
         /**
+         * Sets the records path segment. Default value is [OasStubOptions.DEFAULT_RECORDS_PATH]
+         */
+        fun recordPath(recordPath: String) = apply { this.recordPath = recordPath }
+
+        /**
          * Enabling admin endpoints. Default value is `true`
          */
         fun enableAdmin(enableAdmin: Boolean) = apply { this.enableAdmin = enableAdmin }
@@ -162,6 +177,11 @@ internal constructor(internal val stubPath: String,
          * Enabling metrics endpoints. Default value is `true`
          */
         fun enableMetrics(enableMetrics: Boolean) = apply { this.enableMetrics = enableMetrics }
+
+        /**
+         * Enabling records endpoints. Default value is `false`
+         */
+        fun enableRecord(enableRecord: Boolean) = apply { this.enableRecord = enableRecord }
 
         /**
          * Sets object mapper to be used.
@@ -206,8 +226,10 @@ internal constructor(internal val stubPath: String,
          * Returns the parent options builder.
          */
         fun parent() = parent
-        internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, enableAdmin, enableMetrics,
-            objectMapper.copy().registerModules(KotlinModule.Builder().build()), routesBuilders,
+        internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, recordPath,
+            enableAdmin, enableMetrics, enableRecord,
+            objectMapper.copy().registerModules(KotlinModule.Builder().build(), Jdk8Module()),
+            routesBuilders,
             persistentStorage, sessionStorage, staticConfigurations)
     }
 

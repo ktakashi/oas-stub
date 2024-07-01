@@ -14,14 +14,14 @@ class OasStubMetricsRoutesBuilder(private val options: OasStubStubOptions): OasS
     override fun build(routes: OasStubRoutes) {
         if (options.enableMetrics) {
             routes.get("${options.adminPath}${options.metricsPath}/$PATH_SEGMENT") { request ->
-                Mono.just(request.param(PATH_VARIABLE_NAME)?.let { context ->
+                Mono.justOrEmpty(request.param(PATH_VARIABLE_NAME)?.let { context ->
                     apiObserver.getApiMetrics(context).map { metrics ->
                         request.responseBuilder()
                             .ok()
                             .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
                             .body(metrics)
-                    }.orElseGet { request.responseBuilder().notFound().build() }
-                } ?: request.responseBuilder().notFound().build())
+                    }
+                }).switchIfEmpty(Mono.defer { Mono.just(request.responseBuilder().notFound().build()) })
             }.delete("${options.adminPath}${options.metricsPath}") { request ->
                 apiObserver.clearApiMetrics()
                 Mono.just(request.responseBuilder().noContent().build())

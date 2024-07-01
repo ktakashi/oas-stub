@@ -153,6 +153,16 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
         testContext.response = given().get(uri)
     }
 
+    @Then("I get records of {string}")
+    fun `I get records via {string}`(context: String) {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+            .path(testContext.adminPrefix)
+            .pathSegment("records", context)
+            .build()
+            .toUri()
+        testContext.response = given().get(uri)
+    }
+
     @And("I update API {string} with {string} via {string} of content type {string}")
     fun `I update API {string} with {string} via {string}`(api: String, value: String, path: String, contentType: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)

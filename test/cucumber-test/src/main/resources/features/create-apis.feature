@@ -71,6 +71,23 @@ Feature: Create APIs from OAS file
       | /schema/test-api.yaml | GET    | /examples/objects |                  |                  | 200    | application/json    | attr=uuid  |
       | /schema/test-api.yaml | POST   | /profiles         | {"name": "name"} | application/json | 201    | <null>              | <null>     |
 
+  @creation @records
+  Scenario Outline: Create Stub APIs with records
+    Given these HTTP headers
+      | name       | value                                |
+      | Request-ID | cca43b93-a4ff-46cf-8564-d8e4f3899657 |
+    Given this API definition '<schema>'
+    When I create 'petstore' API definition
+    And I update API definition with '{"shouldRecord": true}' via '/options' of content type 'application/json'
+    And I '<method>' to '<path>' with '' as ''
+    Then I get http status <status>
+    Then I get records of 'petstore'
+    And I get http status 200
+    @v3 @petstore
+    Examples:
+      | schema                   | method | path             | status |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets         | 200    |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets/1       | 200    |
 
   @deletion
   Scenario Outline: Delete Stub APIs

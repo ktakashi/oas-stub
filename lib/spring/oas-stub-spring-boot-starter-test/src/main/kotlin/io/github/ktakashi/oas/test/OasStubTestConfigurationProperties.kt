@@ -52,8 +52,11 @@ data class OasStubTestProperties(
         .stubOptions()
         .stubPath(server.stubPrefix)
         .adminPath(server.adminPrefix)
+        .metricsPath(server.metricsPrefix)
+        .recordPath(server.recordsPrefix)
         .enableAdmin(server.enableAdmin)
         .enableMetrics(server.enableMetrics)
+        .enableRecord(server.enableRecords)
         .objectMapper(objectMapper)
         .sessionStorage(sessionStorage)
         .persistentStorage(persistentStorage)
@@ -97,6 +100,12 @@ data class OasStubTestServerProperties
      */
     var metricsPrefix: String = OasStubOptions.DEFAULT_METRICS_PATH,
     /**
+     * OAS Stub server, records path
+     *
+     * This will be appended to admin path
+     */
+    var recordsPrefix: String = OasStubOptions.DEFAULT_RECORDS_PATH,
+    /**
      * Flag to enable admin endpoints
      */
     var enableAdmin : Boolean = true,
@@ -104,6 +113,10 @@ data class OasStubTestServerProperties
      * Flag to enable metrics endpoints
      */
     var enableMetrics: Boolean = true,
+    /**
+     * Flag to enable records endpoints
+     */
+    var enableRecords: Boolean = false,
     /**
      * Enables access log
      */

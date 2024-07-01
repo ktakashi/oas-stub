@@ -16,6 +16,7 @@ class OasStubServerPlugin: EventListener {
     private fun setup() {
         options = OasStubOptions.builder()
             .stubOptions()
+            .enableRecord(true)
             .addStaticConfiguration("classpath:/static-config.yaml")
             .addRoutesBuilder(CustomRoutes())
             .parent()

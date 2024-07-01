@@ -9,6 +9,7 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.api.storage.Storage
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
+import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.swagger.v3.oas.models.OpenAPI
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -16,8 +17,7 @@ import reactor.core.publisher.Mono
 
 class StorageService(private val parsingService: ParsingService,
                      private val persistentStorage: PersistentStorage,
-                     val sessionStorage: Storage
-) {
+                     val sessionStorage: SessionStorage) {
     private val apiDefinitions: LoadingCache<String, Mono<ApiDefinitions>> = Caffeine.newBuilder()
             .build { k -> Mono.defer { Mono.justOrEmpty(persistentStorage.getApiDefinition(k)) } }
     private val openApiCache: LoadingCache<String, Mono<OpenAPI>> = Caffeine.newBuilder()

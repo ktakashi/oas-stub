@@ -143,12 +143,18 @@ data class ApiOptions
      *
      * The monitoring will be skipped iff value is set to `false`
      */
-    val shouldMonitor: Boolean? = null): MergeableApiConfig<ApiOptions> {
-    private constructor(builder: Builder): this(builder.shouldValidate, builder.latency, builder.failure, builder.shouldMonitor)
+    val shouldMonitor: Boolean? = null,
+    /**
+     * Flag to control recording of request / response
+     */
+    val shouldRecord: Boolean? = null
+    ): MergeableApiConfig<ApiOptions> {
+    private constructor(builder: Builder): this(builder.shouldValidate, builder.latency, builder.failure, builder.shouldMonitor, builder.shouldRecord)
     override fun merge(other: ApiOptions) = ApiOptions(shouldValidate = shouldValidate ?: other.shouldValidate,
         latency = latency ?: other.latency,
         failure = failure ?: other.failure,
-        shouldMonitor = shouldMonitor ?: other.shouldMonitor)
+        shouldMonitor = shouldMonitor ?: other.shouldMonitor,
+        shouldRecord = shouldRecord ?: other.shouldRecord)
 
     companion object {
         /**
@@ -167,6 +173,7 @@ data class ApiOptions
             private set
         var shouldMonitor: Boolean? = null
             private set
+        var shouldRecord: Boolean? = null
 
         /**
          * Sets [shouldValidate]
@@ -187,6 +194,11 @@ data class ApiOptions
          * Sets [shouldMonitor]
          */
         fun shouldMonitor(shouldMonitor: Boolean?) = apply { this.shouldMonitor = shouldMonitor }
+
+        /**
+         * Sets [shouldRecord]
+         */
+        fun shouldRecord(shouldRecord: Boolean?) = apply { this.shouldRecord = shouldRecord }
 
         /**
          * Builds [ApiOptions]

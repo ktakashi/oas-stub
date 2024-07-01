@@ -5,7 +5,9 @@ import io.github.ktakashi.oas.server.config.OasStubStaticConfigParser
 import io.github.ktakashi.oas.server.handlers.OasStubAdminRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubApiHandler
 import io.github.ktakashi.oas.server.handlers.OasStubMetricsRoutesBuilder
+import io.github.ktakashi.oas.server.handlers.OasStubRecordsRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubRoutes
+import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
@@ -55,6 +57,7 @@ class OasStubServer(private val options: OasStubOptions) {
     private lateinit var oasStubApiHandler: OasStubApiHandler
     private lateinit var oasStubAdminRoutesBuilder: OasStubAdminRoutesBuilder
     private lateinit var oasStubMetricsRoutesBuilder: OasStubMetricsRoutesBuilder
+    private lateinit var oasStubRecordsRoutesBuilder: OasStubRecordsRoutesBuilder
     private lateinit var apiRegistrationService: ApiRegistrationService
     private lateinit var koin: Koin
     private var httpServer: DisposableServer? = null
@@ -86,6 +89,7 @@ class OasStubServer(private val options: OasStubOptions) {
             oasStubApiHandler = OasStubApiHandler()
             oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options.stubOptions)
             oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options.stubOptions)
+            oasStubRecordsRoutesBuilder = OasStubRecordsRoutesBuilder(options.stubOptions)
             apiRegistrationService = koin.get<ApiRegistrationService>()
             val cert = serverOptions.ssl?.let { ssl ->
                 if (ssl.keyAlias != null && ssl.keyPassword != null) {
@@ -203,6 +207,7 @@ class OasStubServer(private val options: OasStubOptions) {
             val oasStubRoutes = OasStubRoutes(routes, koin)
             oasStubAdminRoutesBuilder.build(oasStubRoutes)
             oasStubMetricsRoutesBuilder.build(oasStubRoutes)
+            oasStubRecordsRoutesBuilder.build(oasStubRoutes)
             stubOptions.routesBuilders.forEach { builder -> builder.build(oasStubRoutes) }
             routes.route(prefix(stubOptions.stubPath), oasStubApiHandler)
         }
