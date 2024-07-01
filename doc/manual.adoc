@@ -5,6 +5,7 @@ This is a Users' reference manual for OAS stub.
 - <<introduction.adoc#introduction, Introduction>>
 - <<start.adoc#getting-started, Getting Started>>
 - <<metrics.adoc#metrics, API metrics>>
+- <<metrics.adoc#records, API recording>>
 - <<plugin.adoc#plugin, Plugin>>
 - <<headers.adoc#headers, HTTP headers>>
 - <<options.adoc#options, Options>>

@@ -19,6 +19,7 @@ Both endpoints have the same JSON body of the following format.
 {
   "shouldValidate": true,
   "shouldMonitor": true,
+  "shouldRecord": true,
   "latency": {
     "interval": 1,
     "unit": "MILLISECONDS"
@@ -36,12 +37,12 @@ Both endpoints have the same JSON body of the following format.
 
 | shouldValidate | Specifies if OAS stub validates incoming request or not | true
 | shouldMonitor | Specifies if OAS stub store metrics of the API or not | true
-| latency | Emulates high network latency | `\{"interval": 1, "unit": "SECONDS"}`
-| failure | Enforce API failure | `\{"type": "protocol"}`
+| shouldRecord | Specifies if OAS stub store records of the API request and response or not | true
+| latency | Emulates high network latency | `{"interval": 1, "unit": "SECONDS"}`
+| failure | Enforce API failure | `{"type": "protocol"}`
 |===
 
 === Latency
 
 Latency option is only meaningful when the response has body.
-Due to the limitation of JEE servlet, we don't have the control
-to emit HTTP status and header, but the body content.
+

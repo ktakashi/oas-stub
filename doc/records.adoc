@@ -1,0 +1,17 @@
+[#records]
+== API recording
+
+In some cases, it's convenient to record request and response.
+
+[cols="1,1"]
+|===
+| Endpoint                                      | Query Parameter
+
+| GET /__admin/records/\{context}               | N/A
+|===
+
+The endpoint returns a JSON array of record object, which contains
+status, HTTP method, request uri, request and response.
+
+The request recording can be suppressed if the `shouldRecord`
+option is set and its value is `false`.
