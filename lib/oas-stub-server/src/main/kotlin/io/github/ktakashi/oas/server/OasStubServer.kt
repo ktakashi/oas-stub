@@ -103,13 +103,7 @@ class OasStubServer(private val options: OasStubOptions) {
             } ?: selfSignedCertificate.let {
                 it.cert() to it.key()
             }
-            stubOptions.staticConfigurations.map { location ->
-                OasStubStaticConfigParser.parse(URI.create(location))
-            }.forEach { config ->
-                config.forEach { (context, definition) ->
-                    registerStub(context, definition)
-                }
-            }
+            reloadStaticStub()
             certificate = cert.first
             privateKey = cert.second
             initialized = true
@@ -152,9 +146,36 @@ class OasStubServer(private val options: OasStubOptions) {
         initialized = false
     }
 
+    /**
+     * Register a stub definition
+     *
+     * [name] the name of the stub
+     * [definitions] the definition
+     */
     fun registerStub(name: String, definitions: ApiDefinitions) {
         apiRegistrationService.saveApiDefinitions(name, definitions).subscribe()
     }
+
+    /**
+     * Deregister stub of [name]
+     */
+    fun deregisterStub(name: String) {
+        apiRegistrationService.deleteApiDefinitions(name).subscribe()
+    }
+
+    /**
+     * Reload static stub
+     */
+    fun reloadStaticStub() {
+        stubOptions.staticConfigurations.map { location ->
+            OasStubStaticConfigParser.parse(URI.create(location))
+        }.forEach { config ->
+            config.forEach { (context, definition) ->
+                registerStub(context, definition)
+            }
+        }
+    }
+
 
     /**
      * Returns port number.
