@@ -145,7 +145,25 @@ internal constructor(private val apiRegistrationService: ApiRegistrationService,
 
 }
 
-
+/**
+ * Stub metrics aggregator.
+ *
+ * Example of byPath
+ * ```kotlin
+ * oasStubTestService.getTestApiMetrics("petstore")
+ *   .byPath("/pets")
+ *   .count()
+ * // returns "/pets" API invocation count
+ * ```
+ *
+ * Example of byStatus
+ * ```kotlin
+ * oasStubTestService.getTestApiMetrics("petstore")
+ *   .byStatus(200)
+ *   .count()
+ * // returns API invocation count that returned HTTP status of 200
+ * ```
+ */
 data class OasStubTestApiMetricsAggregator(private val metrics: List<ApiMetric>) {
     /**
      * Get current metrics
