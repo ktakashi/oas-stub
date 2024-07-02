@@ -12,6 +12,7 @@ dependencies {
     testImplementation(project(":lib:spring:oas-stub-spring-boot-starter-test"))
     testImplementation(project(":lib:spring:oas-stub-storage-autoconfigure-api"))
     testImplementation(project(":test:cucumber-test"))
+    testImplementation(libs.spring.web)
     testImplementation(libs.slf4j.api)
     testImplementation(libs.spring.boot.autoconfigure)
     testImplementation(libs.hazelcast)

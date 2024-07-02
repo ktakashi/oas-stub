@@ -16,6 +16,7 @@ dependencies {
     api(project(":lib:spring:oas-stub-hazelcast-storage-autoconfigure"))
     api(project(":lib:spring:oas-stub-mongodb-storage-autoconfigure"))
     api(libs.spring.boot.starter.test)
+    implementation(libs.spring.web)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
     implementation(libs.annotation.api)

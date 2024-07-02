@@ -14,7 +14,7 @@ import io.github.ktakashi.oas.model.ApiRecord
 import java.util.Optional
 import java.util.function.Predicate
 import org.springframework.core.io.Resource
-import reactor.core.publisher.Mono
+import org.springframework.web.util.UriTemplate
 
 /**
  * Providing test utilities
@@ -37,8 +37,8 @@ class OasStubTestService(private val properties: OasStubTestProperties,
         apiRegistrationService.getAllNames().map { name ->
             apiRegistrationService.deleteApiDefinitions(name)
         }.subscribe()
-        apiObserver.clearApiMetrics()
-        apiRecorder.clearAllApiRecords()
+        clearTestApiMetrics()
+        clearAllTestApiRecords()
     }
 
     /**
@@ -179,6 +179,11 @@ data class OasStubTestApiMetricsAggregator(private val metrics: List<ApiMetric>)
      * Filter metrics by [path]
      */
     fun byPath(path: String) = filter { m -> m.apiPath == path }
+
+    /**
+     * Filter metrics by [template]
+     */
+    fun byUriTemplate(template: UriTemplate) = filter { m -> template.matches(m.apiPath) }
 
     /**
      * Filter metrics by [status]
