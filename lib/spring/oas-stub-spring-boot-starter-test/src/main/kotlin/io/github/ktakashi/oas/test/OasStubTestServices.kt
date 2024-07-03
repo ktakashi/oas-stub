@@ -1,5 +1,8 @@
 package io.github.ktakashi.oas.test
 
+import com.fasterxml.jackson.core.JsonPointer
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
@@ -11,8 +14,11 @@ import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.ApiMetric
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiRecord
+import io.github.ktakashi.oas.model.ApiRequestRecord
+import io.github.ktakashi.oas.model.ApiResponseRecord
 import java.util.Optional
 import java.util.function.Predicate
+import kotlin.jvm.optionals.getOrNull
 import org.springframework.core.io.Resource
 import org.springframework.web.util.UriTemplate
 
@@ -25,7 +31,8 @@ import org.springframework.web.util.UriTemplate
 class OasStubTestService(private val properties: OasStubTestProperties,
                          private val apiRegistrationService: ApiRegistrationService,
                          private val apiObserver: ApiObserver,
-                         private val apiRecorder: ApiRecorder) {
+                         private val apiRecorder: ApiRecorder,
+                         private val objectMapper: ObjectMapper) {
     fun setup() {
         clear()
         properties.definitions.forEach { (k, v) ->
@@ -83,7 +90,10 @@ class OasStubTestService(private val properties: OasStubTestProperties,
      */
     fun clearTestApiMetrics() = apiObserver.clearApiMetrics()
 
-    fun getTestApiRecords(name: String): List<ApiRecord> = apiRecorder.getApiRecords(name).map<List<ApiRecord>> { it.records }.orElseGet { listOf() }
+    fun getTestApiRecords(name: String): OasStubTestApiRecordAggregator = OasStubTestApiRecordAggregator(
+        apiRecorder.getApiRecords(name).map { it.records.map { record -> StubRecord(record, objectMapper) } }
+            .orElseGet { listOf() }
+    )
 
     fun clearTestApiRecords(name: String) = apiRecorder.clearApiRecords(name)
 
@@ -176,6 +186,11 @@ data class OasStubTestApiMetricsAggregator(private val metrics: List<ApiMetric>)
     fun filter(predicate: Predicate<ApiMetric>) = OasStubTestApiMetricsAggregator(metrics.filter { v -> predicate.test(v) })
 
     /**
+     * Filter metrics by HTTP method of [method]
+     */
+    fun byMethod(method: String) = filter { m -> m.httpMethod == method }
+
+    /**
      * Filter metrics by [path]
      */
     fun byPath(path: String) = filter { m -> m.apiPath == path }
@@ -194,4 +209,121 @@ data class OasStubTestApiMetricsAggregator(private val metrics: List<ApiMetric>)
      * Returns number of API metrics
      */
     fun count(): Int = metrics.size
+}
+
+private fun ObjectMapper.safeReadTree(value: ByteArray): JsonNode? = try {
+    this.readTree(value)
+} catch (e: Exception) {
+    null
+}
+
+internal interface BaseStubRecord {
+    val json: Optional<JsonNode>
+    val rawBody: Optional<ByteArray>
+    val headers: Map<String, List<String>>
+    fun isJson(): Boolean = json.isPresent
+}
+
+data class StubRequestRecord(private val request: ApiRequestRecord,
+                             private val objectMapper: ObjectMapper): BaseStubRecord {
+    override val json: Optional<JsonNode> by lazy {
+        request.body.map { objectMapper.safeReadTree(it) }
+    }
+
+    override val rawBody = request.body
+    override val headers = request.headers
+}
+data class StubResponseRecord(private val response: ApiResponseRecord,
+                              private val objectMapper: ObjectMapper): BaseStubRecord {
+    override val json: Optional<JsonNode> by lazy {
+        response.body.map { objectMapper.safeReadTree(it) }
+    }
+
+    override val rawBody = response.body
+    override val headers = response.headers
+}
+
+data class StubRecord(private val record: ApiRecord,
+                      private val objectMapper: ObjectMapper) {
+    private val rawRequest: ApiRequestRecord = record.request
+    internal val rawResponse: ApiResponseRecord = record.response
+    val request: StubRequestRecord by lazy { StubRequestRecord(rawRequest, objectMapper) }
+    val response: StubResponseRecord by lazy { StubResponseRecord(rawResponse, objectMapper) }
+
+    val method: String = record.method
+    val path: String = record.path
+}
+
+data class OasStubTestApiRecordAggregator(private val records: List<StubRecord>) {
+    /**
+     * Get current records
+     */
+    fun get() = records
+
+    /**
+     * Get the number of current records
+     */
+    fun count() = records.size
+
+    /**
+     * Filter the records by given [predicate]
+     */
+    fun filter(predicate: Predicate<StubRecord>) = OasStubTestApiRecordAggregator(records.filter { predicate.test(it) })
+
+    fun byMethod(method: String) = filter { record -> record.method == method }
+
+    fun byPath(path: String) = filter { record -> record.path == path }
+
+    fun byUriTemplate(template: UriTemplate) = filter { record -> template.matches(record.path) }
+
+    fun byRequestHeader(name: String) = byRequestHeader(name) { it != null }
+
+    fun byRequestHeader(name: String, value: String) = byRequestHeader(name) { it?.contains(value) ?: false }
+
+    fun byRequestHeader(name: String, predicate: Predicate<List<String>?>) = byHeader(name, StubRecord::request, predicate)
+
+    fun byRequestBody() = byRequestBody { it != null }
+
+    fun byRequestBody(value: ByteArray) = byRequestBody { value.contentEquals(it) }
+
+    fun byRequestBody(predicate: Predicate<ByteArray?>) = byStubBody(StubRecord::request, predicate)
+
+    fun byRequestJson(pointer: String) = byRequestJson(JsonPointer.compile(pointer))
+
+    fun byRequestJson(pointer: JsonPointer) = byRequestJson(pointer) { it != null }
+
+    fun byRequestJson(pointer: String, value: JsonNode) = byRequestJson(JsonPointer.compile(pointer), value)
+
+    fun byRequestJson(pointer: JsonPointer, value: JsonNode) = byRequestJson(pointer) { it == value }
+
+    fun byRequestJson(pointer: JsonPointer, predicate: Predicate<JsonNode?>) = byJsonBody(pointer, StubRecord::request, predicate)
+
+    fun byStatus(status: Int) = filter { record -> record.rawResponse.status == status }
+
+    fun byResponseHeader(name: String) = byResponseHeader(name) { it != null }
+
+    fun byResponseHeader(name: String, value: String) = byResponseHeader(name) { it?.contains(value) ?: false }
+
+    fun byResponseHeader(name: String, predicate: Predicate<List<String>?>) = byHeader(name, StubRecord::response, predicate)
+
+    fun byResponseBody() = byResponseBody { it != null }
+
+    fun byResponseBody(value: ByteArray) = byResponseBody { value.contentEquals(it) }
+
+    fun byResponseBody(predicate: Predicate<ByteArray?>) = byStubBody(StubRecord::response, predicate)
+
+    fun byResponseJson(pointer: String) = byResponseJson(JsonPointer.compile(pointer))
+
+    fun byResponseJson(pointer: JsonPointer) = byResponseJson(pointer) { it != null }
+
+    fun byResponseJson(pointer: String, value: JsonNode) = byResponseJson(JsonPointer.compile(pointer), value)
+
+    fun byResponseJson(pointer: JsonPointer, value: JsonNode) = byResponseJson(pointer) { it == value }
+
+    fun byResponseJson(pointer: JsonPointer, predicate: Predicate<JsonNode?>) = byJsonBody(pointer, StubRecord::response, predicate)
+
+
+    private fun byStubBody(getter: (StubRecord) -> BaseStubRecord, predicate: Predicate<ByteArray?>) = filter { record -> predicate.test(getter(record).rawBody.getOrNull()) }
+    private fun byHeader(name: String, getter: (StubRecord) -> BaseStubRecord, predicate: Predicate<List<String>?>) =  filter { record -> predicate.test(getter(record).headers[name]) }
+    private fun byJsonBody(pointer: JsonPointer, getter: (StubRecord) -> BaseStubRecord, predicate: Predicate<JsonNode?>) = filter { record -> getter(record).json.filter { predicate.test(it.at(pointer)) }.isPresent }
 }

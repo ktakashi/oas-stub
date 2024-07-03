@@ -8,6 +8,7 @@ import io.github.ktakashi.oas.server.handlers.OasStubApiHandler
 import io.github.ktakashi.oas.server.handlers.OasStubMetricsRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubRecordsRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubRoutes
+import io.github.ktakashi.oas.server.modules.makeApiDefinitionMergerModule
 import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
@@ -79,6 +80,7 @@ class OasStubServer(private val options: OasStubOptions) {
                     modules(validatorModule)
                     modules(makeEngineModule(stubOptions))
                     modules(makeStorageModule(stubOptions.persistentStorage, stubOptions.sessionStorage))
+                    modules(makeApiDefinitionMergerModule(stubOptions))
                     this@OasStubServer.koin = koin
                 }
                 koinInitialized = true

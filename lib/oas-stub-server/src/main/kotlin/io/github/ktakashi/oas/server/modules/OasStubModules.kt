@@ -26,6 +26,7 @@ import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataPopulator
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi31DataValidator
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
+import io.github.ktakashi.oas.engine.models.ApiDefinitionsMerger
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.plugins.PluginCompiler
 import io.github.ktakashi.oas.engine.plugins.PluginService
@@ -37,6 +38,8 @@ import io.github.ktakashi.oas.engine.validators.LocalDateValidator
 import io.github.ktakashi.oas.engine.validators.OffsetDateValidator
 import io.github.ktakashi.oas.engine.validators.UUIDValidator
 import io.github.ktakashi.oas.engine.validators.Validator
+import io.github.ktakashi.oas.server.config.ServerApiDefinitionsMerger
+import io.github.ktakashi.oas.server.options.OasStubOptions
 import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -111,4 +114,8 @@ fun makeEngineModule(options: OasStubStubOptions) = module {
 internal fun makeStorageModule(persistentStorage: PersistentStorage, sessionStorage: SessionStorage) = module {
     single<PersistentStorage> { persistentStorage }
     single<SessionStorage> { sessionStorage } bind Storage::class
+}
+
+internal fun makeApiDefinitionMergerModule(options: OasStubStubOptions) = module {
+    single<ApiDefinitionsMerger> { ServerApiDefinitionsMerger(options) }
 }

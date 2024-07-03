@@ -41,7 +41,8 @@ class OasStubServerConfiguration(internal val properties: OasStubTestProperties,
         oasStubTestService = OasStubTestService(properties,
             inject<ApiRegistrationService>().value,
             inject<ApiObserver>().value,
-            inject<ApiRecorder>().value)
+            inject<ApiRecorder>().value,
+            inject<ObjectMapper>().value)
         return oasStubTestService
     }
 

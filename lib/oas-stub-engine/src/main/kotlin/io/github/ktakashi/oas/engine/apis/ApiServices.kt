@@ -5,7 +5,9 @@ import io.github.ktakashi.oas.api.http.HttpResponse
 import io.github.ktakashi.oas.api.http.RequestContext
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
+import io.github.ktakashi.oas.engine.models.ApiDefinitionsMerger
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
+import io.github.ktakashi.oas.engine.models.merge
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.paths.findMatchingPath
 import io.github.ktakashi.oas.engine.paths.findMatchingPathValue
@@ -113,17 +115,20 @@ interface ApiRegistrationService {
 private val logger = LoggerFactory.getLogger(ApiExecutionService::class.java)
 
 class DefaultApiRegistrationService(private val storageService: StorageService,
-                                    private val parsingService: ParsingService) : ApiRegistrationService {
+                                    private val parsingService: ParsingService,
+                                    private val apiDefinitionsMerger: ApiDefinitionsMerger?) : ApiRegistrationService {
     override fun getApiDefinitions(name: String): Mono<ApiDefinitions> = storageService.getApiDefinitions(name)
-    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Mono<ApiDefinitions> = apiDefinitions.specification?.let { spec ->
-        parsingService.parse(spec, false).flatMap { openApi ->
-            when (openApi.specVersion) {
-                // V31 isn't one-to-one mapping, so keep the original one
-                SpecVersion.V31 -> Mono.just(apiDefinitions)
-                else -> parsingService.toYaml(openApi).map(apiDefinitions::updateSpecification)
-            }.map { stripInvalidConfiguration(openApi, it) }
-        }.flatMap { def -> Mono.justOrEmpty(storageService.saveApiDefinitions(name, def)) }
-    } ?: Mono.defer { Mono.justOrEmpty(storageService.saveApiDefinitions(name, apiDefinitions)) }
+    override fun saveApiDefinitions(name: String, apiDefinitions: ApiDefinitions): Mono<ApiDefinitions> = apiDefinitionsMerger.merge(apiDefinitions).let { definitions ->
+        definitions.specification?.let { spec ->
+            parsingService.parse(spec, false).flatMap { openApi ->
+                when (openApi.specVersion) {
+                    // V31 isn't one-to-one mapping, so keep the original one
+                    SpecVersion.V31 -> Mono.just(definitions)
+                    else -> parsingService.toYaml(openApi).map(definitions::updateSpecification)
+                }.map { stripInvalidConfiguration(openApi, it) }
+            }.flatMap { def -> Mono.justOrEmpty(storageService.saveApiDefinitions(name, def)) }
+        } ?: Mono.defer { Mono.justOrEmpty(storageService.saveApiDefinitions(name, definitions)) }
+    }
 
     override fun deleteApiDefinitions(name: String): Mono<Boolean> = Mono.defer { Mono.just(storageService.deleteApiDefinitions(name)) }
 

@@ -10,6 +10,7 @@ import io.github.ktakashi.oas.model.ApiRecords
 import io.github.ktakashi.oas.model.ApiRequestRecord
 import io.github.ktakashi.oas.model.ApiResponseRecord
 import java.util.Optional
+import java.util.TreeMap
 
 private const val API_METRICS_KEY = "*io.github.ktakashi.oas.api.metrics*"
 private const val API_RECORDS_KEY = "*io.github.ktakashi.oas.api.records*"
@@ -45,7 +46,15 @@ interface SessionStorage: Storage {
 }
 
 private fun getApiRecordKey(name: String) = "$API_RECORDS_KEY:$name"
-private fun RequestContext.toRecord() = ApiRequestRecord(contentType, headers, cookies.map { (k, v) -> k to v.toString() }.toMap(), content)
-private fun ResponseContext.toRecord() = ApiResponseRecord(status, contentType, headers, content)
+private fun RequestContext.toRecord() = ApiRequestRecord(contentType, ensureTreeMap(headers, contentType), cookies.map { (k, v) -> k to v.toString() }.toMap(), content)
+private fun ResponseContext.toRecord() = ApiResponseRecord(status, contentType, ensureTreeMap(headers, contentType), content)
 
+private fun ensureTreeMap(headers: Map<String, List<String>>, contentType: Optional<String>): Map<String, List<String>> = (when (headers) {
+    is TreeMap -> headers
+    else -> TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply { putAll(headers) }
+}).also {
+    if (contentType.isPresent && !it.containsKey("Content-Type")) {
+        it["Content-Type"] = listOf(contentType.get())
+    }
+}
 private data class DefaultApiMetricsHolder(val metrics: MutableMap<String, ApiMetrics> = mutableMapOf())
