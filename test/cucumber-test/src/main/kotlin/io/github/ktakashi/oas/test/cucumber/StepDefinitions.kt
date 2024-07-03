@@ -256,7 +256,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     }
 
     @Then("I get response JSON satisfies this {string}")
-    fun IGetResponseJsonSatifiesThis(condition: String) {
+    fun iGetResponseJsonSatisfiesThis(condition: String) {
         if ("<null>" == condition) {
             val body = testContext.response?.body() ?: throw IllegalStateException("no response")
             val r = body.asByteArray()

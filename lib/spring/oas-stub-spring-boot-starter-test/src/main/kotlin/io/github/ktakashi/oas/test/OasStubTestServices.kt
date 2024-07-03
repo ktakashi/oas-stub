@@ -218,42 +218,71 @@ private fun ObjectMapper.safeReadTree(value: ByteArray): JsonNode? = try {
 }
 
 internal interface BaseStubRecord {
-    val json: Optional<JsonNode>
+    /**
+     * Converts body to JSON if possible
+     */
+    fun json(): Optional<JsonNode>
     val rawBody: Optional<ByteArray>
     val headers: Map<String, List<String>>
-    fun isJson(): Boolean = json.isPresent
+    fun isJson(): Boolean = json().isPresent
 }
 
 data class StubRequestRecord(private val request: ApiRequestRecord,
                              private val objectMapper: ObjectMapper): BaseStubRecord {
-    override val json: Optional<JsonNode> by lazy {
+    private val cacheJson: Optional<JsonNode> by lazy {
         request.body.map { objectMapper.safeReadTree(it) }
     }
+    override fun json(): Optional<JsonNode> = cacheJson
 
     override val rawBody = request.body
     override val headers = request.headers
 }
 data class StubResponseRecord(private val response: ApiResponseRecord,
                               private val objectMapper: ObjectMapper): BaseStubRecord {
-    override val json: Optional<JsonNode> by lazy {
+    private val cacheJson: Optional<JsonNode> by lazy {
         response.body.map { objectMapper.safeReadTree(it) }
     }
+    override fun json(): Optional<JsonNode> = cacheJson
 
     override val rawBody = response.body
     override val headers = response.headers
 }
 
+/**
+ * Stub invocation record
+ */
 data class StubRecord(private val record: ApiRecord,
                       private val objectMapper: ObjectMapper) {
     private val rawRequest: ApiRequestRecord = record.request
     internal val rawResponse: ApiResponseRecord = record.response
+
+    /**
+     * Returns request of this invocation
+     */
     val request: StubRequestRecord by lazy { StubRequestRecord(rawRequest, objectMapper) }
+
+    /**
+     * Returns response of this invocation
+     */
     val response: StubResponseRecord by lazy { StubResponseRecord(rawResponse, objectMapper) }
 
+    /**
+     * HTTP method of this invocation
+     */
     val method: String = record.method
+
+    /**
+     * API path of this invocation
+     */
     val path: String = record.path
 }
 
+/**
+ * Stub records aggregator.
+ *
+ * This aggregator is useful when you want to check what the request or response to/from the
+ * OAS stub server.
+ */
 data class OasStubTestApiRecordAggregator(private val records: List<StubRecord>) {
     /**
      * Get current records
@@ -270,60 +299,154 @@ data class OasStubTestApiRecordAggregator(private val records: List<StubRecord>)
      */
     fun filter(predicate: Predicate<StubRecord>) = OasStubTestApiRecordAggregator(records.filter { predicate.test(it) })
 
+    /**
+     * Filters the records by HTTP method of [method]
+     */
     fun byMethod(method: String) = filter { record -> record.method == method }
 
+    /**
+     * Filters the records by API path of [path]
+     */
     fun byPath(path: String) = filter { record -> record.path == path }
 
+    /**
+     * Filters the records by API path of matching with URI template of [template]
+     */
     fun byUriTemplate(template: UriTemplate) = filter { record -> template.matches(record.path) }
 
+    /**
+     * Filters the records if the [name] request header exists
+     */
     fun byRequestHeader(name: String) = byRequestHeader(name) { it != null }
 
+    /**
+     * Filters the records if the [name] request header contains [value]
+     *
+     * NOTE: HTTP can have multiple of the same headers, this filter returns if one of the values
+     * is [value]
+     */
     fun byRequestHeader(name: String, value: String) = byRequestHeader(name) { it?.contains(value) ?: false }
 
+    /**
+     * Filters the records if the [name] request header satisfies [predicate]
+     */
     fun byRequestHeader(name: String, predicate: Predicate<List<String>?>) = byHeader(name, StubRecord::request, predicate)
 
+    /**
+     * Filters the records if the request contains body
+     */
     fun byRequestBody() = byRequestBody { it != null }
 
+    /**
+     * Filters the records if the request body is [value]
+     */
     fun byRequestBody(value: ByteArray) = byRequestBody { value.contentEquals(it) }
 
+    /**
+     * Filters the records if the request body satisfies [predicate]
+     */
     fun byRequestBody(predicate: Predicate<ByteArray?>) = byStubBody(StubRecord::request, predicate)
 
+    /**
+     * Filters the records if the request body is JSON and contains JSON pointer [pointer] field
+     */
     fun byRequestJson(pointer: String) = byRequestJson(JsonPointer.compile(pointer))
 
+    /**
+     * Filters the records if the request body is JSON and contains JSON pointer [pointer] field
+     */
     fun byRequestJson(pointer: JsonPointer) = byRequestJson(pointer) { it != null }
 
+    /**
+     * Filters the records if the request body is JSON and JSON pointer [pointer] has the value of [value]
+     */
     fun byRequestJson(pointer: String, value: JsonNode) = byRequestJson(JsonPointer.compile(pointer), value)
 
+    /**
+     * Filters the records if the request body is JSON and JSON pointer [pointer] has the value of [value]
+     */
     fun byRequestJson(pointer: JsonPointer, value: JsonNode) = byRequestJson(pointer) { it == value }
 
+    /**
+     * Filters the records if the request body is JSON and the value of JSON pointer [pointer] satisfies [predicate]
+     */
+    fun byRequestJson(pointer: String, predicate: Predicate<JsonNode?>) = byRequestJson(JsonPointer.compile(pointer), predicate)
+
+    /**
+     * Filters the records if the request body is JSON and the value of JSON pointer [pointer] satisfies [predicate]
+     */
     fun byRequestJson(pointer: JsonPointer, predicate: Predicate<JsonNode?>) = byJsonBody(pointer, StubRecord::request, predicate)
 
+    /**
+     * Filters the records if the response status is [status]
+     */
     fun byStatus(status: Int) = filter { record -> record.rawResponse.status == status }
 
+    /**
+     * Filters the records if the [name] response header exists
+     */
     fun byResponseHeader(name: String) = byResponseHeader(name) { it != null }
 
+    /**
+     * Filters the records if the [name] response header contains [value]
+     *
+     * NOTE: HTTP can have multiple of the same headers, this filter returns if one of the values
+     * is [value]
+     */
     fun byResponseHeader(name: String, value: String) = byResponseHeader(name) { it?.contains(value) ?: false }
 
+    /**
+     * Filters the records if the [name] response header satisfies [predicate]
+     */
     fun byResponseHeader(name: String, predicate: Predicate<List<String>?>) = byHeader(name, StubRecord::response, predicate)
 
+    /**
+     * Filters the records if the response contains body
+     */
     fun byResponseBody() = byResponseBody { it != null }
 
+    /**
+     * Filters the records if the response body is [value]
+     */
     fun byResponseBody(value: ByteArray) = byResponseBody { value.contentEquals(it) }
 
+    /**
+     * Filters the records if the response body satisfies [predicate]
+     */
     fun byResponseBody(predicate: Predicate<ByteArray?>) = byStubBody(StubRecord::response, predicate)
 
+    /**
+     * Filters the records if the response body is JSON and contains JSON pointer [pointer] field
+     */
     fun byResponseJson(pointer: String) = byResponseJson(JsonPointer.compile(pointer))
 
+    /**
+     * Filters the records if the response body is JSON and contains JSON pointer [pointer] field
+     */
     fun byResponseJson(pointer: JsonPointer) = byResponseJson(pointer) { it != null }
 
+    /**
+     * Filters the records if the response body is JSON and JSON pointer [pointer] has the value of [value]
+     */
     fun byResponseJson(pointer: String, value: JsonNode) = byResponseJson(JsonPointer.compile(pointer), value)
 
+    /**
+     * Filters the records if the response body is JSON and JSON pointer [pointer] has the value of [value]
+     */
     fun byResponseJson(pointer: JsonPointer, value: JsonNode) = byResponseJson(pointer) { it == value }
 
+    /**
+     * Filters the records if the response body is JSON and the value of JSON pointer [pointer] satisfies [predicate]
+     */
+    fun byResponseJson(pointer: String, predicate: Predicate<JsonNode?>) = byResponseJson(JsonPointer.compile(pointer), predicate)
+
+    /**
+     * Filters the records if the response body is JSON and the value of JSON pointer [pointer] satisfies [predicate]
+     */
     fun byResponseJson(pointer: JsonPointer, predicate: Predicate<JsonNode?>) = byJsonBody(pointer, StubRecord::response, predicate)
 
 
     private fun byStubBody(getter: (StubRecord) -> BaseStubRecord, predicate: Predicate<ByteArray?>) = filter { record -> predicate.test(getter(record).rawBody.getOrNull()) }
     private fun byHeader(name: String, getter: (StubRecord) -> BaseStubRecord, predicate: Predicate<List<String>?>) =  filter { record -> predicate.test(getter(record).headers[name]) }
-    private fun byJsonBody(pointer: JsonPointer, getter: (StubRecord) -> BaseStubRecord, predicate: Predicate<JsonNode?>) = filter { record -> getter(record).json.filter { predicate.test(it.at(pointer)) }.isPresent }
+    private fun byJsonBody(pointer: JsonPointer, getter: (StubRecord) -> BaseStubRecord, predicate: Predicate<JsonNode?>) = filter { record -> getter(record).json().filter { predicate.test(it.at(pointer)) }.isPresent }
 }

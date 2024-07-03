@@ -80,6 +80,7 @@ public class StepDefinitions {
     @And("{string} API {string} is called {int} time(s)")
     public void petstoreAPIVPetsIdIsCalledTime(String context, String api, int count) {
         assertEquals(count, oasStubTestService.getTestApiMetrics(context).byPath(api).count());
+        assertEquals(count, oasStubTestService.getTestApiRecords(context).byPath(api).count());
     }
 
     private String getApplicationUri() {
