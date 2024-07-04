@@ -1,1 +1,18 @@
 specification: "classpath:/schema/test-api.yaml"
+configurations:
+  /examples:
+    plugin:
+      type: GROOVY
+      script: 'classpath:/oas/stub/plugins/StaticStubPlugin.groovy'
+    data:
+      status: 404
+  /examples/objects:
+    plugin:
+      type: GROOVY
+      script: 'classpath:/plugins/ListDataPlugin.groovy'
+    data:
+      list:
+        - oas
+        - stub
+        - is
+        - great
