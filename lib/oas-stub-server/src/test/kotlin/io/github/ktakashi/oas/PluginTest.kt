@@ -5,6 +5,7 @@ import io.github.ktakashi.oas.server.options.OasStubOptions
 import io.restassured.RestAssured.given
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -30,9 +31,14 @@ class PluginTest {
 
     @Test
     fun staticPluginTest() {
-        given().get("http://localhost:${server.port()}/oas/test-api-static/examples")
+        val r = given().get("http://localhost:${server.port()}/oas/test-api-static/examples")
             .then()
             .statusCode(404)
+            .header("X-Example-Id", equalTo("12345"))
+            .extract()
+        val headers = r.headers().filter { it.name == "X-Example-Values" }
+        assertEquals(3, headers.size)
+        assertTrue(setOf("a", "b", "c").containsAll(headers.map { it.value }))
 
         val response = given().get("http://localhost:${server.port()}/__admin/metrics/test-api-static")
             .then()

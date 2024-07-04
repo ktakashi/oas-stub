@@ -23,7 +23,9 @@ class StaticStubPlugin implements ApiPlugin {
                     it.forEach { String k, v ->
                         r.compute(k) { k2, v2 ->
                             if (v instanceof Collection) {
-
+                                new ArrayList(v)
+                            } else {
+                                [v.toString()]
                             }
                         }
                     }

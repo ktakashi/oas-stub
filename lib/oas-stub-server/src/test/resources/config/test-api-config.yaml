@@ -6,6 +6,12 @@ configurations:
       script: 'classpath:/oas/stub/plugins/StaticStubPlugin.groovy'
     data:
       status: 404
+      headers:
+        X-Example-Id: 12345
+        X-Example-Values:
+          - a
+          - b
+          - c
   /examples/objects:
     plugin:
       type: GROOVY
