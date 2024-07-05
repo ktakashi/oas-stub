@@ -144,7 +144,7 @@ class OasStubApiConfigurationDsl internal  constructor(private val init: OasStub
     /**
      * Configure plugin
      *
-     * [resource] can be any Spring resource, e.g. [ClassPathResource]
+     * [resource] can be any Spring resource, e.g. [org.springframework.core.io.ClassPathResource]
      */
     fun plugin(resource: Resource, type: PluginType = PluginType.GROOVY) {
         val plugin = PluginDefinition(type, resource.getContentAsString(StandardCharsets.UTF_8))
@@ -229,10 +229,18 @@ class OasStubApiDelayDsl internal constructor(private val init: OasStubApiDelayD
 
 class OasStubApiOptionsDsl internal constructor(private val init: OasStubApiOptionsDsl.() -> Unit) {
     private var shouldValidate: Boolean? = null
+    private var shouldMonitor: Boolean? = null
+    private var shouldRecord: Boolean? = null
     private var latency: ApiLatency? = null
     private var failure: ApiFailure? = null
     fun shouldValidate(shouldValidate: Boolean?) {
         this.shouldValidate = shouldValidate
+    }
+    fun shouldMonitor(shouldMonitor: Boolean?) {
+        this.shouldMonitor = shouldMonitor
+    }
+    fun shouldRecord(shouldRecord: Boolean?) {
+        this.shouldRecord = shouldRecord
     }
     fun latency(init: OasStubApiLatency.() -> Unit) {
         latency = OasStubApiLatency(init).save()
@@ -243,6 +251,8 @@ class OasStubApiOptionsDsl internal constructor(private val init: OasStubApiOpti
     internal fun save(): ApiOptions {
         init()
         return ApiOptions(shouldValidate = shouldValidate,
+            shouldMonitor = shouldMonitor,
+            shouldRecord = shouldRecord,
             latency = latency,
             failure = failure)
     }

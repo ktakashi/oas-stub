@@ -1,18 +1,30 @@
 package io.github.ktakashi.oas.example.test
 
 import io.github.ktakashi.oas.model.ApiData
+import io.github.ktakashi.oas.model.ApiFixedDelay
 import io.github.ktakashi.oas.model.ApiHeaders
+import io.github.ktakashi.oas.model.ApiHttpError
+import io.github.ktakashi.oas.model.ApiLatency
+import io.github.ktakashi.oas.model.ApiOptions
+import io.github.ktakashi.oas.model.ApiProtocolFailure
+import io.github.ktakashi.oas.model.PluginDefinition
+import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
+import io.github.ktakashi.oas.test.OasStubTestPlugin
 import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestResources
 import io.github.ktakashi.oas.test.OasStubTestService
+import io.github.ktakashi.oas.test.context
 import io.restassured.RestAssured
 import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
 import io.restassured.filter.log.ResponseLoggingFilter
 import java.net.URI
+import kotlin.time.DurationUnit
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -48,6 +60,76 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
     @Test
     fun testPetstoreStatic() {
         check("petstore-static")
+    }
+
+    @Test
+    fun testDsl() {
+        oasStubTestService.context("dsl-test") {
+            headers {
+                request {
+                    header("Stub-Request-Header", "ok")
+                }
+                response {
+                    header("Stub-Response-Header", "ok")
+                }
+            }
+            options {
+                shouldValidate(true)
+                shouldMonitor(true)
+                shouldRecord(true)
+                latency {
+                    interval(1)
+                    unit(DurationUnit.NANOSECONDS)
+                }
+                failure {
+                    protocol()
+                }
+            }
+            delay {
+                noDelay()
+            }
+            configuration("/api0") {
+                headers {
+                    request {
+                        header("API0-Request-Header", "ok")
+                    }
+                    response {
+                        header("API0-Response-Header", "ok")
+                    }
+                }
+                delay {
+                    fixed(1)
+                }
+                options {
+                    failure {
+                        status(500)
+                    }
+                }
+                defaultPlugin()
+            }
+        }
+        val context = oasStubTestService.getTestApiContext("dsl-test")
+        val definitions = context.apiDefinitions
+        assertNotNull(definitions.headers)
+        assertEquals(setOf("Stub-Request-Header"), definitions.headers?.request?.keys)
+        assertEquals(setOf("Stub-Response-Header"), definitions.headers?.response?.keys)
+        assertNotNull(definitions.options)
+        assertEquals(ApiOptions(shouldValidate = true,
+            latency = ApiLatency(1, DurationUnit.NANOSECONDS),
+            failure = ApiProtocolFailure,
+            shouldMonitor = true,
+            shouldRecord = true
+        ), definitions.options)
+        assertNull(definitions.delay)
+        assertNotNull(definitions.configurations)
+        val configuration = definitions.configurations!!["/api0"]
+        assertNotNull(configuration)
+        assertNotNull(configuration?.headers)
+        assertEquals(setOf("API0-Request-Header"), configuration?.headers?.request?.keys)
+        assertEquals(setOf("API0-Response-Header"), configuration?.headers?.response?.keys)
+        assertEquals(ApiFixedDelay(1 ), configuration?.delay)
+        assertEquals(ApiOptions(failure = ApiHttpError(500)), configuration?.options)
+        assertEquals(OasStubTestPlugin().toPluginDefinition(), configuration?.plugin)
     }
 
     fun check(name: String) {

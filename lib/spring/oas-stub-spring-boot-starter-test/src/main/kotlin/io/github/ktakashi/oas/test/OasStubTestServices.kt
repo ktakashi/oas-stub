@@ -108,7 +108,8 @@ class OasStubTestService(private val properties: OasStubTestProperties,
 class OasStubTestApiContext
 internal constructor(private val apiRegistrationService: ApiRegistrationService,
                      private val name: String,
-                     private val apiDefinitions: ApiDefinitions) {
+                     // Visible for testing
+                     internal val apiDefinitions: ApiDefinitions) {
     /**
      * Saves the current [ApiDefinitions] with [name]
      */
