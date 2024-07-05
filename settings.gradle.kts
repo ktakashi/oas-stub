@@ -36,5 +36,6 @@ include(":lib:spring:oas-stub-spring-boot-starter-test")
 
 include(":test:cucumber-test")
 include(":test:oas-stub-spring-tests")
+include(":test:reports")
 
 include(":bom:oas-stub-bom")

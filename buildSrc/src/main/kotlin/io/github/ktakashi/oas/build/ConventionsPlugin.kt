@@ -15,6 +15,8 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
+import org.gradle.testing.jacoco.plugins.JacocoPlugin
+import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
@@ -26,6 +28,7 @@ class ConventionsPlugin: Plugin<Project> {
     override fun apply(project: Project) {
         configureJavaConventions(project)
         configureKotlinConventions(project)
+        configureJacocoConventions(project)
         configureMavenPublishingConventions(project)
         configureSigningConventions(project)
     }
@@ -65,6 +68,22 @@ internal fun configureKotlinConventions(project: Project) {
             }
         }
         project.extensions.getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(17)
+    }
+}
+
+internal fun configureJacocoConventions(project: Project) {
+    project.plugins.withType(JavaLibraryPlugin::class.java) {
+        project.plugins.apply(JacocoPlugin::class.java)
+        project.tasks.withType(JacocoReport::class.java) { jacoco ->
+            project.tasks.withType(Test::class.java) { testTask ->
+                testTask.finalizedBy(jacoco)
+                jacoco.dependsOn(testTask)
+            }
+            jacoco.reports.xml.required.set(false)
+            jacoco.reports.csv.required.set(false)
+            jacoco.reports.html.required.set(true)
+            jacoco.reports.html.outputLocation.set(project.layout.buildDirectory.dir("jacocoHtml"))
+        }
     }
 }
 
