@@ -21,9 +21,9 @@ internal class OasStubServerConnection(private val connection: NConnection): Con
     }
 }
 
-internal class OasStubServerHttpRequest(private val request: HttpServerRequest,
-                                        private val response: HttpServerResponse,
-                                        private val objectMapper: ObjectMapper): RouterHttpRequest {
+internal open class OasStubServerHttpRequest(private val request: HttpServerRequest,
+                                             private val response: HttpServerResponse,
+                                             private val objectMapper: ObjectMapper): RouterHttpRequest {
     private val uri = URI.create(request.uri())
     private val qp by lazy { QueryStringDecoder(request.uri()).parameters() }
     override val connection by lazy { OasStubServerConnection(request as NConnection) }
@@ -75,6 +75,4 @@ internal class OasStubServerResponseBuilder(response: HttpServerResponse)
     override fun body(body: Any?): RouterHttpResponse = buildingResponse.apply {
         this.body = body
     }
-
-
 }

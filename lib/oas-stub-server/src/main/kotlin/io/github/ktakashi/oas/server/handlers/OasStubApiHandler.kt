@@ -1,6 +1,8 @@
 package io.github.ktakashi.oas.server.handlers
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.ktakashi.oas.api.http.HttpRequest
+import io.github.ktakashi.oas.api.http.HttpResponse
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.engine.apis.ApiContext
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
@@ -9,10 +11,12 @@ import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiMetric
+import io.github.ktakashi.oas.server.api.OasStubApiForwardingResolver
 import io.github.ktakashi.oas.server.http.OasStubServerHttpRequest
 import io.github.ktakashi.oas.server.http.OasStubServerHttpResponse
+import io.github.ktakashi.oas.server.options.OasStubOptions
+import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import io.netty.handler.codec.http.HttpResponseStatus
-import java.io.ByteArrayOutputStream
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicReference
@@ -27,7 +31,7 @@ import reactor.netty.http.server.HttpServerResponse
 
 private val logger = LoggerFactory.getLogger(OasStubApiHandler::class.java)
 
-class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServerResponse, Publisher<Void>> {
+open class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServerResponse, Publisher<Void>> {
     private val apiExecutionService by inject<ApiExecutionService>()
     private val apiObserver by inject<ApiObserver>()
     private val apiDelayService by inject<ApiDelayService>()
@@ -37,8 +41,8 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
         logger.debug("Request {} {}", request.method(), request.uri())
         val now = OffsetDateTime.now()
         val ref = AtomicReference<ApiContext>()
-        val newRequest = OasStubServerHttpRequest(request, response, objectMapper)
-        val newResponse = OasStubServerHttpResponse(response)
+        val newRequest = newOasStubServerHttpRequest(request, response, objectMapper)
+        val newResponse = newOasStubServerHttpResponse(response)
 
         return apiExecutionService.getApiContext(newRequest)
             .flatMap { context ->
@@ -64,6 +68,12 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
             .onErrorResume { response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).send() }
     }
 
+    protected open fun newOasStubServerHttpResponse(response: HttpServerResponse): HttpResponse =
+        OasStubServerHttpResponse(response)
+
+    protected open fun newOasStubServerHttpRequest(request: HttpServerRequest, response: HttpServerResponse, objectMapper: ObjectMapper): HttpRequest =
+        OasStubServerHttpRequest(request, response, objectMapper)
+
     private fun report(context: ApiContext, request: HttpServerRequest, response: ResponseContext, start: OffsetDateTime, e: Throwable? = null) {
         fun rec() {
             val end = OffsetDateTime.now()
@@ -79,3 +89,18 @@ class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpServer
     }
 }
 
+class OasStubForwardingApiHandler(private val options: OasStubStubOptions): OasStubApiHandler() {
+    override fun newOasStubServerHttpRequest(request: HttpServerRequest, response: HttpServerResponse, objectMapper: ObjectMapper): HttpRequest =
+        OasStubServerForwardingHttpRequest(options, request, response, objectMapper)
+}
+
+internal class OasStubServerForwardingHttpRequest(private val options: OasStubStubOptions,
+                                                  request: HttpServerRequest,
+                                                  response: HttpServerResponse,
+                                                  objectMapper: ObjectMapper): OasStubServerHttpRequest(request, response, objectMapper) {
+    private val resolvedURI: String? by lazy {
+        options.forwardingResolvers.asSequence().mapNotNull { it.resolveRequestUri(super.requestURI, this, options) }.firstOrNull()
+    }
+    override val requestURI: String
+        get() = resolvedURI ?: super.requestURI
+}

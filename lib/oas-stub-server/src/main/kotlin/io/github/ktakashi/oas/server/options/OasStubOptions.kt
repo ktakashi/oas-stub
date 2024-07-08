@@ -3,6 +3,7 @@ package io.github.ktakashi.oas.server.options
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.github.ktakashi.oas.server.api.OasStubApiForwardingResolver
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -118,6 +119,7 @@ internal constructor(val port: Int,
 data class OasStubStubOptions
 internal constructor(internal val stubPath: String,
                      internal val adminPath: String,
+                     internal val forwardingPath: String?,
                      internal val metricsPath: String,
                      internal val recordsPath: String,
                      internal val enableAdmin: Boolean,
@@ -127,7 +129,8 @@ internal constructor(internal val stubPath: String,
                      internal val routesBuilders: List<OasStubRoutesBuilder>,
                      internal val persistentStorage: PersistentStorage,
                      internal val sessionStorage: SessionStorage,
-                     internal val staticConfigurations: List<String>)
+                     internal val staticConfigurations: List<String>,
+                     internal val forwardingResolvers: List<OasStubApiForwardingResolver>)
 {
     companion object {
         @JvmStatic
@@ -137,6 +140,7 @@ internal constructor(internal val stubPath: String,
     class Builder(private val parent: OasStubOptions.Builder,
                   private var stubPath: String = OasStubOptions.DEFAULT_STUB_PATH,
                   private var adminPath: String = OasStubOptions.DEFAULT_ADMIN_PATH,
+                  private var forwardingPath: String? = null,
                   private var metricsPath: String = OasStubOptions.DEFAULT_METRICS_PATH,
                   private var recordsPath: String = OasStubOptions.DEFAULT_RECORDS_PATH,
                   private var enableAdmin: Boolean = true,
@@ -146,7 +150,8 @@ internal constructor(internal val stubPath: String,
                   private var objectMapper: ObjectMapper = ObjectMapper().findAndRegisterModules(),
                   private var persistentStorage: PersistentStorage = InMemoryPersistentStorage(),
                   private var sessionStorage: SessionStorage = InMemorySessionStorage(),
-                  private var staticConfigurations: MutableList<String> = mutableListOf()) {
+                  private var staticConfigurations: MutableList<String> = mutableListOf(),
+                  private var forwardingResolvers: MutableList<OasStubApiForwardingResolver> = mutableListOf()) {
         /**
          * Sets the stub path. Default value is [OasStubOptions.DEFAULT_STUB_PATH]
          */
@@ -156,6 +161,11 @@ internal constructor(internal val stubPath: String,
          * Sets the admin path. Default value is [OasStubOptions.DEFAULT_ADMIN_PATH]
          */
         fun adminPath(adminPath: String) = apply { this.adminPath = adminPath }
+
+        /**
+         * Sets the forwarding path. Default disabled.
+         */
+        fun forwardingPath(forwardingPath: String) = apply { this.forwardingPath = forwardingPath }
 
         /**
          * Sets the metrics path segment. Default value is [OasStubOptions.DEFAULT_METRICS_PATH]
@@ -222,14 +232,25 @@ internal constructor(internal val stubPath: String,
         fun addRoutesBuilder(routesBuilder: OasStubRoutesBuilder) = apply { this.routesBuilders.add(routesBuilder) }
 
         /**
+         * Sets forwarding resolvers
+         */
+        fun forwardingResolvers(forwardingResolvers: List<OasStubApiForwardingResolver>) = apply { this.forwardingResolvers = forwardingResolvers.toMutableList() }
+
+        /**
+         * Adds a forwarding resolver
+         */
+        fun addForwardingResolver(forwardingResolver: OasStubApiForwardingResolver) = apply { this.forwardingResolvers.add(forwardingResolver) }
+
+        /**
          * Returns the parent options builder.
          */
         fun parent() = parent
-        internal fun build() = OasStubStubOptions(stubPath, adminPath, metricsPath, recordsPath,
+        internal fun build() = OasStubStubOptions(stubPath, adminPath, forwardingPath,
+            metricsPath, recordsPath,
             enableAdmin, enableMetrics, enableRecords,
             objectMapper.copy().registerModules(KotlinModule.Builder().build(), Jdk8Module()),
             routesBuilders,
-            persistentStorage, sessionStorage, staticConfigurations)
+            persistentStorage, sessionStorage, staticConfigurations, forwardingResolvers)
     }
 
 }

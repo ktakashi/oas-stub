@@ -1,13 +1,17 @@
 package io.github.ktakashi.oas
 
 import io.github.ktakashi.oas.server.OasStubServer
+import io.github.ktakashi.oas.server.api.OasStubApiByHeaderForwardingResolver
 import io.github.ktakashi.oas.server.options.OasStubOptions
 import io.restassured.RestAssured.given
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+
+private const val FORWARDING_HEADER = "X-Oas-Stub-Application"
 
 class PluginTest {
     companion object {
@@ -20,6 +24,8 @@ class PluginTest {
                 .port(0)
                 .parent()
                 .stubOptions()
+                .forwardingPath("/")
+                .addForwardingResolver(OasStubApiByHeaderForwardingResolver(FORWARDING_HEADER))
                 .enableRecords(true)
                 .addStaticConfiguration("classpath:/static-config.yaml")
                 .parent()
@@ -27,6 +33,12 @@ class PluginTest {
             server = OasStubServer(options)
             server.start()
         }
+    }
+
+    @BeforeEach
+    fun init() {
+        server.resetMetrics()
+        server.resetRecords()
     }
 
     @Test
@@ -65,5 +77,19 @@ class PluginTest {
             .extract()
             .jsonPath()
         assertEquals(1, response.get<Map<String, List<Any>>>("metrics")["/examples/objects"]?.size)
+    }
+
+    @Test
+    fun forwardingTest() {
+        given()
+            .header(FORWARDING_HEADER, "test-api-static")
+            .get("http://localhost:${server.port()}/examples/objects")
+            .then()
+            .statusCode(200)
+            .body("size()", equalTo(4))
+            .body("[0]", equalTo("oas"))
+            .body("[1]", equalTo("stub"))
+            .body("[2]", equalTo("is"))
+            .body("[3]", equalTo("great"))
     }
 }

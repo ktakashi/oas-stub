@@ -1,18 +1,23 @@
 package io.github.ktakashi.oas.server
 
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
+import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
+import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.server.config.OasStubStaticConfigParser
 import io.github.ktakashi.oas.server.handlers.OasStubAdminRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubApiHandler
+import io.github.ktakashi.oas.server.handlers.OasStubForwardingApiHandler
 import io.github.ktakashi.oas.server.handlers.OasStubMetricsRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubRecordsRoutesBuilder
 import io.github.ktakashi.oas.server.handlers.OasStubRoutes
+import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.server.modules.makeApiDefinitionMergerModule
 import io.github.ktakashi.oas.server.modules.makeEngineModule
 import io.github.ktakashi.oas.server.modules.makeStorageModule
 import io.github.ktakashi.oas.server.modules.validatorModule
 import io.github.ktakashi.oas.server.options.OasStubOptions
+import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import io.netty.handler.codec.http2.Http2SecurityUtil
 import io.netty.handler.ssl.ApplicationProtocolConfig
 import io.netty.handler.ssl.ApplicationProtocolNames
@@ -54,11 +59,10 @@ class OasStubServer(private val options: OasStubOptions) {
         private val selfSignedCertificate = SelfSignedCertificate()
     }
     private var initialized = false
-    private lateinit var oasStubApiHandler: OasStubApiHandler
-    private lateinit var oasStubAdminRoutesBuilder: OasStubAdminRoutesBuilder
-    private lateinit var oasStubMetricsRoutesBuilder: OasStubMetricsRoutesBuilder
-    private lateinit var oasStubRecordsRoutesBuilder: OasStubRecordsRoutesBuilder
+    private val builderCreators: Set<(OasStubStubOptions) -> OasStubRoutesBuilder> = setOf(::OasStubAdminRoutesBuilder, ::OasStubMetricsRoutesBuilder, ::OasStubRecordsRoutesBuilder)
     private lateinit var apiRegistrationService: ApiRegistrationService
+    private lateinit var apiObserver: ApiObserver
+    private lateinit var apiRecorder: ApiRecorder
     private lateinit var koin: Koin
     private var httpServer: DisposableServer? = null
     private var httpsServer: DisposableServer? = null
@@ -87,11 +91,9 @@ class OasStubServer(private val options: OasStubOptions) {
             } else {
                 koin = GlobalContext.get()
             }
-            oasStubApiHandler = OasStubApiHandler()
-            oasStubAdminRoutesBuilder = OasStubAdminRoutesBuilder(options.stubOptions)
-            oasStubMetricsRoutesBuilder = OasStubMetricsRoutesBuilder(options.stubOptions)
-            oasStubRecordsRoutesBuilder = OasStubRecordsRoutesBuilder(options.stubOptions)
             apiRegistrationService = koin.get<ApiRegistrationService>()
+            apiObserver = koin.get<ApiObserver>()
+            apiRecorder = koin.get<ApiRecorder>()
             val cert = serverOptions.ssl?.let { ssl ->
                 if (ssl.keyAlias != null && ssl.keyPassword != null) {
                     ssl.keyStore?.getKey(ssl.keyAlias, ssl.keyPassword.toCharArray())?.let { key ->
@@ -178,6 +180,19 @@ class OasStubServer(private val options: OasStubOptions) {
         }
     }
 
+    /**
+     * Clear all metrics
+     */
+    fun resetMetrics() {
+        apiObserver.clearApiMetrics()
+    }
+
+    /**
+     * Clear all recordings
+     */
+    fun resetRecords() {
+        apiRecorder.clearAllApiRecords()
+    }
 
     /**
      * Returns port number.
@@ -241,11 +256,16 @@ class OasStubServer(private val options: OasStubOptions) {
         .accessLog(serverOptions.enableAccessLog)
         .route { routes ->
             val oasStubRoutes = OasStubRoutes(routes, koin)
-            oasStubAdminRoutesBuilder.build(oasStubRoutes)
-            oasStubMetricsRoutesBuilder.build(oasStubRoutes)
-            oasStubRecordsRoutesBuilder.build(oasStubRoutes)
+            builderCreators.forEach { creator ->
+                creator(stubOptions).build(oasStubRoutes)
+            }
             stubOptions.routesBuilders.forEach { builder -> builder.build(oasStubRoutes) }
-            routes.route(prefix(stubOptions.stubPath), oasStubApiHandler)
+            routes.route(prefix(stubOptions.stubPath), OasStubApiHandler())
+            stubOptions.forwardingPath?.let {
+                if (stubOptions.forwardingResolvers.isNotEmpty()) {
+                    routes.route(prefix(it), OasStubForwardingApiHandler(stubOptions))
+                }
+            }
         }
 
     private fun prefix(path: String): Predicate<in HttpServerRequest> =
