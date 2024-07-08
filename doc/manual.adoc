@@ -13,3 +13,4 @@ This is a Users' reference manual for OAS stub.
 - <<storages.adoc#storages, Storages>>
 - <<static.adoc#static, Static configuration>>
 - <<testing.adoc#testing, Testing module>>
+- <<forwarding.adoc#forwarding, Request forwarding>>

@@ -1,0 +1,38 @@
+[#forwarding]
+== Forwarding request
+
+In some environment, you may need to access your stub always from a
+particular path, like `/api/your-api-name` and your library may not
+allow you to change the prefix `/api`. To resolve this issue, there
+are configuration options called `forwardingPath` and `forwardingResolvers`
+on `OasStubOptions`.
+
+Example usage:
+[source, java]
+----
+public class Example() {
+    var options = OasStubOptions.builder()
+            .stubOptions()
+            .forwardingPath("/")
+            .addForwardingResolver(new OasStubApiByHeaderForwardingResolver("X-OAS-Stub-Application"))
+            .parent()
+            .build();
+    var server = OasStubServer(options);
+    server.start();
+}
+----
+
+Then support you have `pestore` APIs uploaded, now you can request the
+API like the below command:
+
+[source, shell]
+----
+curl -H'X-OAS-Stub-Application: petstore' http://localhost:8080/v1/pets/1
+----
+
+For this example, the server resolves the API context from the header value.
+
+To create a custom resolver, you need to implement `OasStubApiForwardingResolver`
+interface and pass it to the configuration.
+
+For the API documentation, see Javadoc of the interface.
