@@ -99,8 +99,17 @@ internal class OasStubServerForwardingHttpRequest(private val options: OasStubSt
                                                   response: HttpServerResponse,
                                                   objectMapper: ObjectMapper): OasStubServerHttpRequest(request, response, objectMapper) {
     private val resolvedURI: String? by lazy {
-        options.forwardingResolvers.asSequence().mapNotNull { it.resolveRequestUri(super.requestURI, this, options) }.firstOrNull()
+        val context = ForwardingContext(this, super.requestURI, options.stubPath)
+        options.forwardingResolvers.asSequence().mapNotNull { it.resolveRequestUri(context) }.firstOrNull()
     }
     override val requestURI: String
         get() = resolvedURI ?: super.requestURI
+
+    private class ForwardingContext(private val request: HttpRequest,
+                                    override val requestUri: String,
+                                    override val stubPrefix: String): OasStubApiForwardingResolver.Context {
+        override val method: String
+            get() = request.method
+        override fun getHeader(name: String): String? = request.getHeader(name)
+    }
 }

@@ -1,7 +1,6 @@
 package io.github.ktakashi.oas.server.api
 
 import io.github.ktakashi.oas.api.http.HttpRequest
-import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -12,17 +11,20 @@ import java.nio.charset.StandardCharsets
  * is provided.
  */
 fun interface OasStubApiForwardingResolver {
+    interface Context {
+        val requestUri: String
+        val method: String
+        val stubPrefix: String
+        fun getHeader(name: String): String?
+        fun buildPath(name: String) = buildPath(name, requestUri)
+        fun buildPath(name: String, path: String) = "$stubPrefix/${URLEncoder.encode(name, StandardCharsets.UTF_8)}$path"
+    }
     /**
      * Resolve the stub name.
      *
-     * [requestUri]: the original request URI
-     * [request]: an [HttpRequest] instance.
-     * [options]: Stub options
-     *
-     * NOTE: Calling `request.requestURI` causes infinite loop. If you need
-     * the original URI, then use the [requestUri].
+     * [context]: API endpoint context
      */
-    fun resolveRequestUri(requestUri: String, request: HttpRequest, options: OasStubStubOptions): String?
+    fun resolveRequestUri(context: Context): String?
 }
 
 /**
@@ -31,8 +33,7 @@ fun interface OasStubApiForwardingResolver {
  * The value of the [headerName] will be the stub name.
  */
 class OasStubApiByHeaderForwardingResolver(private val headerName: String) : OasStubApiForwardingResolver {
-    override fun resolveRequestUri(requestUri: String, request: HttpRequest, options: OasStubStubOptions): String? = request.getHeader(headerName)?.let { name ->
-        // simply append
-        "${options.stubPath}/${URLEncoder.encode(name, StandardCharsets.UTF_8)}$requestUri"
+    override fun resolveRequestUri(context: OasStubApiForwardingResolver.Context): String? = context.getHeader(headerName)?.let { name ->
+        context.buildPath(name)
     }
 }
