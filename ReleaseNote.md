@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+Version 2.1.0
+---
+
+### New features
+- Recording capability of incoming request and outgoing response
+- Aggregator of recorded requests and responses
+- Forwarding capability (e.g. `/` -> `/oas/{context}`)
+- Stub registration APIs on `OasStubServer`
+
+### Bug fix
+- `StaticStubPlugin.groovy` had lack of header injection implementation
 
 Version 2.0.0
 ---
