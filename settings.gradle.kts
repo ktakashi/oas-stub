@@ -38,4 +38,6 @@ include(":test:cucumber-test")
 include(":test:oas-stub-spring-tests")
 include(":test:reports")
 
+include(":doc")
+
 include(":bom:oas-stub-bom")
