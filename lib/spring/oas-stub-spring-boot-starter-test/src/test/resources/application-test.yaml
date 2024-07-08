@@ -1,3 +1,4 @@
 oas.stub.test:
   server:
     admin-prefix: /__admin
+    forwarding-prefix: /

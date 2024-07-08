@@ -165,7 +165,7 @@ internal constructor(internal val stubPath: String,
         /**
          * Sets the forwarding path. Default disabled.
          */
-        fun forwardingPath(forwardingPath: String) = apply { this.forwardingPath = forwardingPath }
+        fun forwardingPath(forwardingPath: String?) = apply { this.forwardingPath = forwardingPath }
 
         /**
          * Sets the metrics path segment. Default value is [OasStubOptions.DEFAULT_METRICS_PATH]

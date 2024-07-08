@@ -9,6 +9,7 @@ import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
+import io.github.ktakashi.oas.server.api.OasStubApiForwardingResolver
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.server.options.OasStubOptions
 import io.github.ktakashi.oas.server.options.OasStubServerSSLOptions
@@ -48,10 +49,13 @@ data class OasStubTestProperties(
     fun toOasStubOptions(objectMapper: ObjectMapper,
                          sessionStorage: SessionStorage,
                          persistentStorage: PersistentStorage,
-                         oasStubRoutesBuilders: Set<OasStubRoutesBuilder>) = OasStubOptions.builder()
+                         oasStubRoutesBuilders: Set<OasStubRoutesBuilder>,
+                         oasStubApiForwardingResolvers: Set<OasStubApiForwardingResolver>) = OasStubOptions.builder()
         .stubOptions()
         .stubPath(server.stubPrefix)
         .adminPath(server.adminPrefix)
+        .forwardingPath(server.forwardingPrefix)
+        .forwardingResolvers(oasStubApiForwardingResolvers.toList())
         .metricsPath(server.metricsPrefix)
         .recordsPath(server.recordsPrefix)
         .enableAdmin(server.enableAdmin)
@@ -93,6 +97,10 @@ data class OasStubTestServerProperties
      * OAS Stub server, admin path
      */
     var adminPrefix: String = OasStubOptions.DEFAULT_ADMIN_PATH,
+    /**
+     * OAS Stub server, forwarding path.
+     */
+    var forwardingPrefix: String? = null,
     /**
      * OAS Stub server, metrics path
      *

@@ -5,6 +5,7 @@ import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.server.OasStubServer
+import io.github.ktakashi.oas.server.api.OasStubApiForwardingResolver
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -25,13 +26,14 @@ import org.springframework.context.annotation.Configuration
 @EnableAutoConfiguration
 class OasStubServerConfiguration(internal val properties: OasStubTestProperties,
                                  private val objectMapper: ObjectMapper,
-                                 private val oasStubRoutesBuilders: Set<OasStubRoutesBuilder>): KoinComponent, SmartLifecycle {
+                                 private val oasStubRoutesBuilders: Set<OasStubRoutesBuilder>,
+                                 private val oasStubApiForwardingResolvers: Set<OasStubApiForwardingResolver>): KoinComponent, SmartLifecycle {
     private lateinit var oasStubTestService: OasStubTestService
     private lateinit var oasStubServer: OasStubServer
 
     @Bean
     fun oasStubServer(sessionStorage: SessionStorage, persistentStorage: PersistentStorage): OasStubServer {
-        oasStubServer = OasStubServer(properties.toOasStubOptions(objectMapper,sessionStorage, persistentStorage, oasStubRoutesBuilders))
+        oasStubServer = OasStubServer(properties.toOasStubOptions(objectMapper, sessionStorage, persistentStorage, oasStubRoutesBuilders, oasStubApiForwardingResolvers))
         oasStubServer.init()
         return oasStubServer
     }

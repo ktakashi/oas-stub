@@ -52,7 +52,7 @@ import reactor.netty.tcp.AbstractProtocolSslContextSpec
  *
  * See [OasStubOptions] for the more options
  */
-class OasStubServer(private val options: OasStubOptions) {
+class OasStubServer(options: OasStubOptions) {
     companion object {
         private var koinInitialized: Boolean = false
         @JvmStatic

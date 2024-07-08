@@ -7,8 +7,6 @@ import io.github.ktakashi.oas.model.ApiHttpError
 import io.github.ktakashi.oas.model.ApiLatency
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
-import io.github.ktakashi.oas.model.PluginDefinition
-import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
 import io.github.ktakashi.oas.test.OasStubTestPlugin
 import io.github.ktakashi.oas.test.OasStubTestProperties
@@ -30,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -60,6 +59,16 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
     @Test
     fun testPetstoreStatic() {
         check("petstore-static")
+    }
+
+    @Test
+    fun testForwardingResolver() {
+        given()
+            .headers(X_OAS_STUB_APPLICATION, "petstore")
+            .get(URI.create("http://localhost:$localPort/v1/pets/1"))
+            .then()
+            .statusCode(200)
+            .body("id", equalTo(1))
     }
 
     @Test
