@@ -28,7 +28,6 @@ import java.net.URI
 import java.time.Duration
 import java.util.Optional
 import java.util.TreeMap
-import java.util.UUID
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
@@ -149,8 +148,6 @@ class DefaultApiRegistrationService(private val storageService: StorageService,
     }
 
 }
-
-private val uniqueTag = UUID.randomUUID().toString()
 
 class DefaultApiService(private val storageService: StorageService,
                         private val apiPathService: ApiPathService,
