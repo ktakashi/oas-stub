@@ -100,7 +100,7 @@ data class OasStubTestServerProperties
     /**
      * OAS Stub server, forwarding path.
      */
-    var forwardingPrefix: String? = null,
+    var forwardingPrefix: String = OasStubOptions.DEFAULT_FORWARDING_PATH,
     /**
      * OAS Stub server, metrics path
      *

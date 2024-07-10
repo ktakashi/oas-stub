@@ -261,10 +261,8 @@ class OasStubServer(options: OasStubOptions) {
             }
             stubOptions.routesBuilders.forEach { builder -> builder.build(oasStubRoutes) }
             routes.route(prefix(stubOptions.stubPath), OasStubApiHandler())
-            stubOptions.forwardingPath?.let {
-                if (stubOptions.forwardingResolvers.isNotEmpty()) {
-                    routes.route(prefix(it), OasStubForwardingApiHandler(stubOptions))
-                }
+            if (stubOptions.forwardingResolvers.isNotEmpty()) {
+                routes.route(prefix(stubOptions.forwardingPath), OasStubForwardingApiHandler(stubOptions))
             }
         }
 

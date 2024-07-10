@@ -36,6 +36,11 @@ internal constructor(val serverOptions: OasStubServerOptions,
         const val DEFAULT_ADMIN_PATH = "/__admin"
 
         /**
+         * Default forwarding path
+         */
+        const val DEFAULT_FORWARDING_PATH = "/"
+
+        /**
          * Default metrics path segment
          */
         const val DEFAULT_METRICS_PATH = "/metrics"
@@ -119,7 +124,7 @@ internal constructor(val port: Int,
 data class OasStubStubOptions
 internal constructor(internal val stubPath: String,
                      internal val adminPath: String,
-                     internal val forwardingPath: String?,
+                     internal val forwardingPath: String,
                      internal val metricsPath: String,
                      internal val recordsPath: String,
                      internal val enableAdmin: Boolean,
@@ -140,7 +145,7 @@ internal constructor(internal val stubPath: String,
     class Builder(private val parent: OasStubOptions.Builder,
                   private var stubPath: String = OasStubOptions.DEFAULT_STUB_PATH,
                   private var adminPath: String = OasStubOptions.DEFAULT_ADMIN_PATH,
-                  private var forwardingPath: String? = null,
+                  private var forwardingPath: String = OasStubOptions.DEFAULT_FORWARDING_PATH,
                   private var metricsPath: String = OasStubOptions.DEFAULT_METRICS_PATH,
                   private var recordsPath: String = OasStubOptions.DEFAULT_RECORDS_PATH,
                   private var enableAdmin: Boolean = true,
@@ -165,7 +170,7 @@ internal constructor(internal val stubPath: String,
         /**
          * Sets the forwarding path. Default disabled.
          */
-        fun forwardingPath(forwardingPath: String?) = apply { this.forwardingPath = forwardingPath }
+        fun forwardingPath(forwardingPath: String) = apply { this.forwardingPath = forwardingPath }
 
         /**
          * Sets the metrics path segment. Default value is [OasStubOptions.DEFAULT_METRICS_PATH]
