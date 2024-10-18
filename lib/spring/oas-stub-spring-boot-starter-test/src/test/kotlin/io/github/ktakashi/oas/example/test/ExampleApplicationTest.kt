@@ -8,6 +8,7 @@ import io.github.ktakashi.oas.model.ApiLatency
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
 import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
+import io.github.ktakashi.oas.test.OasStubApiHeaderDsl
 import io.github.ktakashi.oas.test.OasStubTestPlugin
 import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestResources
@@ -76,18 +77,18 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
         oasStubTestService.context("dsl-test") {
             headers {
                 request {
-                    header("Stub-Request-Header", "ok")
+                    "Stub-Request-Header" to listOf("ok")
                 }
                 response {
                     header("Stub-Response-Header", "ok")
                 }
             }
             options {
-                shouldValidate(true)
+                shouldValidate = true
                 shouldMonitor(true)
                 shouldRecord(true)
                 latency {
-                    interval(1)
+                    interval = 1
                     unit(DurationUnit.NANOSECONDS)
                 }
                 failure {

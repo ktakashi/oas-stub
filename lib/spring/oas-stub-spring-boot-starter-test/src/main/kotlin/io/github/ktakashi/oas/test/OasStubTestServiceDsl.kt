@@ -228,11 +228,11 @@ class OasStubApiDelayDsl internal constructor(private val init: OasStubApiDelayD
 }
 
 class OasStubApiOptionsDsl internal constructor(private val init: OasStubApiOptionsDsl.() -> Unit) {
-    private var shouldValidate: Boolean? = null
-    private var shouldMonitor: Boolean? = null
-    private var shouldRecord: Boolean? = null
-    private var latency: ApiLatency? = null
-    private var failure: ApiFailure? = null
+    var shouldValidate: Boolean? = null
+    var shouldMonitor: Boolean? = null
+    var shouldRecord: Boolean? = null
+    var latency: ApiLatency? = null
+    var failure: ApiFailure? = null
     fun shouldValidate(shouldValidate: Boolean?) {
         this.shouldValidate = shouldValidate
     }
@@ -259,8 +259,8 @@ class OasStubApiOptionsDsl internal constructor(private val init: OasStubApiOpti
 }
 
 class OasStubApiLatency internal constructor(private val init: OasStubApiLatency.() -> Unit) {
-    private var interval: Long? = null
-    private var unit: DurationUnit = DurationUnit.SECONDS
+    var interval: Long? = null
+    var unit: DurationUnit = DurationUnit.SECONDS
 
     fun interval(interval: Long?) {
         this.interval = interval
@@ -314,9 +314,15 @@ class OasStubApiHeadersDsl internal constructor(private val init: OasStubApiHead
 
 class OasStubApiHeaderDsl internal  constructor(private val init: OasStubApiHeaderDsl.() -> Unit) {
     private val headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
+
     fun header(name: String, vararg values: String) {
         headers[name] = values.toList()
     }
+
+    infix fun String.to(value: List<String>) {
+        headers[this] = value
+    }
+
     internal fun save(): SortedMap<String, List<String>> {
         init()
         return headers
