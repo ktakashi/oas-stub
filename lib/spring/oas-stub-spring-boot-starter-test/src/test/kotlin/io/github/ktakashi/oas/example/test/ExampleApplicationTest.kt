@@ -81,6 +81,7 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
                 }
                 response {
                     header("Stub-Response-Header", "ok")
+                    header("Stub-Response-Header2", listOf("ok"))
                 }
             }
             options {
@@ -116,13 +117,16 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
                     }
                 }
                 defaultPlugin()
+                data {
+                    "key" to "value"
+                }
             }
         }
         val context = oasStubTestService.getTestApiContext("dsl-test")
         val definitions = context.apiDefinitions
         assertNotNull(definitions.headers)
         assertEquals(setOf("Stub-Request-Header"), definitions.headers?.request?.keys)
-        assertEquals(setOf("Stub-Response-Header"), definitions.headers?.response?.keys)
+        assertEquals(setOf("Stub-Response-Header", "Stub-Response-Header2"), definitions.headers?.response?.keys)
         assertNotNull(definitions.options)
         assertEquals(ApiOptions(shouldValidate = true,
             latency = ApiLatency(1, DurationUnit.NANOSECONDS),
@@ -140,6 +144,7 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
         assertEquals(ApiFixedDelay(1 ), configuration?.delay)
         assertEquals(ApiOptions(failure = ApiHttpError(500)), configuration?.options)
         assertEquals(OasStubTestPlugin().toPluginDefinition(), configuration?.plugin)
+        assertEquals("value", configuration?.data?.get("key"))
     }
 
     fun check(name: String) {

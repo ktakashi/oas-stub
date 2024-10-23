@@ -184,6 +184,14 @@ class OasStubApiDataDsl internal  constructor(private val init: OasStubApiDataDs
     fun entry(key: String, data: Any) {
         apiData[key] = data
     }
+
+    /**
+     * Convenient method of [entry]
+     */
+    infix fun String.to(data: Any) {
+        entry(this, data)
+    }
+
     internal fun save(): ApiData {
         init()
         return ApiData(apiData)
@@ -231,8 +239,8 @@ class OasStubApiOptionsDsl internal constructor(private val init: OasStubApiOpti
     var shouldValidate: Boolean? = null
     var shouldMonitor: Boolean? = null
     var shouldRecord: Boolean? = null
-    var latency: ApiLatency? = null
-    var failure: ApiFailure? = null
+    private var latency: ApiLatency? = null
+    private var failure: ApiFailure? = null
     fun shouldValidate(shouldValidate: Boolean?) {
         this.shouldValidate = shouldValidate
     }
@@ -316,11 +324,15 @@ class OasStubApiHeaderDsl internal  constructor(private val init: OasStubApiHead
     private val headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
 
     fun header(name: String, vararg values: String) {
-        headers[name] = values.toList()
+        header(name, values.toList())
+    }
+
+    fun header(name: String, values: List<String>) {
+        headers[name] = values
     }
 
     infix fun String.to(value: List<String>) {
-        headers[this] = value
+        header(this, value)
     }
 
     internal fun save(): SortedMap<String, List<String>> {
