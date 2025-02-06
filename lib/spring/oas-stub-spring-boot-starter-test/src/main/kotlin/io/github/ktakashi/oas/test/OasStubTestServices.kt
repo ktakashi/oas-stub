@@ -142,7 +142,7 @@ internal constructor(private val apiRegistrationService: ApiRegistrationService,
     /**
      * Updates data configuration of the API definition
      */
-    fun updateData(data: Map<String, Any>) = OasStubTestApiContext(apiRegistrationService, name, apiDefinitions.updateData(ApiData(data)))
+    fun updateData(data: Map<String, Any>) = OasStubTestApiContext(apiRegistrationService, name, apiDefinitions.updateData(ApiData(data.toMutableMap())))
 
     /**
      * Updates delay configuration of the API definition

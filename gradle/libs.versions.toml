@@ -1,29 +1,28 @@
 [versions]
-kotlin = "1.9.24"
-dokka = "1.9.0"
-koin = "3.5.6"
-jackson = "2.17.0"
-junit = "5.9.3"
-hazelcast = "5.3.7"
-mongodb = "4.10.2"
-groovy = "4.0.15"
-spring = "6.1.6"
-spring-boot="3.2.5"
-projectreactor = "3.6.5"
-reactor-addon = "3.5.1"
-guava = "32.1.2-jre"
-flapdoodle = "4.13.1"
-jersey = "3.1.3"
-reactor-netty = "1.1.18"
-bouncy-castle = "1.78.1"
-commons-codec = "1.17.0"
-snakeyaml = "2.2"
+kotlin = "2.1.10"
+dokka = "2.0.0"
+koin = "4.0.2"
+jackson = "2.18.2"
+junit = "5.11.4"
+hazelcast = "5.5.0"
+mongodb = "5.3.1"
+groovy = "4.0.25"
+spring = "6.2.2"
+spring-boot="3.4.2"
+projectreactor = "3.7.2"
+reactor-addon = "3.5.2"
+guava = "33.4.0-jre"
+flapdoodle = "4.18.1"
+reactor-netty = "1.2.2"
+bouncy-castle = "1.80"
+commons-codec = "1.18.0"
+snakeyaml = "2.3"
+jersey = "3.1.10"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
-spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 
 [libraries]
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
@@ -33,10 +32,8 @@ koin-jvm = { group = "io.insert-koin", name = "koin-core-jvm", version.ref = "ko
 
 jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
 jackson-databind-core = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
-jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310", version.ref = "jackson" }
 jackson-datatype-jdk8 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jdk8", version.ref = "jackson" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
-jackson-module-jakarta-xmlbind-annotations = { group = "com.fasterxml.jackson.module", name = "jackson-module-jakarta-xmlbind-annotations", version.ref = "jackson"}
 
 dokka-gradle-plugin = { group = "org.jetbrains.dokka", name = "org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
@@ -44,30 +41,26 @@ projectreactor-reactor-core = { group = "io.projectreactor", name = "reactor-cor
 reactor-extra = { group = "io.projectreactor.addons", name = "reactor-extra", version.ref = "reactor-addon" }
 reactor-netty = { group = "io.projectreactor.netty", name = "reactor-netty", version.ref = "reactor-netty" }
 
-ws-rs-api = { group = "jakarta.ws.rs", name = "jakarta.ws.rs-api", version = "3.1.0" }
-mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.1.2" }
-validation-api = { group = "jakarta.validation", name = "jakarta.validation-api", version = "3.0.2" }
-annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version = "2.1.1" }
+ws-rs-api = { group = "jakarta.ws.rs", name = "jakarta.ws.rs-api", version = "4.0.0" }
+mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.1.3" }
+validation-api = { group = "jakarta.validation", name = "jakarta.validation-api", version = "3.1.1" }
+annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version = "3.0.0" }
 
-swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version = "2.1.22" }
+swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version = "2.1.25" }
 commons-codec = { group = "commons-codec", name = "commons-codec", version.ref = "commons-codec"}
 
 snakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" }
 
-caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version = "3.1.7" }
+caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version = "3.2.0" }
 groovy-core = { group = "org.apache.groovy", name = "groovy", version.ref = "groovy" }
 groovy-xml = { group = "org.apache.groovy", name = "groovy-xml", version.ref = "groovy" }
 groovy-json = { group = "org.apache.groovy", name = "groovy-json", version.ref = "groovy" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.7" }
-logback-classic = { group = "ch.qos.logback", name = "logback-classic", version = "1.4.11" }
-
-jersey-client = { group = "org.glassfish.jersey.core", name = "jersey-client", version.ref = "jersey" }
-jersey-server = { group = "org.glassfish.jersey.core", name = "jersey-server", version.ref = "jersey" }
-jersey-container-servlet = { group = "org.glassfish.jersey.containers", name = "jersey-container-servlet", version.ref = "jersey"}
-jersey-media-json-jackson = { group = "org.glassfish.jersey.media", name = "jersey-media-json-jackson", version.ref = "jersey" }
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.16" }
 
 hazelcast = { group = "com.hazelcast", name = "hazelcast", version.ref = "hazelcast" }
 mongodb-driver-sync = { group = "org.mongodb", name = "mongodb-driver-sync", version.ref = "mongodb" }
+
+jersey-client = { group = "org.glassfish.jersey.core", name = "jersey-client", version.ref = "jersey" }
 
 # Spring
 spring-web = { group = "org.springframework", name = "spring-web", version.ref = "spring" }
@@ -84,7 +77,6 @@ bcpkix-jdk18on = { group = "org.bouncycastle", name = "bcpkix-jdk18on", version.
 # test libraries
 # We use BOM only for test libraries if possible
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
-cucumber-bom = { group = "io.cucumber", name = "cucumber-bom", version = "7.13.0" }
+cucumber-bom = { group = "io.cucumber", name = "cucumber-bom", version = "7.21.0" }
 flapdoodle-embed-mongo = { group = "de.flapdoodle.embed", name = "de.flapdoodle.embed.mongo", version.ref = "flapdoodle" }
-awaitility = { group = "org.awaitility", name = "awaitility", version = "4.2.0" }
-rest-assured = { group = "io.rest-assured", name = "rest-assured", version = "5.3.1" }
+rest-assured = { group = "io.rest-assured", name = "rest-assured", version = "5.5.0" }

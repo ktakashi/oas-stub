@@ -291,7 +291,7 @@ data class OasStubTestConfigurationProperties
     fun toApiConfiguration() = ApiConfiguration.builder()
         .headers(headers?.toApiHeaders())
         .plugin(plugin.toPluginDefinition())
-        .data(ApiData(data))
+        .data(ApiData(data.toMutableMap()))
         .build()
 }
 

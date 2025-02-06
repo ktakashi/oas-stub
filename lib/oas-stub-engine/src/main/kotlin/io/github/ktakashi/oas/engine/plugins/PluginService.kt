@@ -27,7 +27,7 @@ class PluginService(private val pluginCompilers: Set<PluginCompiler>,
 
     private val pluginCache = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofHours(1))
-            .build(CacheLoader<PluginDefinition, Class<ApiPlugin>> {
+            .build(CacheLoader<PluginDefinition, Class<ApiPlugin>?> {
                 pluginCompilers.firstOrNull { c -> c.support(it.type) }?.compileScript(it.script)
             })
     fun applyPlugin(requestContext: RequestContext, responseContext: ResponseContext): Mono<ResponseContext> =
@@ -37,11 +37,12 @@ class PluginService(private val pluginCompilers: Set<PluginCompiler>,
                     .flatMap { v -> Mono.justOrEmpty(ModelPropertyUtils.mergeProperty(requestContext.apiPath, v, ApiCommonConfigurations<*>::data)) }
                     .map { it.asMap()}
                     .switchIfEmpty(Mono.defer { Mono.just(mapOf()) })
-                    .map { apiData ->
-                        val compiled = pluginCache[plugin]
-                        val code = compiled.getConstructor().newInstance()
-                        val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData, objectMapper)
-                        code.customize(context)
+                    .mapNotNull { apiData ->
+                        pluginCache[plugin]?.let { compiled ->
+                            val code = compiled.getConstructor().newInstance()
+                            val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData, objectMapper)
+                            code.customize(context)
+                        }
                     }.onErrorResume { e ->
                         logger.info("Failed execute plugin: {}", e.message, e)
                         Mono.empty()

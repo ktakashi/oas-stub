@@ -14,6 +14,7 @@ import java.security.KeyStore
 /**
  * OAS Stub options.
  */
+@ConsistentCopyVisibility
 data class OasStubOptions
 internal constructor(val serverOptions: OasStubServerOptions,
                      val stubOptions: OasStubStubOptions)
@@ -71,6 +72,7 @@ internal constructor(val serverOptions: OasStubServerOptions,
     }
 }
 
+@ConsistentCopyVisibility
 data class OasStubServerOptions
 internal constructor(val port: Int,
                      val httpsPort: Int,
@@ -121,6 +123,7 @@ internal constructor(val port: Int,
 
 }
 
+@ConsistentCopyVisibility
 data class OasStubStubOptions
 internal constructor(internal val stubPath: String,
                      internal val adminPath: String,
@@ -264,6 +267,7 @@ internal constructor(internal val stubPath: String,
  * The SSL options are used when the [OasStubServerOptions.httpsPort] is `>= 0`.
  * If the options is not set, then the server generates a self-signed certificate
  */
+@ConsistentCopyVisibility
 data class OasStubServerSSLOptions
 internal constructor(internal val keyStore: KeyStore?,
                      internal val keyAlias: String?,

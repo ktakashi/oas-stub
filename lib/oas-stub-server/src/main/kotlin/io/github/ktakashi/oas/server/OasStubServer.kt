@@ -39,7 +39,7 @@ import reactor.netty.DisposableServer
 import reactor.netty.http.server.HttpServer
 import reactor.netty.http.server.HttpServerRequest
 import reactor.netty.tcp.AbstractProtocolSslContextSpec
-
+import reactor.netty.tcp.SslProvider as TcpSslProvider
 
 /**
  * OAS Stub server.
@@ -132,7 +132,7 @@ class OasStubServer(options: OasStubOptions) {
                             }
                             builder.clientAuth(ClientAuth.valueOf(ssl.clientAuth.name))
                         }
-                    }))
+                    }) as TcpSslProvider.GenericSslContextSpec<*>)
                 }.bindNow()
         }
     }

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.client.config.ClientFailoverConfig
+import com.hazelcast.client.impl.connection.tcp.RoutingMode
 import com.hazelcast.config.SerializerConfig
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.nio.serialization.Serializer
@@ -85,7 +86,7 @@ class AutoHazelcastConfiguration(private val properties: HazelcastStoragePropert
             clusterName = instance.clusterName
         }
         networkConfig.addresses = instance.nodeIps?: listOf()
-        networkConfig.isSmartRouting = true
+        networkConfig.clusterRoutingConfig.routingMode = RoutingMode.ALL_MEMBERS
     }
 }
 

@@ -19,10 +19,12 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.internal.KaptWithoutKotlincTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 class ConventionsPlugin: Plugin<Project> {
     override fun apply(project: Project) {
@@ -59,12 +61,12 @@ internal fun configureKotlinConventions(project: Project) {
             }
         }
 
-        project.tasks.withType(KotlinCompile::class.java) { task ->
-            (task.kotlinOptions as KotlinJvmOptions).apply {
-                freeCompilerArgs += listOf("-Xjvm-default=all", "-Xjsr305=strict")
-                apiVersion = "1.9"
-                languageVersion = "1.9"
-                jvmTarget = "17"
+        project.tasks.withType(KotlinCompilationTask::class.java) { task ->
+            (task.compilerOptions as KotlinJvmCompilerOptions).apply {
+                freeCompilerArgs.addAll(listOf("-Xjvm-default=all", "-Xjsr305=strict"))
+                apiVersion.set(KotlinVersion.KOTLIN_2_1)
+                languageVersion.set(KotlinVersion.KOTLIN_2_1)
+                jvmTarget.set(JvmTarget.JVM_17)
             }
         }
         project.extensions.getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(17)
