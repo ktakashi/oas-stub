@@ -33,7 +33,7 @@ class PluginService(private val pluginCompilers: Set<PluginCompiler>,
                 pluginCompilers.firstOrNull { c -> c.support(it.type) }?.compileScript(it.script)
             })
     fun applyPlugin(requestContext: RequestContext, responseContext: ResponseContext): Mono<ResponseContext> =
-            storageService.getPluginDefinition(requestContext.applicationName, requestContext.apiPath).flatMap { plugin ->
+            storageService.getPluginDefinition(requestContext.applicationName, requestContext.method, requestContext.apiPath).flatMap { plugin ->
                 logger.debug("Applying plugin -> {}", plugin)
                 apiContextService.getApiContext(requestContext.applicationName, requestContext.apiPath, requestContext.method)
                     .mapNotNull { context -> context.mergeProperty(ApiCommonConfigurations<*>::data)?.asMap() }

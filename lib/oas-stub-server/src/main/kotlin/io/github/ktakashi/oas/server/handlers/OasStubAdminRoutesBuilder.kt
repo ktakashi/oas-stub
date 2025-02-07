@@ -1,8 +1,12 @@
 package io.github.ktakashi.oas.server.handlers
 
+import io.github.ktakashi.oas.api.plugin.ApiPlugin
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
+import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
+import io.github.ktakashi.oas.model.ApiEntryConfiguration
+import io.github.ktakashi.oas.model.ApiMethodConfiguration
 import io.github.ktakashi.oas.model.PluginDefinition
 import io.github.ktakashi.oas.model.PluginType
 import io.github.ktakashi.oas.server.http.RouterHttpRequest
@@ -20,7 +24,8 @@ import reactor.core.publisher.Mono
 
 internal const val PATH_VARIABLE_NAME = "context"
 internal const val PATH_SEGMENT = "{$PATH_VARIABLE_NAME}"
-private const val PARAMETER_NAME = "api"
+private const val API_PARAMETER_NAME = "api"
+private const val METHOD_PARAMETER_NAME = "method"
 
 class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStubRoutesBuilder, KoinComponent {
     private val apiRegistrationService: ApiRegistrationService by inject()
@@ -45,15 +50,15 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
                 path("${options.adminPath}/$PATH_SEGMENT/data", adminContextApi(ApiDefinitions::data, ApiDefinitions::updateData))
                 path("${options.adminPath}/$PATH_SEGMENT/delay", adminContextApi(ApiDefinitions::delay, ApiDefinitions::updateDelay))
 
-                path("${options.adminPath}/$PATH_SEGMENT/configurations/options", adminConfigurationApi(ApiConfiguration::options, ApiConfiguration::updateOptions))
-                path("${options.adminPath}/$PATH_SEGMENT/configurations/headers", adminConfigurationApi(ApiConfiguration::headers, ApiConfiguration::updateHeaders))
-                path("${options.adminPath}/$PATH_SEGMENT/configurations/data", adminConfigurationApi(ApiConfiguration::data, ApiConfiguration::updateData))
-                path("${options.adminPath}/$PATH_SEGMENT/configurations/delay", adminConfigurationApi(ApiConfiguration::delay, ApiConfiguration::updateDelay))
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/options", adminConfigurationApi({ it.options }) { c, v -> c.updateOptions(v) })
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/headers", adminConfigurationApi({ it.headers }) { c, v -> c.updateHeaders(v) })
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/data", adminConfigurationApi({ it.data }) { c, v -> c.updateData(v) })
+                path("${options.adminPath}/$PATH_SEGMENT/configurations/delay", adminConfigurationApi({ it.delay }) { c, v -> c.updateDelay(v) })
                 get("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request ->
-                    getConfigurationProperty(request, ApiConfiguration::plugin)
+                    getConfigurationProperty(request) { it.plugin }
                 }
                 delete("${options.adminPath}/$PATH_SEGMENT/configurations/plugins") { request ->
-                    deleteConfigurationProperty( request, ApiConfiguration::updatePlugin)
+                    deleteConfigurationProperty(request) { c, v: PluginDefinition? -> c.updatePlugin(v) }
                 }
                 put("${options.adminPath}/$PATH_SEGMENT/configurations/plugins/groovy") { request ->
                     request.bodyToInputStream().flatMap { body ->
@@ -126,8 +131,8 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
         }
     }
 
-    private inline fun <reified T> adminConfigurationApi(noinline retriever: (ApiConfiguration) -> T?, noinline updater: (ApiConfiguration, T?) -> ApiConfiguration) = OasStubRouteHandler { request ->
-        if (request.queryParameters.containsKey(PARAMETER_NAME)) {
+    private inline fun <reified T> adminConfigurationApi(noinline retriever: (ApiEntryConfiguration<*>) -> T?, noinline updater: (ApiEntryConfiguration<*>, T?) -> ApiEntryConfiguration<*>) = OasStubRouteHandler { request ->
+        if (request.queryParameters.containsKey(API_PARAMETER_NAME)) {
             when (request.method) {
                 "GET" -> getConfigurationProperty(request, retriever)
                 "PUT" -> putConfigurationProperty(request, updater)
@@ -139,7 +144,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
         }
     }
 
-    private inline fun <reified T> putConfigurationProperty(request: RouterHttpRequest, noinline updater: (ApiConfiguration, T) -> ApiConfiguration) =
+    private inline fun <reified T> putConfigurationProperty(request: RouterHttpRequest, noinline updater: (ApiEntryConfiguration<*>, T) -> ApiEntryConfiguration<*>) =
         request.bodyToMono(T::class.java).flatMap { body ->
             updateConfigurationProperty(request) { config -> updater(config, body) }
                 .map { v -> request.responseBuilder().ok()
@@ -147,32 +152,35 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
                     .body(v) }
         }.switchIfEmpty(Mono.defer { notFound(request) })
 
-    private fun <T> deleteConfigurationProperty(request: RouterHttpRequest, updater: (ApiConfiguration, T?) -> ApiConfiguration) =
+    private fun <T> deleteConfigurationProperty(request: RouterHttpRequest, updater: (ApiEntryConfiguration<*>, T?) -> ApiEntryConfiguration<*>) =
         updateConfigurationProperty(request) { config -> updater(config, null) }
             .map { request.responseBuilder().noContent().build() }
             .switchIfEmpty(Mono.defer { notFound(request) })
 
-    private fun updateConfigurationProperty(request: RouterHttpRequest, updater: (ApiConfiguration) -> ApiConfiguration) =
+    private fun updateConfigurationProperty(request: RouterHttpRequest, updater: (ApiEntryConfiguration<*>) -> ApiEntryConfiguration<*>) =
         request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).mapNotNull { def ->
-                request.queryParameters[PARAMETER_NAME]?.get(0)?.let {
+                request.queryParameters[API_PARAMETER_NAME]?.get(0)?.let {
                     apiRegistrationService.validPath(def, URLDecoder.decode(it, StandardCharsets.UTF_8)).map { api ->
                         val newDef = if (def.configurations == null) def.updateConfigurations(mapOf()) else def
-                        updater(newDef.configurations?.get(api) ?: ApiConfiguration()).let { config ->
-                            newDef.updateConfiguration(api, config)
-                        }
+                        val configuration = newDef.configurations?.get(api) ?: ApiConfiguration()
+                        request.queryParameters[METHOD_PARAMETER_NAME]?.get(0)?.let { method ->
+                            val methods = configuration.methods?.get(method) ?: ApiMethodConfiguration()
+                            updater(methods).let { config -> newDef.updateConfiguration(api, configuration.updateMethod(method, config as ApiMethodConfiguration)) }
+                        } ?: updater(configuration).let { config -> newDef.updateConfiguration(api, config as ApiConfiguration) }
                     }
                 }
-            }.flatMap { it }
-            .flatMap { def -> apiRegistrationService.saveApiDefinitions(context, def) }
+            }.flatMap { it }.flatMap {def -> apiRegistrationService.saveApiDefinitions(context, def) }
         } ?: Mono.empty()
 
-    private fun <T> getConfigurationProperty(request: RouterHttpRequest, retriever: (ApiConfiguration) -> T?) =
+    private fun <T> getConfigurationProperty(request: RouterHttpRequest, retriever: (ApiEntryConfiguration<*>) -> T?) =
         request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).mapNotNull { def ->
-                request.queryParameters[PARAMETER_NAME]?.get(0)?.let {
+                request.queryParameters[API_PARAMETER_NAME]?.get(0)?.let {
                     val api = URLDecoder.decode(it, StandardCharsets.UTF_8)
-                    def.configurations?.let { v -> v[api]?.let(retriever) }
+                    request.queryParameters[METHOD_PARAMETER_NAME]?.get(0)?.let { method ->
+                        def.configurations?.let { v -> v[api]?.methods?.get(method)?.let(retriever) }
+                    } ?: def.configurations?.let { v -> v[api]?.let(retriever) }
                 }
             }.map { v -> request.responseBuilder().ok()
                 .header(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())

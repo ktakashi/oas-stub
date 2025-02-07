@@ -11,16 +11,20 @@ class PetStoreGetPetPlugin implements ApiPlugin {
 
     @Override
     ResponseContext customize(PluginContext pluginContext) {
-        def context = pluginContext.responseContext
-        if (context.status == 200) {
-            def node = objectMapper.readTree(context.getContent().get())
+        def request = pluginContext.requestContext
+        def response = pluginContext.responseContext
+        if (request.method != "GET") {
+            return response.mutate().status(405).build()
+        }
+        if (response.status == 200) {
+            def node = objectMapper.readTree(response.getContent().get())
             if (node.isObject()) {
                 def object = node as ObjectNode
                 object.replace("id", objectMapper.nodeFactory.numberNode(1))
                 def content = objectMapper.writeValueAsBytes(object)
-                return context.mutate().content(content).build()
+                return response.mutate().content(content).build()
             }
         }
-        return context
+        return response
     }
 }

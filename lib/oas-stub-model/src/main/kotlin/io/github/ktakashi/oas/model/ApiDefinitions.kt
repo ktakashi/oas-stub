@@ -424,6 +424,9 @@ data class ApiConfiguration
      * API Plugin
      */
     override val plugin: PluginDefinition? = null,
+    /**
+     * Configuration per method
+     */
     val methods: Map<String, ApiMethodConfiguration>? = null): ApiEntryConfiguration<ApiConfiguration> {
     private constructor(builder: Builder): this(builder.headers, builder.options, builder.data, builder.delay, builder.plugin, builder.methods)
 
@@ -432,6 +435,11 @@ data class ApiConfiguration
     override fun updateOptions(options: ApiOptions?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin, methods)
     override fun updateData(data: ApiData?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin, methods)
     override fun updateDelay(delay: ApiDelay?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin, methods)
+    fun updateMethods(methods: Map<String, ApiMethodConfiguration>) = ApiConfiguration(headers, options, data, delay, plugin, methods)
+    fun updateMethod(method: String, configuration: ApiMethodConfiguration) =
+        mapOf(method to configuration).let { methodConfig ->
+            ApiConfiguration(headers, options, data, delay, plugin, if (methods == null) methodConfig else methods + methodConfig)
+        }
 
     fun mutate(): Builder = Builder(headers, options, data, delay, plugin, methods)
 

@@ -39,10 +39,10 @@ class StorageService(private val parsingService: ParsingService,
     fun getApiDefinitions(name: String): Mono<ApiDefinitions> = apiDefinitions[name]
     fun getOpenApi(name: String): Mono<OpenAPI> = openApiCache[name]
 
-    fun getPluginDefinition(name: String, path: String): Mono<PluginDefinition> = apiDefinitions[name]
+    fun getPluginDefinition(name: String, method: String, path: String): Mono<PluginDefinition> = apiDefinitions[name]
             .mapNotNull { v -> v.configurations }
             .flatMap { v -> Mono.justOrEmpty(findMatchingPathValue(path, v as Map<String, ApiConfiguration>)) }
-            .mapNotNull { v -> v.plugin }
+            .mapNotNull { v -> v.methods?.get(method)?.plugin ?: v.plugin }
 
     fun getApiNames(): Flux<String> = Flux.defer { Flux.fromIterable(persistentStorage.getNames()) }
 }

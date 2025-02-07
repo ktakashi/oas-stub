@@ -176,6 +176,20 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
                 .put(uri)
     }
 
+    @And("I update API {string} of {string} method with {string} via {string} of content type {string}")
+    fun `I update API {string} of {string} method with {string} via {string}`(api: String, method: String, value: String, path: String, contentType: String) {
+        val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
+            .path(testContext.adminPrefix)
+            .pathSegment(testContext.apiName, "configurations")
+            .path(path)
+            .queryParam("api", api)
+            .queryParam("method", method)
+            .build().toUri()
+        testContext.response = given().contentType(contentType)
+            .body(maybeContent(value))
+            .put(uri)
+    }
+
     @And("I delete API {string} via {string}")
     fun `I delete API {string} via {string}`(api: String, path: String) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)

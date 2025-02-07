@@ -2,6 +2,7 @@ package io.github.ktakashi.oas.test.glue.https
 
 import io.cucumber.java.BeforeAll
 import io.cucumber.spring.CucumberContextConfiguration
+import io.github.ktakashi.oas.server.OasStubServer
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.test.cucumber.TestContext
@@ -29,10 +30,12 @@ class SpringBootTestBridge: KoinComponent {
     fun persistentStorage() = persistentStorage
 
     @Bean @Lazy
-    fun testContextSupplier() = TestContextSupplier {
-        val server = OasStubServerPlugin.server
+    fun testContextSupplier(server: OasStubServer) = TestContextSupplier {
         TestContext("https://localhost:${server.httpsPort()}", server.stubPath(), server.adminPath())
     }
+
+    @Bean @Lazy
+    fun oasStubServer() = OasStubServerPlugin.server
 }
 
 @BeforeAll
