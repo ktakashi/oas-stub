@@ -309,6 +309,92 @@ interface ApiCommonConfigurations<T: ApiCommonConfigurations<T>> {
     fun updateDelay(delay: ApiDelay?): T
 }
 
+interface ApiEntryConfiguration<T: ApiEntryConfiguration<T>>: ApiCommonConfigurations<T> {
+    val plugin: PluginDefinition?
+
+    /**
+     * Updates [plugin] and returns new [ApiEntryConfiguration] instance
+     */
+    fun updatePlugin(plugin: PluginDefinition?): T
+}
+
+data class ApiMethodConfiguration
+@JvmOverloads constructor(
+    /**
+     * API specific headers
+     */
+    override val headers: ApiHeaders? = null,
+    /**
+     * API specific options
+     */
+    override val options: ApiOptions? = null,
+    /**
+     * API specific data
+     */
+    override val data: ApiData? = null,
+    /**
+     * API specific delay config
+     */
+    override val delay: ApiDelay? = null,
+    /**
+     * API Plugin
+     */
+    override val plugin: PluginDefinition? = null,
+) : ApiEntryConfiguration<ApiMethodConfiguration> {
+    private constructor(builder: Builder) : this(builder.headers, builder.options, builder.data, builder.delay, builder.plugin)
+
+    override fun updatePlugin(plugin: PluginDefinition?) = ApiMethodConfiguration(headers, options, data, delay, plugin)
+    override fun updateHeaders(headers: ApiHeaders?): ApiMethodConfiguration = ApiMethodConfiguration(headers, options, data, delay, plugin)
+    override fun updateOptions(options: ApiOptions?): ApiMethodConfiguration = ApiMethodConfiguration(headers, options, data, delay, plugin)
+    override fun updateData(data: ApiData?): ApiMethodConfiguration = ApiMethodConfiguration(headers, options, data, delay, plugin)
+    override fun updateDelay(delay: ApiDelay?): ApiMethodConfiguration = ApiMethodConfiguration(headers, options, data, delay, plugin)
+
+    companion object {
+        /**
+         * Creates a builder
+         */
+        @JvmStatic
+        fun builder() = Builder()
+    }
+
+    class Builder
+    internal constructor(internal var headers: ApiHeaders? = null,
+                         internal var options: ApiOptions? = null,
+                         internal var data: ApiData? = null,
+                         internal var delay: ApiDelay? = null,
+                         internal var plugin: PluginDefinition? = null) {
+        /**
+         * Sets [headers]
+         */
+        fun headers(headers: ApiHeaders?) = apply { this.headers = headers }
+
+        /**
+         * Sets [options]
+         */
+        fun options(options: ApiOptions?) = apply { this.options = options }
+
+        /**
+         * Sets [data]
+         */
+        fun data(data: ApiData?) = apply { this.data = data }
+
+        /**
+         * Sets [delay]
+         */
+        fun delay(delay: ApiDelay?) = apply { this.delay = delay }
+
+        /**
+         * Sets [plugin]
+         */
+        fun plugin(plugin: PluginDefinition?) = apply { this.plugin = plugin }
+
+        /**
+         * Builds an [ApiConfiguration]
+         */
+        fun build() = ApiMethodConfiguration(this)
+    }
+}
+
 /**
  * API configuration.
  *
@@ -337,19 +423,17 @@ data class ApiConfiguration
     /**
      * API Plugin
      */
-    val plugin: PluginDefinition? = null): ApiCommonConfigurations<ApiConfiguration> {
-    private constructor(builder: Builder): this(builder.headers, builder.options, builder.data, builder.delay, builder.plugin)
+    override val plugin: PluginDefinition? = null,
+    val methods: Map<String, ApiMethodConfiguration>? = null): ApiEntryConfiguration<ApiConfiguration> {
+    private constructor(builder: Builder): this(builder.headers, builder.options, builder.data, builder.delay, builder.plugin, builder.methods)
 
-    /**
-     * Updates [plugin] and returns new [ApiConfiguration] instance
-     */
-    fun updatePlugin(plugin: PluginDefinition?) = ApiConfiguration(headers, options, data, delay, plugin)
-    override fun updateHeaders(headers: ApiHeaders?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin)
-    override fun updateOptions(options: ApiOptions?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin)
-    override fun updateData(data: ApiData?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin)
-    override fun updateDelay(delay: ApiDelay?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin)
+    override fun updatePlugin(plugin: PluginDefinition?) = ApiConfiguration(headers, options, data, delay, plugin, methods)
+    override fun updateHeaders(headers: ApiHeaders?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin, methods)
+    override fun updateOptions(options: ApiOptions?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin, methods)
+    override fun updateData(data: ApiData?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin, methods)
+    override fun updateDelay(delay: ApiDelay?): ApiConfiguration = ApiConfiguration(headers, options, data, delay, plugin, methods)
 
-    fun mutate(): Builder = Builder(headers, options, data, delay, plugin)
+    fun mutate(): Builder = Builder(headers, options, data, delay, plugin, methods)
 
     companion object {
         /**
@@ -364,7 +448,8 @@ data class ApiConfiguration
                          internal var options: ApiOptions? = null,
                          internal var data: ApiData? = null,
                          internal var delay: ApiDelay? = null,
-                         internal var plugin: PluginDefinition? = null){
+                         internal var plugin: PluginDefinition? = null,
+                         internal var methods: Map<String, ApiMethodConfiguration>? = null) {
         /**
          * Sets [headers]
          */
@@ -389,6 +474,19 @@ data class ApiConfiguration
          * Sets [plugin]
          */
         fun plugin(plugin: PluginDefinition?) = apply { this.plugin = plugin }
+
+        /**
+         * Sets [methods]
+         */
+        fun methods(methods: Map<String, ApiMethodConfiguration>?) = apply { this.methods = methods }
+
+        /**
+         * Updates [methods] with [method] and [configuration]
+         */
+        fun method(method: String, configuration: ApiMethodConfiguration) = when (val methods = this.methods) {
+            null -> methods(mapOf(method to configuration))
+            else -> methods(methods + mapOf(method to configuration))
+        }
 
         /**
          * Builds an [ApiConfiguration]

@@ -5,15 +5,16 @@ import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
-import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
-import io.github.ktakashi.oas.engine.storages.StorageService
-import io.github.ktakashi.oas.model.ApiCommonConfigurations
-import io.github.ktakashi.oas.model.PluginDefinition
-import io.github.ktakashi.oas.api.plugin.PluginContext
 import io.github.ktakashi.oas.api.http.RequestContext
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.api.plugin.ApiPlugin
+import io.github.ktakashi.oas.api.plugin.PluginContext
 import io.github.ktakashi.oas.api.storage.Storage
+import io.github.ktakashi.oas.engine.apis.ApiContextService
+import io.github.ktakashi.oas.engine.models.mergeProperty
+import io.github.ktakashi.oas.engine.storages.StorageService
+import io.github.ktakashi.oas.model.ApiCommonConfigurations
+import io.github.ktakashi.oas.model.PluginDefinition
 import java.time.Duration
 import java.util.Optional
 import org.slf4j.LoggerFactory
@@ -22,6 +23,7 @@ import reactor.core.publisher.Mono
 private val logger = LoggerFactory.getLogger(PluginService::class.java)
 
 class PluginService(private val pluginCompilers: Set<PluginCompiler>,
+                    private val apiContextService: ApiContextService,
                     private val storageService: StorageService,
                     private val objectMapper: ObjectMapper) {
 
@@ -33,14 +35,13 @@ class PluginService(private val pluginCompilers: Set<PluginCompiler>,
     fun applyPlugin(requestContext: RequestContext, responseContext: ResponseContext): Mono<ResponseContext> =
             storageService.getPluginDefinition(requestContext.applicationName, requestContext.apiPath).flatMap { plugin ->
                 logger.debug("Applying plugin -> {}", plugin)
-                storageService.getApiDefinitions(requestContext.applicationName)
-                    .flatMap { v -> Mono.justOrEmpty(ModelPropertyUtils.mergeProperty(requestContext.apiPath, v, ApiCommonConfigurations<*>::data)) }
-                    .map { it.asMap()}
+                apiContextService.getApiContext(requestContext.applicationName, requestContext.apiPath, requestContext.method)
+                    .mapNotNull { context -> context.mergeProperty(ApiCommonConfigurations<*>::data)?.asMap() }
                     .switchIfEmpty(Mono.defer { Mono.just(mapOf()) })
                     .mapNotNull { apiData ->
                         pluginCache[plugin]?.let { compiled ->
                             val code = compiled.getConstructor().newInstance()
-                            val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData, objectMapper)
+                            val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData!!, objectMapper)
                             code.customize(context)
                         }
                     }.onErrorResume { e ->

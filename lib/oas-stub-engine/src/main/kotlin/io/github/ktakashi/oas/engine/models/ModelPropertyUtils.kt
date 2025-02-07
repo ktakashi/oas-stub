@@ -1,17 +1,21 @@
 package io.github.ktakashi.oas.engine.models
 
+import io.github.ktakashi.oas.engine.apis.ApiDefinitionsContext
 import io.github.ktakashi.oas.engine.paths.findMatchingPathValue
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
-import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.MergeableApiConfig
 
-object ModelPropertyUtils {
-    @JvmStatic
-    fun <R : MergeableApiConfig<R>> mergeProperty(path: String, d: ApiDefinitions, propertyRetriever: (ApiCommonConfigurations<*>) -> R?) =
-            d.configurations?.let {
-                findMatchingPathValue(path, it)
-                        .map { def -> propertyRetriever(def) }
-                        .map { o -> propertyRetriever(d)?.let { other -> o?.merge(other) } ?: o }
-                        .orElseGet { propertyRetriever(d) }
-            } ?: propertyRetriever(d)
+// Merge root - path - method configuration
+// the priority is reverse order (method is the strongest)
+fun <R: MergeableApiConfig<R>> ApiDefinitionsContext.mergeProperty(propertyRetriever: (ApiCommonConfigurations<*>) -> R?): R? {
+    return apiDefinitions.configurations?.let {
+        findMatchingPathValue(this.apiPath, it)
+            .map { config ->
+                val methodConfig = config.methods?.get(this.method)?.let { methodConfiguration ->
+                    propertyRetriever(methodConfiguration)
+                }
+                val mergedConfig = propertyRetriever(config)?.let { other -> methodConfig?.merge(other) ?: other } ?: methodConfig
+                propertyRetriever(apiDefinitions)?.let { other -> mergedConfig?.merge(other) ?: other } ?: mergedConfig
+            }.orElseGet { propertyRetriever(apiDefinitions) }
+    } ?: propertyRetriever(apiDefinitions)
 }

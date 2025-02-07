@@ -6,8 +6,8 @@ import io.github.ktakashi.oas.api.http.RequestContext
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
 import io.github.ktakashi.oas.engine.models.ApiDefinitionsMerger
-import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
 import io.github.ktakashi.oas.engine.models.merge
+import io.github.ktakashi.oas.engine.models.mergeProperty
 import io.github.ktakashi.oas.engine.parsers.ParsingService
 import io.github.ktakashi.oas.engine.paths.findMatchingPath
 import io.github.ktakashi.oas.engine.paths.findMatchingPathValue
@@ -32,20 +32,40 @@ import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.function.TupleUtils
 
-data class ApiContext(val context: String, val apiPath: String, val method: String, val openApi: OpenAPI, val apiDefinitions: ApiDefinitions)
+interface ApiDefinitionsContext {
+    val context: String
+    val apiPath: String
+    val method: String
+    val apiDefinitions: ApiDefinitions
+}
+
+data class ApiContext(override val context: String,
+                      override val apiPath: String,
+                      override val method: String,
+                      val openApi: OpenAPI,
+                      override val apiDefinitions: ApiDefinitions): ApiDefinitionsContext
+
+data class ApiCustomContext(override val context: String,
+                            override val apiPath: String,
+                            override val method: String,
+                            override val apiDefinitions: ApiDefinitions): ApiDefinitionsContext
 
 class ApiException(val requestContext: ApiContextAwareRequestContext, val responseContext: ResponseContext): Exception()
 
 
-fun interface ApiContextService {
+interface ApiContextService {
     /**
      * Retrieves [ApiContext] from the [request]
      *
      * If context is not found, then the result would be empty
      */
     fun getApiContext(request: HttpRequest): Mono<ApiContext>
+
+    /**
+     * Retrieves [ApiContext] of [context], [path] and [method]
+     */
+    fun getApiContext(context: String, path: String, method: String): Mono<ApiDefinitionsContext>
 }
 
 /**
@@ -149,57 +169,59 @@ class DefaultApiRegistrationService(private val storageService: StorageService,
 
 }
 
-class DefaultApiService(private val storageService: StorageService,
-                        private val apiPathService: ApiPathService,
+class DefaultApiContextService(private val storageService: StorageService,
+                               private val apiPathService: ApiPathService): ApiContextService {
+
+    override fun getApiContext(request: HttpRequest): Mono<ApiContext> = apiPathService.extractApiNameAndPath(request.requestURI).map { (context, api) ->
+        storageService.getApiDefinitions(context).flatMap { apiDefinitions ->
+            storageService.getOpenApi(context)
+                .map { def ->
+                    ApiContext(
+                        openApi = def,
+                        context = context,
+                        apiPath = api,
+                        method = request.method,
+                        apiDefinitions = apiDefinitions
+                    )
+                }
+        }
+    }.orElseGet { Mono.empty() }
+
+    override fun getApiContext(context: String, path: String, method: String): Mono<ApiDefinitionsContext> = storageService.getApiDefinitions(context).map { apiDefinitions ->
+        ApiCustomContext(context = context, apiPath = path, method = method, apiDefinitions = apiDefinitions)
+    }
+}
+
+class DefaultApiService(private val apiContextService: ApiContextService,
                         private val apiResultProvider: ApiResultProvider,
                         private val apiFailureService: ApiFailureService,
                         private val apiRecorder: ApiRecorder,
-                        private val pluginService: PluginService): ApiExecutionService {
-    override fun getApiContext(request: HttpRequest): Mono<ApiContext> =
-        apiPathService.extractApiNameAndPath(request.requestURI).map { (context, api) ->
-            storageService.getApiDefinitions(context).flatMap { apiDefinitions ->
-                storageService.getOpenApi(context)
-                    .map { def ->
-                        ApiContext(
-                            openApi = def,
-                            context = context,
-                            apiPath = api,
-                            method = request.method,
-                            apiDefinitions = apiDefinitions
-                        )
-                    }
-            }
-        }.orElseGet { Mono.empty() }
+                        private val pluginService: PluginService): ApiExecutionService, ApiContextService by apiContextService {
 
     override fun executeApi(apiContext: ApiContext, request: HttpRequest, response: HttpResponse): Mono<ResponseContext> =
-        makeRequestContext(apiContext, apiContext.apiPath, request, response)
+        apiContext.makeRequestContext(request, response)
             .flatMap { context ->
-                Mono.justOrEmpty(adjustBasePath(context.apiPath, apiContext.openApi))
-                    .flatMap { v ->
-                        Mono.justOrEmpty(findMatchingPathValue(v, apiContext.openApi.paths))
-                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(HttpURLConnection.HTTP_NOT_FOUND)) })
-                            .flatMap { path ->
-                                Mono.justOrEmpty(getOperation(path, apiContext.method)).zipWith(Mono.just(path))
-                            }
-                            .switchIfEmpty(Mono.error { ApiException(context, makeErrorResponse(HttpURLConnection.HTTP_BAD_METHOD)) })
-                            .flatMap(TupleUtils.function { operation, path ->
-                                apiResultProvider.provideResult(path, operation, context)
-                            })
-                            .flatMap { response -> emitResponse(context, response) }
+                val (operation, path) = adjustBasePath(context.apiPath, apiContext.openApi).flatMap { v ->
+                    findMatchingPathValue(v, apiContext.openApi.paths).map { path ->
+                        getOperation(path, apiContext.method)
+                            .map { it to path }
+                            .orElseThrow { ApiException(context, makeErrorResponse(HttpURLConnection.HTTP_BAD_METHOD)) }
                     }
+                }.orElseThrow { ApiException(context, makeErrorResponse(HttpURLConnection.HTTP_NOT_FOUND)) }
+                emitResponse(context, apiResultProvider.provideResult(path, operation, context))
             }.onErrorResume(ApiException::class.java) { e -> emitResponse(e.requestContext, e.responseContext) }
             .doOnError { e -> logger.error(e.message) }
 
-    private fun makeRequestContext(apiContext: ApiContext, path: String, request: HttpRequest, response: HttpResponse) = apiContext.apiDefinitions.let { apiDefinitions ->
-        val apiOptions = ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::options)
+    private fun ApiContext.makeRequestContext(request: HttpRequest, response: HttpResponse) = apiDefinitions.let { apiDefinitions ->
+        val apiOptions = mergeProperty(ApiCommonConfigurations<*>::options)
         request.bodyToInputStream().map { inputStream ->
             ApiContextAwareRequestContext(
-                apiContext = apiContext, apiDefinitions = apiDefinitions, apiPath = path,
+                apiContext = this, apiDefinitions = apiDefinitions, apiPath = apiPath,
                 apiOptions = apiOptions,
                 content = readContent(request, inputStream),
                 contentType = Optional.ofNullable(request.contentType),
                 headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
-                    ModelPropertyUtils.mergeProperty(path, apiDefinitions, ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
+                    mergeProperty(ApiCommonConfigurations<*>::headers)?.request?.let { putAll(it) }
                     putAll(readHeaders(request))
                 },
                 cookies = request.cookies.associate { c -> c.name to HttpCookie(c.name, c.value) },
@@ -216,7 +238,7 @@ class DefaultApiService(private val storageService: StorageService,
 
     private fun customizeResponse(responseContext: ResponseContext, requestContext: ApiContextAwareRequestContext) =
         responseContext.let { context ->
-            ModelPropertyUtils.mergeProperty(requestContext.apiPath, requestContext.apiDefinitions, ApiCommonConfigurations<*>::headers)?.response?.let { responseHeaders ->
+            requestContext.apiContext.mergeProperty(ApiCommonConfigurations<*>::headers)?.response?.let { responseHeaders ->
                 val newHeaders = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER).apply {
                     putAll(responseHeaders)
                     putAll(context.headers)
@@ -233,8 +255,7 @@ class DefaultApiService(private val storageService: StorageService,
         }
 
     private fun recordRequestResponse(request: ApiContextAwareRequestContext, response: ResponseContext) {
-        val context = request.apiContext
-        ModelPropertyUtils.mergeProperty(context.apiPath, context.apiDefinitions, ApiCommonConfigurations<*>::options)?.let { options ->
+        request.apiContext.mergeProperty(ApiCommonConfigurations<*>::options)?.let { options ->
             if (options.shouldRecord == true) {
                 apiRecorder.addApiRecord(request.applicationName, request, response)
             }

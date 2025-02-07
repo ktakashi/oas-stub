@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.api.storage.Storage
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiContentDecider
+import io.github.ktakashi.oas.engine.apis.ApiContextService
 import io.github.ktakashi.oas.engine.apis.ApiDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
@@ -18,6 +19,7 @@ import io.github.ktakashi.oas.engine.apis.ApiRequestPathVariableValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestSecurityValidator
 import io.github.ktakashi.oas.engine.apis.ApiRequestValidator
 import io.github.ktakashi.oas.engine.apis.ApiResultProvider
+import io.github.ktakashi.oas.engine.apis.DefaultApiContextService
 import io.github.ktakashi.oas.engine.apis.DefaultApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.DefaultApiService
 import io.github.ktakashi.oas.engine.apis.json.JsonOpenApi30DataPopulator
@@ -91,6 +93,9 @@ fun makeEngineModule(options: OasStubStubOptions) = module {
     singleOf(::StorageService)
     single { ApiContentDecider(getAll<ApiRequestValidator>().toSet(), get<ObjectMapper>()) }
     single { ApiResultProvider(get<ApiContentDecider>(), getAll<ApiDataPopulator>().toSet(), getAll<ApiAnyDataPopulator>().toSet()) }
+    singleOf(::DefaultApiContextService) {
+        bind<ApiContextService>()
+    }
     singleOf(::DefaultApiService) {
         bind<ApiExecutionService>()
     }
@@ -106,7 +111,7 @@ fun makeEngineModule(options: OasStubStubOptions) = module {
         bind<PluginCompiler>()
     }
 
-    single { PluginService(getAll<PluginCompiler>().toSet(), get<StorageService>(), get<ObjectMapper>()) }
+    single { PluginService(getAll<PluginCompiler>().toSet(), get<ApiContextService>(), get<StorageService>(), get<ObjectMapper>()) }
     single { ApiPathService(options.stubPath) }
     single { options.objectMapper }
 }

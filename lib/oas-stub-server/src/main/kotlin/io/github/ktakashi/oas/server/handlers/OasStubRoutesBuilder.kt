@@ -115,29 +115,29 @@ internal constructor(private val context: String,
     /**
      * GET route
      */
-    fun get(path: String, handler: OasStubRouteHandler) = apply { routes.routes.get(adjustPath(path), optionAwareHandler(path, handler)) }
+    fun get(path: String, handler: OasStubRouteHandler) = apply { routes.routes.get(adjustPath(path), optionAwareHandler("GET", path, handler)) }
     /**
      * POST route
      */
-    fun post(path: String, handler: OasStubRouteHandler) = apply { routes.routes.post(adjustPath(path), optionAwareHandler(path, handler)) }
+    fun post(path: String, handler: OasStubRouteHandler) = apply { routes.routes.post(adjustPath(path), optionAwareHandler("POST", path, handler)) }
     /**
      * PUT route
      */
-    fun put(path: String, handler: OasStubRouteHandler) = apply { routes.routes.put(adjustPath(path), optionAwareHandler(path, handler)) }
+    fun put(path: String, handler: OasStubRouteHandler) = apply { routes.routes.put(adjustPath(path), optionAwareHandler("PUT", path, handler)) }
     /**
      * DELETE route
      */
-    fun delete(path: String, handler: OasStubRouteHandler) = apply { routes.routes.delete(adjustPath(path), optionAwareHandler(path, handler)) }
+    fun delete(path: String, handler: OasStubRouteHandler) = apply { routes.routes.delete(adjustPath(path), optionAwareHandler("DELETE", path, handler)) }
 
     /**
      * Handling `GET`, `POST`, `PUT` and `DELETE` method in the given [path]
      */
     fun path(path: String, handler: OasStubRouteHandler) = apply {
         routes.routes.also {
-            it.get(adjustPath(path), optionAwareHandler(path, handler))
-            it.post(adjustPath(path), optionAwareHandler(path, handler))
-            it.put(adjustPath(path), optionAwareHandler(path, handler))
-            it.delete(adjustPath(path), optionAwareHandler(path, handler))
+            it.get(adjustPath(path), optionAwareHandler("GET", path, handler))
+            it.post(adjustPath(path), optionAwareHandler("POST", path, handler))
+            it.put(adjustPath(path), optionAwareHandler("PUT", path, handler))
+            it.delete(adjustPath(path), optionAwareHandler("DELETE", path, handler))
         }
     }
 
@@ -150,14 +150,14 @@ internal constructor(private val context: String,
     }
 
     private fun adjustPath(path: String): String = "/$context$path"
-    private fun optionAwareHandler(path: String, handler: OasStubRouteHandler): ReactorResponseHandler {
+    private fun optionAwareHandler(method: String, path: String, handler: OasStubRouteHandler): ReactorResponseHandler {
         return adjustHandler(handler, objectMapper, checkFailure(path)) { execution ->
-            delayService.delayMono(context, path, execution)
+            delayService.delayMono(context, method, path, execution)
         }
     }
 
     private fun checkFailure(path: String): (RouterHttpRequest) -> Mono<RouterHttpResponse> = { request ->
-        failureService.checkFailure(context, path) { responseContext ->
+        failureService.checkFailure(context, path, request) { responseContext ->
             request.responseBuilder().status(responseContext.status).build()
         }.doOnError(ApiConnectionException::class.java) { e ->
             logger.error(e.message)

@@ -8,13 +8,12 @@ import io.github.ktakashi.oas.engine.apis.ApiContext
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiExecutionService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
-import io.github.ktakashi.oas.engine.models.ModelPropertyUtils
+import io.github.ktakashi.oas.engine.models.mergeProperty
 import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiMetric
 import io.github.ktakashi.oas.server.api.OasStubApiForwardingResolver
 import io.github.ktakashi.oas.server.http.OasStubServerHttpRequest
 import io.github.ktakashi.oas.server.http.OasStubServerHttpResponse
-import io.github.ktakashi.oas.server.options.OasStubOptions
 import io.github.ktakashi.oas.server.options.OasStubStubOptions
 import io.netty.handler.codec.http.HttpResponseStatus
 import java.time.Duration
@@ -81,7 +80,7 @@ open class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpS
             apiObserver.addApiMetric(context.context, context.apiPath, metric)
         }
         logger.debug("Response {}", response.status, e)
-        ModelPropertyUtils.mergeProperty(context.apiPath, context.apiDefinitions, ApiCommonConfigurations<*>::options)?.let { options ->
+        context.mergeProperty(ApiCommonConfigurations<*>::options)?.let { options ->
             if (options.shouldMonitor == null || options.shouldMonitor == true) {
                 rec()
             }

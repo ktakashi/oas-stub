@@ -7,7 +7,6 @@ import io.github.ktakashi.oas.engine.paths.findMatchingPathValue
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
-import io.github.ktakashi.oas.api.storage.Storage
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.swagger.v3.oas.models.OpenAPI

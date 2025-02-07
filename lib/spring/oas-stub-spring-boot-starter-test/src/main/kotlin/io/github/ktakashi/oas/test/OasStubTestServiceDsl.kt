@@ -164,7 +164,7 @@ class OasStubApiConfigurationDsl internal  constructor(private val init: OasStub
     }
 }
 
-class OasStubApiDataDsl internal  constructor(private val init: OasStubApiDataDsl.() -> Unit) {
+class OasStubApiDataDsl internal constructor(private val init: OasStubApiDataDsl.() -> Unit) {
     private var apiData = mutableMapOf<String, Any>()
 
     /**

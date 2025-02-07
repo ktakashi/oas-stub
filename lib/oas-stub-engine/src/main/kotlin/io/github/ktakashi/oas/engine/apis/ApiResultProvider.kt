@@ -10,18 +10,17 @@ import jakarta.ws.rs.core.MediaType
 import java.net.HttpURLConnection
 import java.util.Optional
 import org.slf4j.LoggerFactory
-import reactor.core.publisher.Mono
 
 private val logger = LoggerFactory.getLogger(ApiResultProvider::class.java)
 
 class ApiResultProvider(private val contentDecider: ApiContentDecider,
                         private val populators: Set<ApiDataPopulator>,
                         private val anyPopulators: Set<ApiAnyDataPopulator>) {
-    fun provideResult(path: PathItem, operation: Operation, requestContext: ApiContextAwareRequestContext): Mono<ResponseContext> = Mono.just(when (val decision = contentDecider.decideContent(requestContext, path, operation)) {
+    fun provideResult(path: PathItem, operation: Operation, requestContext: ApiContextAwareRequestContext): ResponseContext = when (val decision = contentDecider.decideContent(requestContext, path, operation)) {
         is ContentFound -> decision.content.map { content -> toResponseContext(requestContext, decision.status, content) }
                 .orElseGet { DefaultResponseContext(status = decision.status) }
         is ContentNotFound -> decision.responseContext
-    })
+    }
 
     private fun toResponseContext(requestContext: ApiContextAwareRequestContext, status: Int, content: Content): ResponseContext {
         if (content.isEmpty()) {

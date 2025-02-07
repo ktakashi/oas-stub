@@ -71,7 +71,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
         }
     }
 
-    private fun adminContext(request: RouterHttpRequest): Mono<RouterHttpResponse>  = when (request.method) {
+    private fun adminContext(request: RouterHttpRequest): Mono<RouterHttpResponse> = when (request.method) {
         "GET" -> request.param(PATH_VARIABLE_NAME)?.let { context ->
             apiRegistrationService.getApiDefinitions(context).map { v ->
                 request.responseBuilder()
