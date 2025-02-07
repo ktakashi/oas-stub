@@ -438,7 +438,7 @@ data class ApiConfiguration
     fun updateMethods(methods: Map<String, ApiMethodConfiguration>) = ApiConfiguration(headers, options, data, delay, plugin, methods)
     fun updateMethod(method: String, configuration: ApiMethodConfiguration) =
         mapOf(method to configuration).let { methodConfig ->
-            ApiConfiguration(headers, options, data, delay, plugin, if (methods == null) methodConfig else methods + methodConfig)
+            updateMethods(if (methods == null) methodConfig else methods + methodConfig)
         }
 
     fun mutate(): Builder = Builder(headers, options, data, delay, plugin, methods)

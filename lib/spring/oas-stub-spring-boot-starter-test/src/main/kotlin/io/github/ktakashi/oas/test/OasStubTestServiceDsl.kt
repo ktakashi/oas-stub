@@ -4,12 +4,14 @@ import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiConnectionError
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiDelay
+import io.github.ktakashi.oas.model.ApiEntryConfiguration
 import io.github.ktakashi.oas.model.ApiFailure
 import io.github.ktakashi.oas.model.ApiFailureNone
 import io.github.ktakashi.oas.model.ApiFixedDelay
 import io.github.ktakashi.oas.model.ApiHeaders
 import io.github.ktakashi.oas.model.ApiHttpError
 import io.github.ktakashi.oas.model.ApiLatency
+import io.github.ktakashi.oas.model.ApiMethodConfiguration
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
 import io.github.ktakashi.oas.model.PluginDefinition
@@ -95,31 +97,30 @@ class OasStubTestServiceDsl
     }
 }
 
-class OasStubApiConfigurationDsl internal  constructor(private val init: OasStubApiConfigurationDsl.() -> Unit) {
+open class OasStubApiEntryConfigurationDsl<D: OasStubApiEntryConfigurationDsl<D, T>, T: ApiEntryConfiguration<T>>(private val init: OasStubApiEntryConfigurationDsl<D, T>.() -> Unit, protected var apiEntryConfiguration: T) {
     companion object {
-        private val defaultPluginDefinition = OasStubTestPlugin().toPluginDefinition()
+        @JvmStatic
+        protected val defaultPluginDefinition = OasStubTestPlugin().toPluginDefinition()
     }
-    private var apiConfiguration =  ApiConfiguration(plugin = defaultPluginDefinition)
-
     /**
      * Configure API level headers
      */
     fun headers(init: OasStubApiHeadersDsl.() -> Unit) {
-        apiConfiguration = apiConfiguration.updateHeaders(OasStubApiHeadersDsl(init).save())
+        apiEntryConfiguration = apiEntryConfiguration.updateHeaders(OasStubApiHeadersDsl(init).save())
     }
 
     /**
      * Configure API level data
      */
     fun data(init: OasStubApiDataDsl.() -> Unit) {
-        apiConfiguration = apiConfiguration.updateData(OasStubApiDataDsl(init).save())
+        apiEntryConfiguration = apiEntryConfiguration.updateData(OasStubApiDataDsl(init).save())
     }
 
     /**
      * Configure API level delay
      */
     fun delay(init: OasStubApiDelayDsl.() -> Unit) {
-        apiConfiguration = apiConfiguration.updateDelay(OasStubApiDelayDsl(init).save())
+        apiEntryConfiguration = apiEntryConfiguration.updateDelay(OasStubApiDelayDsl(init).save())
     }
 
     /**
@@ -128,7 +129,7 @@ class OasStubApiConfigurationDsl internal  constructor(private val init: OasStub
      * By default, default plugin is configured, so only for documentation purpose
      */
     fun defaultPlugin() {
-        apiConfiguration = apiConfiguration.updatePlugin(defaultPluginDefinition)
+        apiEntryConfiguration = apiEntryConfiguration.updatePlugin(defaultPluginDefinition)
     }
 
     /**
@@ -138,7 +139,7 @@ class OasStubApiConfigurationDsl internal  constructor(private val init: OasStub
      */
     fun plugin(script: String, type: PluginType = PluginType.GROOVY) {
         val plugin = PluginDefinition(type, script)
-        apiConfiguration = apiConfiguration.updatePlugin(plugin)
+        apiEntryConfiguration = apiEntryConfiguration.updatePlugin(plugin)
     }
 
     /**
@@ -148,21 +149,62 @@ class OasStubApiConfigurationDsl internal  constructor(private val init: OasStub
      */
     fun plugin(resource: Resource, type: PluginType = PluginType.GROOVY) {
         val plugin = PluginDefinition(type, resource.getContentAsString(StandardCharsets.UTF_8))
-        apiConfiguration = apiConfiguration.updatePlugin(plugin)
+        apiEntryConfiguration = apiEntryConfiguration.updatePlugin(plugin)
     }
 
     /**
      * Configure API level options
      */
     fun options(init: OasStubApiOptionsDsl.() -> Unit) {
-        apiConfiguration = apiConfiguration.updateOptions(OasStubApiOptionsDsl(init).save())
+        apiEntryConfiguration = apiEntryConfiguration.updateOptions(OasStubApiOptionsDsl(init).save())
     }
 
-    internal fun save(): ApiConfiguration {
+    internal fun save(): T {
         init()
-        return apiConfiguration
+        return apiEntryConfiguration
     }
 }
+
+private typealias OasStubApiConfigurationDslFunc = OasStubApiEntryConfigurationDsl<OasStubApiConfigurationDsl, ApiConfiguration>.() -> Unit
+class OasStubApiConfigurationDsl internal constructor(init: OasStubApiConfigurationDsl.() -> Unit)
+    : OasStubApiEntryConfigurationDsl<OasStubApiConfigurationDsl, ApiConfiguration>(init as OasStubApiConfigurationDslFunc, ApiConfiguration(plugin = defaultPluginDefinition)) {
+    /**
+     * Specifying HTTP method and configure API per method configuration
+     */
+    fun method(method: String, init: OasStubApiMethodConfigurationDslFunc) {
+        apiEntryConfiguration = apiEntryConfiguration.updateMethod(method, OasStubApiMethodConfigurationDsl(init).save())
+    }
+
+    /**
+     * Configure API per method configuration of HEAD
+     */
+    fun head(init: OasStubApiMethodConfigurationDslFunc) = method("HEAD", init)
+    /**
+     * Configure API per method configuration of GET
+     */
+    fun get(init: OasStubApiMethodConfigurationDslFunc) = method("GET", init)
+    /**
+     * Configure API per method configuration of POST
+     */
+    fun post(init: OasStubApiMethodConfigurationDslFunc) = method("POST", init)
+    /**
+     * Configure API per method configuration of PUT
+     */
+    fun put(init: OasStubApiMethodConfigurationDslFunc) = method("PUT", init)
+    /**
+     * Configure API per method configuration of DELETE
+     */
+    fun delete(init: OasStubApiMethodConfigurationDslFunc) = method("DELETE", init)
+    /**
+     * Configure API per method configuration of PATCH
+     */
+    fun patch(init: OasStubApiMethodConfigurationDslFunc) = method("PATCH", init)
+}
+
+private typealias OasStubApiMethodConfigurationDslFunc = OasStubApiEntryConfigurationDsl<OasStubApiMethodConfigurationDsl, ApiMethodConfiguration>.() -> Unit
+class OasStubApiMethodConfigurationDsl internal constructor(init: OasStubApiMethodConfigurationDslFunc)
+    // Unlike ApiConfiguration, we don't specify plugin (it'll be propagated)
+    : OasStubApiEntryConfigurationDsl<OasStubApiMethodConfigurationDsl, ApiMethodConfiguration>(init, ApiMethodConfiguration())
 
 class OasStubApiDataDsl internal constructor(private val init: OasStubApiDataDsl.() -> Unit) {
     private var apiData = mutableMapOf<String, Any>()

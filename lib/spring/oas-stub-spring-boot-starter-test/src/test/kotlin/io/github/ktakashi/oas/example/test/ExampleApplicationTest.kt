@@ -1,5 +1,6 @@
 package io.github.ktakashi.oas.example.test
 
+import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiData
 import io.github.ktakashi.oas.model.ApiFixedDelay
 import io.github.ktakashi.oas.model.ApiHeaders
@@ -120,6 +121,48 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
                 data {
                     "key" to "value"
                 }
+                method("OPTION") {
+                    data {
+                        "key" to "option"
+                        "key2" to "option2"
+                    }
+                }
+                head {
+                    data {
+                        "key" to "head"
+                        "key2" to "head2"
+                    }
+                }
+                get {
+                    data {
+                        "key" to "get"
+                        "key2" to "get2"
+                    }
+                }
+                post {
+                    data {
+                        "key" to "post"
+                        "key2" to "post2"
+                    }
+                }
+                put {
+                    data {
+                        "key" to "put"
+                        "key2" to "put2"
+                    }
+                }
+                delete {
+                    data {
+                        "key" to "delete"
+                        "key2" to "delete2"
+                    }
+                }
+                patch {
+                    data {
+                        "key" to "patch"
+                        "key2" to "patch2"
+                    }
+                }
             }
         }
         val context = oasStubTestService.getTestApiContext("dsl-test")
@@ -145,6 +188,20 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
         assertEquals(ApiOptions(failure = ApiHttpError(500)), configuration?.options)
         assertEquals(OasStubTestPlugin().toPluginDefinition(), configuration?.plugin)
         assertEquals("value", configuration?.data?.get("key"))
+        assertNull(configuration?.data?.get("key2"))
+
+        fun ApiConfiguration?.checkMethodConfiguration(method: String) {
+            val methods = this?.methods ?: error("No methods, shouldn't be here")
+            val config = methods[method]
+            assertNotNull(config)
+            val value = method.lowercase()
+            assertEquals(value, config?.data?.get("key"))
+            assertEquals("${value}2", config?.data?.get("key2"))
+            assertNull(config?.plugin)
+        }
+        listOf("HEAD", "OPTION", "GET", "POST", "PUT", "DELETE", "PATCH").forEach {
+            configuration.checkMethodConfiguration(it)
+        }
     }
 
     fun check(name: String) {
