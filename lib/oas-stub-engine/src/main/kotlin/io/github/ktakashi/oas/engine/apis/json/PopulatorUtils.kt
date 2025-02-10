@@ -2,7 +2,6 @@ package io.github.ktakashi.oas.engine.apis.json
 
 import com.fasterxml.jackson.core.io.NumberInput
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.DecimalNode
@@ -10,6 +9,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import io.github.ktakashi.oas.engine.apis.ApiDataPopulator
 import io.github.ktakashi.oas.engine.data.regexp.RegexpDataGenerator
 import io.swagger.v3.oas.models.media.Schema
 import java.math.BigDecimal
@@ -28,7 +28,7 @@ private val logger = LoggerFactory.getLogger("io.github.ktakashi.oas.engine.apis
 private val regexpDataGenerator = RegexpDataGenerator()
 
 @Suppress("kotlin:S6518") // impossible to make it
-internal fun populateObjectNode(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
+internal fun ApiDataPopulator.populateObjectNode(schema: Schema<*>, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
     if (v is String) {
         objectMapper.readTree(v)
     } else {
@@ -38,13 +38,13 @@ internal fun populateObjectNode(schema: Schema<*>, objectMapper: ObjectMapper, p
     schema.properties?.forEach { (k, v) -> me.set<JsonNode>(k, populateNode(v)) }
 }
 
-internal fun populateArrayNode(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
+internal fun ApiDataPopulator.populateArrayNode(schema: Schema<*>, populateNode: NodePopulator): JsonNode = handleExample(schema) { v ->
     if (v is String) {
         objectMapper.readTree(v)
     } else {
         objectMapper.valueToTree(v)
     }
-} ?: handleArray(schema, objectMapper, populateNode)
+} ?: handleArray(schema, populateNode)
 
 internal fun populateBooleanNode(schema: Schema<*>): JsonNode = handleExample(schema) { v -> BooleanNode.valueOf(v.toString().toBoolean()) }
     ?: BooleanNode.valueOf(true)
@@ -62,14 +62,14 @@ private fun handleExample(schema: Schema<*>, generator: (Any) -> JsonNode) = get
     try {
         generator(it)
     } catch (e: Exception) {
-        logger.debug("Failed to deserialize example: $it", e)
+        logger.debug("Failed to deserialize example: {}", it, e)
         null
     }
 }
 
 private fun getExample(schema: Schema<*>) = schema.examples?.get(0) ?: schema.example
 
-private fun handleArray(schema: Schema<*>, objectMapper: ObjectMapper, populateNode: NodePopulator): ArrayNode {
+private fun ApiDataPopulator.handleArray(schema: Schema<*>, populateNode: NodePopulator): ArrayNode {
     fun getCount(schema: Schema<*>): Int = schema.minItems
         ?: schema.maxItems?.let { min(it, 10) }
         ?: 1

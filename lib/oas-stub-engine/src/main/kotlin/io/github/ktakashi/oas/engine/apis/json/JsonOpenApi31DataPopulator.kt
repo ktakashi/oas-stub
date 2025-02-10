@@ -10,13 +10,8 @@ import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.JsonSchema
 import io.swagger.v3.oas.models.media.Schema
 
-class JsonOpenApi31DataPopulator(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V31) {
-    override fun populate(schema: Schema<*>): ByteArray = when (schema) {
-        is JsonSchema -> objectMapper.writeValueAsBytes(populateNode(schema))
-        else -> "null".toByteArray()
-    }
-
-    private fun populateNode(schema: Schema<*>): JsonNode = when {
+class JsonOpenApi31DataPopulator(objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(objectMapper, SpecVersion.V31) {
+    override fun populateNode(schema: Schema<*>): JsonNode = when {
         schema.anyOf != null && schema.anyOf.isNotEmpty() -> populateNode(schema.anyOf[0] as JsonSchema)
         schema.oneOf != null && schema.oneOf.isNotEmpty() -> populateNode(schema.oneOf[0] as JsonSchema)
         schema.allOf != null && schema.allOf.isNotEmpty() -> NullNode.instance // TODO Implement me, it's problematic...
@@ -34,7 +29,7 @@ class JsonOpenApi31DataPopulator(private val objectMapper: ObjectMapper): JsonMe
         else -> NullNode.instance
     }
 
-    private fun populateObject(schema: Schema<*>): JsonNode = populateObjectNode(schema, objectMapper, ::populateNode)
+    private fun populateObject(schema: Schema<*>): JsonNode = populateObjectNode(schema, ::populateNode)
 
-    private fun populateArray(schema: Schema<*>): JsonNode  = populateArrayNode(schema, objectMapper, ::populateNode)
+    private fun populateArray(schema: Schema<*>): JsonNode  = populateArrayNode(schema, ::populateNode)
 }

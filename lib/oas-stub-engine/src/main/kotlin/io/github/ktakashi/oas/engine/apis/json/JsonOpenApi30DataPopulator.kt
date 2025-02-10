@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.engine.apis.json
 
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.NullNode
@@ -14,15 +13,8 @@ import io.swagger.v3.oas.models.media.IntegerSchema
 import io.swagger.v3.oas.models.media.NumberSchema
 import io.swagger.v3.oas.models.media.Schema
 
-class JsonOpenApi30DataPopulator(private val objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(SpecVersion.V30) {
-    override fun populate(schema: Schema<*>): ByteArray = try {
-        val node = populateNode(schema)
-        objectMapper.writeValueAsBytes(node)
-    } catch (e: JsonProcessingException) {
-        "null".toByteArray()
-    }
-
-    private fun populateNode(schema: Schema<*>): JsonNode = when (schema) {
+class JsonOpenApi30DataPopulator(objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, AbstractApiDataPopulator(objectMapper, SpecVersion.V30) {
+    override fun populateNode(schema: Schema<*>): JsonNode = when (schema) {
         is ComposedSchema -> when {
             schema.anyOf != null && schema.anyOf.isNotEmpty() -> populateNode(schema.anyOf[0])
             schema.oneOf != null && schema.oneOf.isNotEmpty() -> populateNode(schema.oneOf[0])
@@ -42,8 +34,8 @@ class JsonOpenApi30DataPopulator(private val objectMapper: ObjectMapper): JsonMe
         else -> NullNode.instance
     }
 
-    private fun populateObject(schema: Schema<*>): JsonNode = populateObjectNode(schema, objectMapper, ::populateNode)
+    private fun populateObject(schema: Schema<*>): JsonNode = populateObjectNode(schema, ::populateNode)
 
-    private fun populateArray(schema: ArraySchema): JsonNode = populateArrayNode(schema, objectMapper, ::populateNode)
+    private fun populateArray(schema: ArraySchema): JsonNode = populateArrayNode(schema, ::populateNode)
 }
 
