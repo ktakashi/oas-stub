@@ -6,6 +6,7 @@ import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
+import io.cucumber.java.ParameterType
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.restassured.RestAssured
@@ -28,6 +29,7 @@ import org.hamcrest.Matchers.greaterThanOrEqualTo
 import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.util.UriComponentsBuilder
@@ -40,7 +42,9 @@ data class TestContext(var applicationUrl: String,
                        var apiName: String = "",
                        var headers: MutableList<Header> = mutableListOf(),
                        var response: Response? = null,
-                       var responseTime: Long? = null)
+                       var responseTime: Long? = null) {
+    val responses = mutableListOf<Response>()
+}
 
 fun interface TestContextSupplier: Supplier<TestContext>
 
@@ -61,6 +65,13 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
         testContext = testContextSupplier.get()
         sessionStorage.clearApiMetrics()
         RestAssured.config = RestAssured.config().redirect(RedirectConfig().followRedirects(false))
+    }
+
+    @ParameterType("yes|no")
+    fun yesNo(value: String) = when (value) {
+        "yes" -> true
+        "no" -> false
+        else -> error("shouldn't happen")
     }
 
     @Given("this API definition {string}")
@@ -261,6 +272,19 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     @Then("I get http status {int}")
     fun iGetHttpStatus(status: Int) {
         testContext.response?.then()?.statusCode(status) ?: throw IllegalStateException("No response")
+    }
+
+    @Then("I save the response")
+    fun iSaveTheResponse() {
+        testContext.responses.add(testContext.response!!)
+    }
+
+    @Then("the responses are the same: {yesNo}")
+    fun theResponsesAreNotTheSame(areSame: Boolean) {
+        assert(testContext.response != null) { "Response is null" }
+        assert(testContext.responses.lastOrNull() != null) { "The previous response must be saved" }
+
+        assertEquals(areSame, testContext.responses.last().thenReturn().body.asByteArray().contentEquals(testContext.response!!.thenReturn().body.asByteArray()))
     }
 
     @Then("I get response header of {string} with {string}")
