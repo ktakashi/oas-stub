@@ -13,10 +13,13 @@ import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.DecimalNode
 import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
+import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.POJONode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.ktakashi.oas.engine.apis.AbstractApiDataPopulator
 import io.github.ktakashi.oas.engine.data.regexp.RegexpDataGenerator
 import io.swagger.v3.oas.models.SpecVersion
@@ -27,6 +30,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import kotlin.math.min
 import org.slf4j.LoggerFactory
 
@@ -36,8 +40,10 @@ private val regexpDataGenerator = RegexpDataGenerator()
 
 private fun interface JsonNodeSupplier: () -> JsonNode
 private object JsonNodeSupplerSerializer: StdSerializer<JsonNodeSupplier>(JsonNodeSupplier::class.java) {
+    private fun readResolve(): Any = JsonNodeSupplerSerializer
     override fun serialize(value: JsonNodeSupplier, gen: JsonGenerator, provider: SerializerProvider) {
-        provider.defaultSerializeValue(value(), gen)
+        val node = value()
+        gen.writeString(node.toString())
     }
 }
 
@@ -52,12 +58,18 @@ private class JsonNodeSerializerModule: SimpleModule("JsonNodeSerializerModule")
 
 abstract class JsonApiDataPopulator(sourceObjectMapper: ObjectMapper, version: SpecVersion): AbstractApiDataPopulator(version) {
     protected val objectMapper: ObjectMapper = sourceObjectMapper.copy().registerModules(JsonNodeSerializerModule())
+    private val cache = Caffeine.newBuilder()
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build(CacheLoader<Schema<*>, JsonNode> { schema ->
+            populateCache(schema)
+        })
 
-    override fun populate(schema: Schema<*>): ByteArray = try {
-        val node = populateNode(schema)
-        objectMapper.writeValueAsBytes(node)
+    override fun populate(schema: Schema<*>): ByteArray = objectMapper.writeValueAsBytes(cache[schema])
+
+    private fun populateCache(schema: Schema<*>): JsonNode = try {
+        populateNode(schema)
     } catch (e: JsonProcessingException) {
-        "null".toByteArray()
+        NullNode.instance
     }
 
     abstract fun populateNode(schema: Schema<*>): JsonNode
@@ -126,7 +138,7 @@ abstract class JsonApiDataPopulator(sourceObjectMapper: ObjectMapper, version: S
 
     private fun handlePattern(schema: Schema<*>): JsonNode =
         schema.pattern?.let {
-            POJONode(JsonNodeSupplier { TextNode.valueOf(generateMatchingString(it)) } )
+            TextNode.valueOf(generateMatchingString(it))
         } ?: TextNode.valueOf(if (schema.enum != null && schema.enum.isNotEmpty()) schema.enum[0].toString() else "string")
 
     private fun handleRange(schema: Schema<*>): JsonNode = schema.minimum?.let { v -> DecimalNode(v) }

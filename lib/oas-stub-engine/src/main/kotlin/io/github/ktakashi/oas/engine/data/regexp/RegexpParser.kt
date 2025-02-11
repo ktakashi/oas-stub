@@ -1,5 +1,7 @@
 package io.github.ktakashi.oas.engine.data.regexp
 
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.ktakashi.oas.engine.data.charset.CharSet
 import io.github.ktakashi.peg.Parser
 import io.github.ktakashi.peg.SuccessResult
@@ -19,6 +21,7 @@ import io.github.ktakashi.peg.token
 import java.text.ParseException
 import java.util.EnumSet
 import java.util.Optional
+import java.util.concurrent.TimeUnit
 
 
 // Maybe for future?
@@ -46,9 +49,15 @@ private const val ALPHABETS = "abcdefghijklmnopqrstuvwxyz"
 //  - https://262.ecma-international.org/5.1/#sec-15.10.1
 //  - https://www.brics.dk/automaton/doc/dk/brics/automaton/RegExp.html
 class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
+    private val cache = Caffeine.newBuilder()
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build(CacheLoader<String, RegexpNode> { pattern -> parsePattern(pattern) })
+
     constructor(): this(EnumSet.noneOf(RegexpParserOption::class.java))
 
-    fun parse(pattern: String): RegexpNode = when (val r = disjunction(pattern.asSequence())) {
+    fun parse(pattern: String): RegexpNode = cache[pattern]
+
+    private fun parsePattern(pattern: String): RegexpNode = when (val r = disjunction(pattern.asSequence())) {
         is SuccessResult -> r.value
         else -> throw ParseException("Failed to parse $pattern", 0)
     }
@@ -202,7 +211,7 @@ class RegexpParser(private val options: EnumSet<RegexpParserOption>) {
         assertion,
         bind(atom, optional(quantifier)) { r, o ->
             result(o.map { q ->
-                // optinisation
+                // optimisation
                 // e.g. \d+ -> \d\d*, so the repetition would always have minimum 0
                 val rep = q.first.min
                 val max = q.first.max - (if (q.first.max == Int.MAX_VALUE) 0 else rep)

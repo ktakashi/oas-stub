@@ -2,11 +2,11 @@ package io.github.ktakashi.oas.test.cucumber
 
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.Before
+import io.cucumber.java.ParameterType
 import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
-import io.cucumber.java.ParameterType
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.restassured.RestAssured
@@ -20,6 +20,9 @@ import io.restassured.http.Headers
 import io.restassured.response.Response
 import java.io.IOException
 import java.net.URI
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.ForkJoinPool
 import java.util.function.Supplier
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
@@ -29,7 +32,6 @@ import org.hamcrest.Matchers.greaterThanOrEqualTo
 import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.util.UriComponentsBuilder
@@ -223,8 +225,27 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     }
 
     @Then("I {string} to {string} with {string} as {string}")
-    fun iGETtoPathWithContentasContentType(method: String, path: String, content: String, contentType: String) {
+    fun iRequestToPathWithContentAsContentType(method: String, path: String, content: String, contentType: String) {
         requestApi(path, contentType, content, method)
+    }
+
+    @Then("I {string} to {string} with {string} as {string} for {int} times in {int} batches")
+    fun iRequestToPathWithContentAsContentTypeForNTimes(method: String, path: String, content: String, contentType: String, count: Int, batch: Int) {
+        val filters = RestAssured.filters()
+        RestAssured.replaceFiltersWith(listOf())
+        val batchUnit = count / batch
+        val executor = Executors.newFixedThreadPool(batchUnit)
+        val responses = (1..batch).flatMap {
+            (1..batchUnit).map {
+                executor.submit(Callable {
+                    requestApiInner(path, contentType, content, method)
+                })
+            }.map { it.get() }
+        }
+        executor.shutdown()
+        testContext.responses.addAll(responses)
+        testContext.response = testContext.responses.firstOrNull()
+        RestAssured.replaceFiltersWith(filters)
     }
 
 
@@ -242,14 +263,19 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
 
     private fun requestApi(path: String, contentType: String, content: String, method: String) {
         val start = System.currentTimeMillis()
+        testContext.response = requestApiInner(path, contentType, content, method)
+        testContext.responseTime = System.currentTimeMillis() - start
+    }
+
+    private fun requestApiInner(path: String, contentType: String, content: String, method: String): Response {
         val p = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
-                .path(testContext.prefix)
-                .pathSegment(testContext.apiName)
-                .path(p.path)
-                .query(p.query)
-                .build()
-                .toUri()
+            .path(testContext.prefix)
+            .pathSegment(testContext.apiName)
+            .path(p.path)
+            .query(p.query)
+            .build()
+            .toUri()
         val spec = given().also {
             if (contentType.isNotBlank()) {
                 it.contentType(contentType)
@@ -257,7 +283,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
         }.headers(Headers(testContext.headers))
 
         val body = maybeContent(content)?.let(::String)
-        testContext.response = when (method.uppercase()) {
+        return when (method.uppercase()) {
             "GET" -> spec.get(uri)
             "POST" -> spec.apply { body?.let { spec.body(body) } }.post(uri)
             "PUT" -> spec.apply { body?.let { spec.body(body) } }.put(uri)
@@ -266,7 +292,6 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
             "OPTIONS" -> spec.options(uri)
             else -> throw IllegalArgumentException("Not supported (yet?)")
         }
-        testContext.responseTime = System.currentTimeMillis() - start
     }
 
     @Then("I get http status {int}")

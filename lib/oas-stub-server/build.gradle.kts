@@ -33,4 +33,5 @@ dependencies {
     testImplementation("io.cucumber:cucumber-junit-platform-engine")
     testImplementation("io.cucumber:cucumber-spring")
     testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.gatling.charts.highcharts)
 }

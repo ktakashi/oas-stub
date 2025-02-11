@@ -1,0 +1,1553 @@
+openapi: 3.1.0
+info:
+  title: Performance test YAML
+  version: 0.1.0
+  contact:
+    name: Takashi Kato
+    email: ktakashi@ymail.com
+tags:
+  - name: PAIN.002
+    description: JSONised PAIN.002
+paths:
+  /pain.002.001.11:
+    description: PAIN.002.001.11
+    get:
+      responses:
+        '200':
+          description: Generated PAIN.002.001.11 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPaymentStatusReportV11"
+components:
+  schemas:
+    CustomerPaymentStatusReportV11:
+      required:
+        - grpHdr
+        - orgnlGrpInfAndSts
+      type: object
+      properties:
+        grpHdr:
+          $ref: '#/components/schemas/GroupHeader86'
+        orgnlGrpInfAndSts:
+          $ref: '#/components/schemas/OriginalGroupHeader17'
+        orgnlPmtInfAndSts:
+          type: array
+          items:
+            $ref: '#/components/schemas/OriginalPaymentInstruction38'
+        splmtryData:
+          maxItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplementaryData2'
+    AccountIdentification4Choice:
+      type: object
+      properties:
+        iban:
+          $ref: '#/components/schemas/IBAN2007Identifier'
+        othr:
+          $ref: '#/components/schemas/GenericAccountIdentification1'
+    AccountSchemeName1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalAccountIdentification1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    ActiveOrHistoricCurrencyAndAmount:
+      required:
+        - ccy
+        - value
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount_SimpleType'
+        ccy:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyCode'
+    ActiveOrHistoricCurrencyAndAmount_SimpleType:
+      minimum: 0
+      type: number
+    ActiveOrHistoricCurrencyCode:
+      pattern: "^([A-Z]{3,3})$"
+      type: string
+    AddressType2Code:
+      type: string
+      enum:
+        - ADDR
+        - PBOX
+        - HOME
+        - BIZZ
+        - MLTO
+        - DLVY
+    AddressType3Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/AddressType2Code'
+        prtry:
+          $ref: '#/components/schemas/GenericIdentification30'
+    AmountType4Choice:
+      type: object
+      properties:
+        eqvtAmt:
+          $ref: '#/components/schemas/EquivalentAmount2'
+        instdAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+    AnyBICDec2014Identifier:
+      pattern: "^([0-9A-Z]{4,4}[A-Z]{2,2}[0-9A-Z]{2,2}([0-9A-Z]{3,3})?)$"
+      type: string
+    BICFIDec2014Identifier:
+      pattern: "^([0-9A-Z]{4,4}[A-Z]{2,2}[0-9A-Z]{2,2}([0-9A-Z]{3,3})?)$"
+      type: string
+    BaseOneRate:
+      type: number
+    BranchAndFinancialInstitutionIdentification6:
+      required:
+        - finInstnId
+      type: object
+      properties:
+        brnchId:
+          $ref: '#/components/schemas/BranchData3'
+        finInstnId:
+          $ref: '#/components/schemas/FinancialInstitutionIdentification18'
+    BranchData3:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Max35Text'
+        lei:
+          $ref: '#/components/schemas/LEIIdentifier'
+        nm:
+          $ref: '#/components/schemas/Max140Text'
+        pstlAdr:
+          $ref: '#/components/schemas/PostalAddress24'
+    CashAccount38:
+      required:
+        - id
+      type: object
+      properties:
+        ccy:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyCode'
+        id:
+          $ref: '#/components/schemas/AccountIdentification4Choice'
+        nm:
+          $ref: '#/components/schemas/Max70Text'
+        prxy:
+          $ref: '#/components/schemas/ProxyAccountIdentification1'
+        tp:
+          $ref: '#/components/schemas/CashAccountType2Choice'
+    CashAccountType2Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalCashAccountType1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    CategoryPurpose1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalCategoryPurpose1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    ChargeBearerType1Code:
+      type: string
+      enum:
+        - DEBT
+        - CRED
+        - SHAR
+        - SLEV
+    ClearingSystemIdentification2Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalClearingSystemIdentification1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    ClearingSystemMemberIdentification2:
+      required:
+        - mmbId
+      type: object
+      properties:
+        clrSysId:
+          $ref: '#/components/schemas/ClearingSystemIdentification2Choice'
+        mmbId:
+          $ref: '#/components/schemas/Max35Text'
+    Contact4:
+      type: object
+      properties:
+        dept:
+          $ref: '#/components/schemas/Max70Text'
+        emailAdr:
+          $ref: '#/components/schemas/Max2048Text'
+        emailPurp:
+          $ref: '#/components/schemas/Max35Text'
+        faxNb:
+          $ref: '#/components/schemas/PhoneNumber'
+        jobTitl:
+          $ref: '#/components/schemas/Max35Text'
+        mobNb:
+          $ref: '#/components/schemas/PhoneNumber'
+        nm:
+          $ref: '#/components/schemas/Max140Text'
+        nmPrfx:
+          $ref: '#/components/schemas/NamePrefix2Code'
+        othr:
+          type: array
+          items:
+            $ref: '#/components/schemas/OtherContact1'
+        phneNb:
+          $ref: '#/components/schemas/PhoneNumber'
+        prefrdMtd:
+          $ref: '#/components/schemas/PreferredContactMethod1Code'
+        rspnsblty:
+          $ref: '#/components/schemas/Max35Text'
+    CountryCode:
+      pattern: "^([A-Z]{2,2})$"
+      type: string
+    CreditDebitCode:
+      type: string
+      enum:
+        - CRDT
+        - DBIT
+    CreditTransferMandateData1:
+      type: object
+      properties:
+        dtOfSgntr:
+          $ref: '#/components/schemas/ISODate'
+        dtOfVrfctn:
+          $ref: '#/components/schemas/ISODateTime'
+        elctrncSgntr:
+          $ref: '#/components/schemas/Max10KBinary'
+        fnlPmtDt:
+          $ref: '#/components/schemas/ISODate'
+        frqcy:
+          $ref: '#/components/schemas/Frequency36Choice'
+        frstPmtDt:
+          $ref: '#/components/schemas/ISODate'
+        mndtId:
+          $ref: '#/components/schemas/Max35Text'
+        rsn:
+          $ref: '#/components/schemas/MandateSetupReason1Choice'
+        tp:
+          $ref: '#/components/schemas/MandateTypeInformation2'
+    CreditorReferenceInformation2:
+      type: object
+      properties:
+        ref:
+          $ref: '#/components/schemas/Max35Text'
+        tp:
+          $ref: '#/components/schemas/CreditorReferenceType2'
+    CreditorReferenceType1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/DocumentType3Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    CreditorReferenceType2:
+      required:
+        - cdOrPrtry
+      type: object
+      properties:
+        cdOrPrtry:
+          $ref: '#/components/schemas/CreditorReferenceType1Choice'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+    DateAndDateTime2Choice:
+      type: object
+      properties:
+        dt:
+          $ref: '#/components/schemas/ISODate'
+        dtTm:
+          $ref: '#/components/schemas/ISODateTime'
+    DateAndPlaceOfBirth1:
+      required:
+        - birthDt
+        - cityOfBirth
+        - ctryOfBirth
+      type: object
+      properties:
+        birthDt:
+          $ref: '#/components/schemas/ISODate'
+        cityOfBirth:
+          $ref: '#/components/schemas/Max35Text'
+        ctryOfBirth:
+          $ref: '#/components/schemas/CountryCode'
+        prvcOfBirth:
+          $ref: '#/components/schemas/Max35Text'
+    DatePeriod2:
+      required:
+        - frDt
+        - toDt
+      type: object
+      properties:
+        frDt:
+          $ref: '#/components/schemas/ISODate'
+        toDt:
+          $ref: '#/components/schemas/ISODate'
+    DecimalNumber:
+      type: number
+    DiscountAmountAndType1:
+      required:
+        - amt
+      type: object
+      properties:
+        amt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        tp:
+          $ref: '#/components/schemas/DiscountAmountType1Choice'
+    DiscountAmountType1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalDiscountAmountType1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    DocumentAdjustment1:
+      required:
+        - amt
+      type: object
+      properties:
+        addtlInf:
+          $ref: '#/components/schemas/Max140Text'
+        amt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        cdtDbtInd:
+          $ref: '#/components/schemas/CreditDebitCode'
+        rsn:
+          $ref: '#/components/schemas/Max4Text'
+    DocumentLineIdentification1:
+      type: object
+      properties:
+        nb:
+          $ref: '#/components/schemas/Max35Text'
+        rltdDt:
+          $ref: '#/components/schemas/ISODate'
+        tp:
+          $ref: '#/components/schemas/DocumentLineType1'
+    DocumentLineInformation1:
+      required:
+        - id
+      type: object
+      properties:
+        amt:
+          $ref: '#/components/schemas/RemittanceAmount3'
+        desc:
+          $ref: '#/components/schemas/Max2048Text'
+        id:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentLineIdentification1'
+    DocumentLineType1:
+      required:
+        - cdOrPrtry
+      type: object
+      properties:
+        cdOrPrtry:
+          $ref: '#/components/schemas/DocumentLineType1Choice'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+    DocumentLineType1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalDocumentLineType1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    DocumentType3Code:
+      type: string
+      enum:
+        - RADM
+        - RPIN
+        - FXDR
+        - DISP
+        - PUOR
+        - SCOR
+    DocumentType6Code:
+      type: string
+      enum:
+        - MSIN
+        - CNFA
+        - DNFA
+        - CINV
+        - CREN
+        - DEBN
+        - HIRI
+        - SBIN
+        - CMCN
+        - SOAC
+        - DISP
+        - BOLD
+        - VCHR
+        - AROI
+        - TSUT
+        - PUOR
+    EquivalentAmount2:
+      required:
+        - amt
+        - ccyOfTrf
+      type: object
+      properties:
+        amt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        ccyOfTrf:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyCode'
+    Exact2NumericText:
+      pattern: "^([0-9]{2,2})$"
+      type: string
+    Exact4AlphaNumericText:
+      pattern: "^([0-9A-Za-z]{4,4})$"
+      type: string
+    ExternalAccountIdentification1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalCashAccountType1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalCategoryPurpose1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalClearingSystemIdentification1Code:
+      maxLength: 5
+      minLength: 1
+      type: string
+    ExternalDiscountAmountType1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalDocumentLineType1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalFinancialInstitutionIdentification1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalGarnishmentType1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalLocalInstrument1Code:
+      maxLength: 35
+      minLength: 1
+      type: string
+    ExternalMandateSetupReason1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalOrganisationIdentification1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalPersonIdentification1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalProxyAccountType1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalPurpose1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalServiceLevel1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalTaxAmountType1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    FinancialIdentificationSchemeName1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalFinancialInstitutionIdentification1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    FinancialInstitutionIdentification18:
+      type: object
+      properties:
+        bicfi:
+          $ref: '#/components/schemas/BICFIDec2014Identifier'
+        clrSysMmbId:
+          $ref: '#/components/schemas/ClearingSystemMemberIdentification2'
+        lei:
+          $ref: '#/components/schemas/LEIIdentifier'
+        nm:
+          $ref: '#/components/schemas/Max140Text'
+        othr:
+          $ref: '#/components/schemas/GenericFinancialIdentification1'
+        pstlAdr:
+          $ref: '#/components/schemas/PostalAddress24'
+    Frequency36Choice:
+      type: object
+      properties:
+        prd:
+          $ref: '#/components/schemas/FrequencyPeriod1'
+        ptInTm:
+          $ref: '#/components/schemas/FrequencyAndMoment1'
+        tp:
+          $ref: '#/components/schemas/Frequency6Code'
+    Frequency6Code:
+      type: string
+      enum:
+        - YEAR
+        - MNTH
+        - QURT
+        - MIAN
+        - WEEK
+        - DAIL
+        - ADHO
+        - INDA
+        - FRTN
+    FrequencyAndMoment1:
+      required:
+        - ptInTm
+        - tp
+      type: object
+      properties:
+        ptInTm:
+          $ref: '#/components/schemas/Exact2NumericText'
+        tp:
+          $ref: '#/components/schemas/Frequency6Code'
+    FrequencyPeriod1:
+      required:
+        - cntPerPrd
+        - tp
+      type: object
+      properties:
+        cntPerPrd:
+          $ref: '#/components/schemas/DecimalNumber'
+        tp:
+          $ref: '#/components/schemas/Frequency6Code'
+    Garnishment3:
+      required:
+        - tp
+      type: object
+      properties:
+        dt:
+          $ref: '#/components/schemas/ISODate'
+        fmlyMdclInsrncInd:
+          $ref: '#/components/schemas/TrueFalseIndicator'
+        grnshee:
+          $ref: '#/components/schemas/PartyIdentification135'
+        grnshmtAdmstr:
+          $ref: '#/components/schemas/PartyIdentification135'
+        mplyeeTermntnInd:
+          $ref: '#/components/schemas/TrueFalseIndicator'
+        refNb:
+          $ref: '#/components/schemas/Max140Text'
+        rmtdAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        tp:
+          $ref: '#/components/schemas/GarnishmentType1'
+    GarnishmentType1:
+      required:
+        - cdOrPrtry
+      type: object
+      properties:
+        cdOrPrtry:
+          $ref: '#/components/schemas/GarnishmentType1Choice'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+    GarnishmentType1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalGarnishmentType1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    GenericAccountIdentification1:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Max34Text'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+        schmeNm:
+          $ref: '#/components/schemas/AccountSchemeName1Choice'
+    GenericFinancialIdentification1:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Max35Text'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+        schmeNm:
+          $ref: '#/components/schemas/FinancialIdentificationSchemeName1Choice'
+    GenericIdentification30:
+      required:
+        - id
+        - issr
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Exact4AlphaNumericText'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+        schmeNm:
+          $ref: '#/components/schemas/Max35Text'
+    GenericOrganisationIdentification1:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Max35Text'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+        schmeNm:
+          $ref: '#/components/schemas/OrganisationIdentificationSchemeName1Choice'
+    GenericPersonIdentification1:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Max35Text'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+        schmeNm:
+          $ref: '#/components/schemas/PersonIdentificationSchemeName1Choice'
+    IBAN2007Identifier:
+      pattern: "^([A-Z]{2,2}[0-9]{2,2}[0-9A-Za-z]{1,30})$"
+      type: string
+    ISODate:
+      type: string
+      format: date
+    ISODateTime:
+      type: string
+      format: date-time
+    LEIIdentifier:
+      pattern: "^([0-9A-Z]{18,18}[0-9]{2,2})$"
+      type: string
+    LocalInstrument2Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalLocalInstrument1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    MandateClassification1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/MandateClassification1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    MandateClassification1Code:
+      type: string
+      enum:
+        - FIXE
+        - USGB
+        - VARI
+    MandateSetupReason1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalMandateSetupReason1Code'
+        prtry:
+          $ref: '#/components/schemas/Max70Text'
+    MandateTypeInformation2:
+      type: object
+      properties:
+        clssfctn:
+          $ref: '#/components/schemas/MandateClassification1Choice'
+        ctgyPurp:
+          $ref: '#/components/schemas/CategoryPurpose1Choice'
+        lclInstrm:
+          $ref: '#/components/schemas/LocalInstrument2Choice'
+        svcLvl:
+          $ref: '#/components/schemas/ServiceLevel8Choice'
+    Max10KBinary:
+      maxLength: 10240
+      minLength: 1
+      type: string
+    Max128Text:
+      maxLength: 128
+      minLength: 1
+      type: string
+    Max140Text:
+      maxLength: 140
+      minLength: 1
+      type: string
+    Max15NumericText:
+      pattern: "^([0-9]{1,15})$"
+      type: string
+    Max16Text:
+      maxLength: 16
+      minLength: 1
+      type: string
+    Max2048Text:
+      maxLength: 2048
+      minLength: 1
+      type: string
+    Max34Text:
+      maxLength: 34
+      minLength: 1
+      type: string
+    Max350Text:
+      maxLength: 350
+      minLength: 1
+      type: string
+    Max35Text:
+      maxLength: 35
+      minLength: 1
+      type: string
+    Max4Text:
+      maxLength: 4
+      minLength: 1
+      type: string
+    Max70Text:
+      maxLength: 70
+      minLength: 1
+      type: string
+    NamePrefix2Code:
+      type: string
+      enum:
+        - DOCT
+        - MADM
+        - MISS
+        - MIST
+        - MIKS
+    Number:
+      type: number
+    OrganisationIdentification29:
+      type: object
+      properties:
+        anyBIC:
+          $ref: '#/components/schemas/AnyBICDec2014Identifier'
+        lei:
+          $ref: '#/components/schemas/LEIIdentifier'
+        othr:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericOrganisationIdentification1'
+    OrganisationIdentificationSchemeName1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalOrganisationIdentification1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    OtherContact1:
+      required:
+        - chanlTp
+      type: object
+      properties:
+        chanlTp:
+          $ref: '#/components/schemas/Max4Text'
+        id:
+          $ref: '#/components/schemas/Max128Text'
+    Party38Choice:
+      type: object
+      properties:
+        orgId:
+          $ref: '#/components/schemas/OrganisationIdentification29'
+        prvtId:
+          $ref: '#/components/schemas/PersonIdentification13'
+    PartyIdentification135:
+      type: object
+      properties:
+        ctctDtls:
+          $ref: '#/components/schemas/Contact4'
+        ctryOfRes:
+          $ref: '#/components/schemas/CountryCode'
+        id:
+          $ref: '#/components/schemas/Party38Choice'
+        nm:
+          $ref: '#/components/schemas/Max140Text'
+        pstlAdr:
+          $ref: '#/components/schemas/PostalAddress24'
+    PercentageRate:
+      type: number
+    PersonIdentification13:
+      type: object
+      properties:
+        dtAndPlcOfBirth:
+          $ref: '#/components/schemas/DateAndPlaceOfBirth1'
+        othr:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericPersonIdentification1'
+    PersonIdentificationSchemeName1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalPersonIdentification1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    PhoneNumber:
+      pattern: "^(\\+[0-9]{1,3}\\-[\\(-\\)\\+\\-0-9]{1,30})$"
+      type: string
+    PostalAddress24:
+      type: object
+      properties:
+        adrLine:
+          type: array
+          items:
+            $ref: '#/components/schemas/Max70Text'
+        adrTp:
+          $ref: '#/components/schemas/AddressType3Choice'
+        bldgNb:
+          $ref: '#/components/schemas/Max16Text'
+        bldgNm:
+          $ref: '#/components/schemas/Max35Text'
+        ctry:
+          $ref: '#/components/schemas/CountryCode'
+        ctrySubDvsn:
+          $ref: '#/components/schemas/Max35Text'
+        dept:
+          $ref: '#/components/schemas/Max70Text'
+        dstrctNm:
+          $ref: '#/components/schemas/Max35Text'
+        flr:
+          $ref: '#/components/schemas/Max70Text'
+        pstBx:
+          $ref: '#/components/schemas/Max16Text'
+        pstcd:
+          $ref: '#/components/schemas/Max16Text'
+        room:
+          $ref: '#/components/schemas/Max70Text'
+        strtNm:
+          $ref: '#/components/schemas/Max70Text'
+        subDept:
+          $ref: '#/components/schemas/Max70Text'
+        twnLctnNm:
+          $ref: '#/components/schemas/Max35Text'
+        twnNm:
+          $ref: '#/components/schemas/Max35Text'
+    PreferredContactMethod1Code:
+      type: string
+      enum:
+        - LETT
+        - MAIL
+        - PHON
+        - FAXX
+        - CELL
+    Priority2Code:
+      type: string
+      enum:
+        - HIGH
+        - NORM
+    ProxyAccountIdentification1:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Max2048Text'
+        tp:
+          $ref: '#/components/schemas/ProxyAccountType1Choice'
+    ProxyAccountType1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalProxyAccountType1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    Purpose2Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalPurpose1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    ReferredDocumentInformation7:
+      type: object
+      properties:
+        lineDtls:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentLineInformation1'
+        nb:
+          $ref: '#/components/schemas/Max35Text'
+        rltdDt:
+          $ref: '#/components/schemas/ISODate'
+        tp:
+          $ref: '#/components/schemas/ReferredDocumentType4'
+    ReferredDocumentType3Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/DocumentType6Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    ReferredDocumentType4:
+      required:
+        - cdOrPrtry
+      type: object
+      properties:
+        cdOrPrtry:
+          $ref: '#/components/schemas/ReferredDocumentType3Choice'
+        issr:
+          $ref: '#/components/schemas/Max35Text'
+    RemittanceAmount2:
+      type: object
+      properties:
+        adjstmntAmtAndRsn:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentAdjustment1'
+        cdtNoteAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        dscntApldAmt:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiscountAmountAndType1'
+        duePyblAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        rmtdAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        taxAmt:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxAmountAndType1'
+    RemittanceAmount3:
+      type: object
+      properties:
+        adjstmntAmtAndRsn:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentAdjustment1'
+        cdtNoteAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        dscntApldAmt:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiscountAmountAndType1'
+        duePyblAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        rmtdAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        taxAmt:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxAmountAndType1'
+    RemittanceInformation16:
+      type: object
+      properties:
+        strd:
+          type: array
+          items:
+            $ref: '#/components/schemas/StructuredRemittanceInformation16'
+        ustrd:
+          type: array
+          items:
+            $ref: '#/components/schemas/Max140Text'
+    ServiceLevel8Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalServiceLevel1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    StructuredRemittanceInformation16:
+      type: object
+      properties:
+        addtlRmtInf:
+          type: array
+          items:
+            $ref: '#/components/schemas/Max140Text'
+        cdtrRefInf:
+          $ref: '#/components/schemas/CreditorReferenceInformation2'
+        grnshmtRmt:
+          $ref: '#/components/schemas/Garnishment3'
+        invcee:
+          $ref: '#/components/schemas/PartyIdentification135'
+        invcr:
+          $ref: '#/components/schemas/PartyIdentification135'
+        rfrdDocAmt:
+          $ref: '#/components/schemas/RemittanceAmount2'
+        rfrdDocInf:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferredDocumentInformation7'
+        taxRmt:
+          $ref: '#/components/schemas/TaxInformation7'
+    SupplementaryData2:
+      required:
+        - envlp
+      type: object
+      properties:
+        envlp:
+          $ref: '#/components/schemas/SupplementaryDataEnvelope2'
+        plcAndNm:
+          $ref: '#/components/schemas/Max350Text'
+    TaxAmount2:
+      type: object
+      properties:
+        dtls:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxRecordDetails2'
+        rate:
+          $ref: '#/components/schemas/PercentageRate'
+        taxblBaseAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        ttlAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+    TaxAmountAndType1:
+      required:
+        - amt
+      type: object
+      properties:
+        amt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        tp:
+          $ref: '#/components/schemas/TaxAmountType1Choice'
+    TaxAmountType1Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalTaxAmountType1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    TaxAuthorisation1:
+      type: object
+      properties:
+        nm:
+          $ref: '#/components/schemas/Max140Text'
+        titl:
+          $ref: '#/components/schemas/Max35Text'
+    TaxInformation7:
+      type: object
+      properties:
+        admstnZone:
+          $ref: '#/components/schemas/Max35Text'
+        cdtr:
+          $ref: '#/components/schemas/TaxParty1'
+        dbtr:
+          $ref: '#/components/schemas/TaxParty2'
+        dt:
+          $ref: '#/components/schemas/ISODate'
+        mtd:
+          $ref: '#/components/schemas/Max35Text'
+        rcrd:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxRecord2'
+        refNb:
+          $ref: '#/components/schemas/Max140Text'
+        seqNb:
+          $ref: '#/components/schemas/Number'
+        ttlTaxAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        ttlTaxblBaseAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        ultmtDbtr:
+          $ref: '#/components/schemas/TaxParty2'
+    TaxParty1:
+      type: object
+      properties:
+        regnId:
+          $ref: '#/components/schemas/Max35Text'
+        taxId:
+          $ref: '#/components/schemas/Max35Text'
+        taxTp:
+          $ref: '#/components/schemas/Max35Text'
+    TaxParty2:
+      type: object
+      properties:
+        authstn:
+          $ref: '#/components/schemas/TaxAuthorisation1'
+        regnId:
+          $ref: '#/components/schemas/Max35Text'
+        taxId:
+          $ref: '#/components/schemas/Max35Text'
+        taxTp:
+          $ref: '#/components/schemas/Max35Text'
+    TaxPeriod2:
+      type: object
+      properties:
+        frToDt:
+          $ref: '#/components/schemas/DatePeriod2'
+        tp:
+          $ref: '#/components/schemas/TaxRecordPeriod1Code'
+        yr:
+          $ref: '#/components/schemas/ISODate'
+    TaxRecord2:
+      type: object
+      properties:
+        addtlInf:
+          $ref: '#/components/schemas/Max140Text'
+        certId:
+          $ref: '#/components/schemas/Max35Text'
+        ctgy:
+          $ref: '#/components/schemas/Max35Text'
+        ctgyDtls:
+          $ref: '#/components/schemas/Max35Text'
+        dbtrSts:
+          $ref: '#/components/schemas/Max35Text'
+        frmsCd:
+          $ref: '#/components/schemas/Max35Text'
+        prd:
+          $ref: '#/components/schemas/TaxPeriod2'
+        taxAmt:
+          $ref: '#/components/schemas/TaxAmount2'
+        tp:
+          $ref: '#/components/schemas/Max35Text'
+    TaxRecordDetails2:
+      required:
+        - amt
+      type: object
+      properties:
+        amt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        prd:
+          $ref: '#/components/schemas/TaxPeriod2'
+    TaxRecordPeriod1Code:
+      type: string
+      enum:
+        - MM01
+        - MM02
+        - MM03
+        - MM04
+        - MM05
+        - MM06
+        - MM07
+        - MM08
+        - MM09
+        - MM10
+        - MM11
+        - MM12
+        - QTR1
+        - QTR2
+        - QTR3
+        - QTR4
+        - HLF1
+        - HLF2
+    TrueFalseIndicator:
+      type: boolean
+    UUIDv4Identifier:
+      pattern: "^([0-9a-f]{8,8}\\-[0-9a-f]{4,4}\\-4[0-9a-f]{3,3}\\-[8-9a-b][0-9a-f]{3,3}\\\
+        -[0-9a-f]{12,12})$"
+      type: string
+    ActiveCurrencyAndAmount:
+      required:
+        - ccy
+        - value
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/ActiveCurrencyAndAmount_SimpleType'
+        ccy:
+          $ref: '#/components/schemas/ActiveCurrencyCode'
+    ActiveCurrencyAndAmount_SimpleType:
+      minimum: 0
+      type: number
+    ActiveCurrencyCode:
+      pattern: "^([A-Z]{3,3})$"
+      type: string
+    AmendmentInformationDetails13:
+      type: object
+      properties:
+        orgnlCdtrAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        orgnlCdtrAgtAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        orgnlCdtrSchmeId:
+          $ref: '#/components/schemas/PartyIdentification135'
+        orgnlDbtr:
+          $ref: '#/components/schemas/PartyIdentification135'
+        orgnlDbtrAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        orgnlDbtrAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        orgnlDbtrAgtAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        orgnlFnlColltnDt:
+          $ref: '#/components/schemas/ISODate'
+        orgnlFrqcy:
+          $ref: '#/components/schemas/Frequency36Choice'
+        orgnlMndtId:
+          $ref: '#/components/schemas/Max35Text'
+        orgnlRsn:
+          $ref: '#/components/schemas/MandateSetupReason1Choice'
+        orgnlTrckgDays:
+          $ref: '#/components/schemas/Exact2NumericText'
+    Charges7:
+      required:
+        - agt
+        - amt
+      type: object
+      properties:
+        agt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        amt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+    ClearingChannel2Code:
+      type: string
+      enum:
+        - RTGS
+        - RTNS
+        - MPNS
+        - BOOK
+    ClearingSystemIdentification3Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalCashClearingSystem1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    CurrencyExchange13:
+      required:
+        - srcCcy
+        - trgtCcy
+        - xchgRate
+      type: object
+      properties:
+        srcCcy:
+          $ref: '#/components/schemas/ActiveCurrencyCode'
+        trgtCcy:
+          $ref: '#/components/schemas/ActiveCurrencyCode'
+        unitCcy:
+          $ref: '#/components/schemas/ActiveCurrencyCode'
+        xchgRate:
+          $ref: '#/components/schemas/BaseOneRate'
+    ExternalCashClearingSystem1Code:
+      maxLength: 3
+      minLength: 1
+      type: string
+    ExternalPaymentGroupStatus1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalPaymentTransactionStatus1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    ExternalStatusReason1Code:
+      maxLength: 4
+      minLength: 1
+      type: string
+    GroupHeader86:
+      required:
+        - creDtTm
+        - msgId
+      type: object
+      properties:
+        cdtrAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        creDtTm:
+          $ref: '#/components/schemas/ISODateTime'
+        dbtrAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        fwdgAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        initgPty:
+          $ref: '#/components/schemas/PartyIdentification135'
+        msgId:
+          $ref: '#/components/schemas/Max35Text'
+    MandateRelatedData1Choice:
+      type: object
+      properties:
+        cdtTrfMndt:
+          $ref: '#/components/schemas/CreditTransferMandateData1'
+        drctDbtMndt:
+          $ref: '#/components/schemas/MandateRelatedInformation14'
+    MandateRelatedInformation14:
+      type: object
+      properties:
+        amdmntInd:
+          $ref: '#/components/schemas/TrueFalseIndicator'
+        amdmntInfDtls:
+          $ref: '#/components/schemas/AmendmentInformationDetails13'
+        dtOfSgntr:
+          $ref: '#/components/schemas/ISODate'
+        elctrncSgntr:
+          $ref: '#/components/schemas/Max1025Text'
+        fnlColltnDt:
+          $ref: '#/components/schemas/ISODate'
+        frqcy:
+          $ref: '#/components/schemas/Frequency36Choice'
+        frstColltnDt:
+          $ref: '#/components/schemas/ISODate'
+        mndtId:
+          $ref: '#/components/schemas/Max35Text'
+        rsn:
+          $ref: '#/components/schemas/MandateSetupReason1Choice'
+        trckgDays:
+          $ref: '#/components/schemas/Exact2NumericText'
+    Max1025Text:
+      maxLength: 1025
+      minLength: 1
+      type: string
+    Max105Text:
+      maxLength: 105
+      minLength: 1
+      type: string
+    NumberOfTransactionsPerStatus5:
+      required:
+        - dtldNbOfTxs
+        - dtldSts
+      type: object
+      properties:
+        dtldCtrlSum:
+          $ref: '#/components/schemas/DecimalNumber'
+        dtldNbOfTxs:
+          $ref: '#/components/schemas/Max15NumericText'
+        dtldSts:
+          $ref: '#/components/schemas/ExternalPaymentTransactionStatus1Code'
+    OriginalGroupHeader17:
+      required:
+        - orgnlMsgId
+        - orgnlMsgNmId
+      type: object
+      properties:
+        grpSts:
+          $ref: '#/components/schemas/ExternalPaymentGroupStatus1Code'
+        nbOfTxsPerSts:
+          type: array
+          items:
+            $ref: '#/components/schemas/NumberOfTransactionsPerStatus5'
+        orgnlCreDtTm:
+          $ref: '#/components/schemas/ISODateTime'
+        orgnlCtrlSum:
+          $ref: '#/components/schemas/DecimalNumber'
+        orgnlMsgId:
+          $ref: '#/components/schemas/Max35Text'
+        orgnlMsgNmId:
+          $ref: '#/components/schemas/Max35Text'
+        orgnlNbOfTxs:
+          $ref: '#/components/schemas/Max15NumericText'
+        stsRsnInf:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusReasonInformation12'
+    OriginalPaymentInstruction38:
+      required:
+        - orgnlPmtInfId
+      type: object
+      properties:
+        nbOfTxsPerSts:
+          type: array
+          items:
+            $ref: '#/components/schemas/NumberOfTransactionsPerStatus5'
+        orgnlCtrlSum:
+          $ref: '#/components/schemas/DecimalNumber'
+        orgnlNbOfTxs:
+          $ref: '#/components/schemas/Max15NumericText'
+        orgnlPmtInfId:
+          $ref: '#/components/schemas/Max35Text'
+        pmtInfSts:
+          $ref: '#/components/schemas/ExternalPaymentGroupStatus1Code'
+        stsRsnInf:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusReasonInformation12'
+        txInfAndSts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentTransaction126'
+    OriginalTransactionReference31:
+      type: object
+      properties:
+        amt:
+          $ref: '#/components/schemas/AmountType4Choice'
+        cdtr:
+          $ref: '#/components/schemas/Party40Choice'
+        cdtrAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        cdtrAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        cdtrAgtAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        cdtrSchmeId:
+          $ref: '#/components/schemas/PartyIdentification135'
+        dbtr:
+          $ref: '#/components/schemas/Party40Choice'
+        dbtrAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        dbtrAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        dbtrAgtAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        intrBkSttlmAmt:
+          $ref: '#/components/schemas/ActiveOrHistoricCurrencyAndAmount'
+        intrBkSttlmDt:
+          $ref: '#/components/schemas/ISODate'
+        mndtRltdInf:
+          $ref: '#/components/schemas/MandateRelatedData1Choice'
+        pmtMtd:
+          $ref: '#/components/schemas/PaymentMethod4Code'
+        pmtTpInf:
+          $ref: '#/components/schemas/PaymentTypeInformation27'
+        purp:
+          $ref: '#/components/schemas/Purpose2Choice'
+        reqdColltnDt:
+          $ref: '#/components/schemas/ISODate'
+        reqdExctnDt:
+          $ref: '#/components/schemas/DateAndDateTime2Choice'
+        rmtInf:
+          $ref: '#/components/schemas/RemittanceInformation16'
+        sttlmInf:
+          $ref: '#/components/schemas/SettlementInstruction7'
+        ultmtCdtr:
+          $ref: '#/components/schemas/Party40Choice'
+        ultmtDbtr:
+          $ref: '#/components/schemas/Party40Choice'
+    Party40Choice:
+      type: object
+      properties:
+        agt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        pty:
+          $ref: '#/components/schemas/PartyIdentification135'
+    PaymentMethod4Code:
+      type: string
+      enum:
+        - CHK
+        - TRF
+        - DD
+        - TRA
+    PaymentTransaction126:
+      type: object
+      properties:
+        accptncDtTm:
+          $ref: '#/components/schemas/ISODateTime'
+        acctSvcrRef:
+          $ref: '#/components/schemas/Max35Text'
+        chrgsInf:
+          type: array
+          items:
+            $ref: '#/components/schemas/Charges7'
+        clrSysRef:
+          $ref: '#/components/schemas/Max35Text'
+        orgnlEndToEndId:
+          $ref: '#/components/schemas/Max35Text'
+        orgnlInstrId:
+          $ref: '#/components/schemas/Max35Text'
+        orgnlTxRef:
+          $ref: '#/components/schemas/OriginalTransactionReference31'
+        orgnlUETR:
+          $ref: '#/components/schemas/UUIDv4Identifier'
+        splmtryData:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplementaryData2'
+        stsId:
+          $ref: '#/components/schemas/Max35Text'
+        stsRsnInf:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusReasonInformation12'
+        trckrData:
+          $ref: '#/components/schemas/TrackerData1'
+        txSts:
+          $ref: '#/components/schemas/ExternalPaymentTransactionStatus1Code'
+    PaymentTypeInformation27:
+      type: object
+      properties:
+        clrChanl:
+          $ref: '#/components/schemas/ClearingChannel2Code'
+        ctgyPurp:
+          $ref: '#/components/schemas/CategoryPurpose1Choice'
+        instrPrty:
+          $ref: '#/components/schemas/Priority2Code'
+        lclInstrm:
+          $ref: '#/components/schemas/LocalInstrument2Choice'
+        seqTp:
+          $ref: '#/components/schemas/SequenceType3Code'
+        svcLvl:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceLevel8Choice'
+    SequenceType3Code:
+      type: string
+      enum:
+        - FRST
+        - RCUR
+        - FNAL
+        - OOFF
+        - RPRE
+    SettlementInstruction7:
+      required:
+        - sttlmMtd
+      type: object
+      properties:
+        clrSys:
+          $ref: '#/components/schemas/ClearingSystemIdentification3Choice'
+        instdRmbrsmntAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        instdRmbrsmntAgtAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        instgRmbrsmntAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        instgRmbrsmntAgtAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        sttlmAcct:
+          $ref: '#/components/schemas/CashAccount38'
+        sttlmMtd:
+          $ref: '#/components/schemas/SettlementMethod1Code'
+        thrdRmbrsmntAgt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        thrdRmbrsmntAgtAcct:
+          $ref: '#/components/schemas/CashAccount38'
+    SettlementMethod1Code:
+      type: string
+      enum:
+        - INDA
+        - INGA
+        - COVE
+        - CLRG
+    StatusReason6Choice:
+      type: object
+      properties:
+        cd:
+          $ref: '#/components/schemas/ExternalStatusReason1Code'
+        prtry:
+          $ref: '#/components/schemas/Max35Text'
+    StatusReasonInformation12:
+      type: object
+      properties:
+        addtlInf:
+          type: array
+          items:
+            $ref: '#/components/schemas/Max105Text'
+        orgtr:
+          $ref: '#/components/schemas/PartyIdentification135'
+        rsn:
+          $ref: '#/components/schemas/StatusReason6Choice'
+    TrackerData1:
+      required:
+        - confdAmt
+        - confdDt
+        - trckrRcrd
+      type: object
+      properties:
+        confdAmt:
+          $ref: '#/components/schemas/ActiveCurrencyAndAmount'
+        confdDt:
+          $ref: '#/components/schemas/DateAndDateTime2Choice'
+        trckrRcrd:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackerRecord1'
+    TrackerRecord1:
+      required:
+        - agt
+      type: object
+      properties:
+        agt:
+          $ref: '#/components/schemas/BranchAndFinancialInstitutionIdentification6'
+        chrgBr:
+          $ref: '#/components/schemas/ChargeBearerType1Code'
+        chrgsAmt:
+          $ref: '#/components/schemas/ActiveCurrencyAndAmount'
+        xchgRateData:
+          $ref: '#/components/schemas/CurrencyExchange13'
+    SupplementaryDataEnvelope2:
+      type: object

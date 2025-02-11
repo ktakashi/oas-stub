@@ -18,6 +18,7 @@ bouncy-castle = "1.80"
 commons-codec = "1.18.0"
 snakeyaml = "2.3"
 jersey = "3.1.10"
+gatling = "3.13.3"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -80,3 +81,5 @@ junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
 cucumber-bom = { group = "io.cucumber", name = "cucumber-bom", version = "7.21.0" }
 flapdoodle-embed-mongo = { group = "de.flapdoodle.embed", name = "de.flapdoodle.embed.mongo", version.ref = "flapdoodle" }
 rest-assured = { group = "io.rest-assured", name = "rest-assured", version = "5.5.0" }
+
+gatling-charts-highcharts = { group = "io.gatling.highcharts", name = "gatling-charts-highcharts", version.ref = "gatling" }

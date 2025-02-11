@@ -8,6 +8,7 @@ import kotlin.random.Random
 class RegexpDataGenerator(private val parser: RegexpParser,
                           private val random: Random) {
     constructor(): this(RegexpParser(), Random.Default)
+
     fun generate(pattern: String) = generate(parser.parse(pattern))
 
     private fun generate(pattern: RegexpNode): String = StringWriter().use {
