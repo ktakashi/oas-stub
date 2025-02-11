@@ -14,7 +14,9 @@ class MongodbPlugin: EventListener {
         lateinit var transitions: TransitionWalker.ReachedState<RunningMongodProcess>
 
         fun setup() {
-            transitions = Mongod.instance().start(Version.Main.V5_0)
+            // see https://github.com/flapdoodle-oss/de.flapdoodle.embed.mongo/issues/515
+            // libssl1 is not supported on Ubuntu 22+, and GitHub Actions uses Ubuntu 24+
+            transitions = Mongod.instance().start(Version.Main.V7_0)
             val serverAddress = transitions.current().serverAddress
             System.setProperty("mongodb.host", serverAddress.host)
             System.setProperty("mongodb.port", serverAddress.port.toString())
