@@ -11,7 +11,7 @@ class OasStubStaticConfigParserTest {
     @Test
     fun `should parse static config`() {
         val definitions = OasStubStaticConfigParser.parse(URI.create("classpath:/static-config.yaml"))
-        assertEquals(2, definitions.size)
+        assertEquals(3, definitions.size)
         assertTrue(definitions.keys.contains("petstore-static"))
         assertNotNull(definitions["petstore-static"])
         assertNotNull(definitions["petstore-static"]?.configurations)
