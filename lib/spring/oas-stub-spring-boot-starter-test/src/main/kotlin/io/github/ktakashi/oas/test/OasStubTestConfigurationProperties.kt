@@ -343,6 +343,49 @@ class OasStubTestResources {
          */
         val response: String? = null
     ) {
+        companion object {
+            @JvmStatic
+            fun builder(): Builder = Builder()
+        }
+        class Builder internal constructor(private var status: Int? = null,
+                                           private var headers: MutableMap<String, List<String>>? = null,
+                                           private var response: String? = null) {
+            /**
+             * Sets [status] for [DefaultResponseModel]
+             */
+            fun status(status: Int?) = apply { this.status = status }
+
+            /**
+             * Sets [headers] for [DefaultResponseModel]
+             */
+            fun headers(headers: MutableMap<String, List<String>>?) = apply { this.headers = headers }
+
+            /**
+             * Adds Header [name] of [value] to [headers]
+             */
+            fun header(name: String, value: List<String>?) = apply {
+                if (value == null) {
+                    headers?.remove(name)
+                } else {
+                    if (headers == null) {
+                        headers = mutableMapOf(name to value)
+                    } else {
+                        headers?.put(name, value)
+                    }
+                }
+            }
+
+            /**
+             * Adds [response] for [DefaultResponseModel]
+             */
+            fun response(response: String?) = apply { this.response = response }
+
+            /**
+             * Builds a [DefaultResponseModel] instance
+             */
+            fun build() = DefaultResponseModel(status, headers, response)
+        }
+
         fun toResponseContext(original: ResponseContext): ResponseContext {
             val header = sortedMapOf<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
             header.putAll(original.headers)

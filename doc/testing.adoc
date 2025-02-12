@@ -26,7 +26,7 @@ this:
 
 [source, java]
 ----
-package ors.example;
+package org.example;
 // imports...
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureOasStubServer(port = 0)
@@ -128,3 +128,63 @@ TIP: `/__admin` can be configured with `oas.stub.test.server.admin-prefix`.
 For the working example, please refer test directory of the
 https://github.com/ktakashi/oas-stub/tree/main/examples/petstore-broker[petstore-broker]
 example.
+
+==== ApiConfiguration.Builder
+
+A stub API can be configured on the fly during the testing by using
+`OasStubTestService#createTestApiContext` and/or
+`OasStubTestService#getTestApiContext`. Both methods return
+`OasStubTestApiContext` object, which allows users to configure the
+stub API.
+
+[source, java]
+----
+// other imports
+import io.github.ktakashi.oas.model.ApiConfiguration;
+import io.github.ktakashi.oas.model.ApiData;
+import io.github.ktakashi.oas.model.PluginDefinition;
+import io.github.ktakashi.oas.test.OasStubTestResources;
+import io.github.ktakashi.oas.test.OasStubTestService;
+
+public class MyExcellentCoverageTest {
+    @Autowired
+    private OasStubTestService oasStubTestService;
+
+    @Before
+    void setup() {
+        var apiContext = oasStubTestService.createTestApiContext("api1", ClassPathResource("/schema/api-spec.yaml"));
+        var config = ApiConfiguration.builder()
+             .plugin(PluginDefinition.groovyPlugin(OasStubTestResources.DEFAULT_PLUGIN_SCRIPT))
+             .data(ApiData.fromMap(Map.of("/api/path", OasStubTestResources.DefaultResponseModel.builder().status(500).build())))
+             .build();
+        apiContext.updateApi("/api/path", config).save();
+    }
+}
+----
+
+==== Kotlin DSL
+
+If you are using Kotlin, then using DSL may provide more intuitive configuration construction.
+
+[source, kotlin]
+----
+import java.util.UUID
+
+oasStubTestService.context("api") {
+    header {
+        request {
+            "X-Request-ID" to UUID.randomUUID().toString()
+        }
+    }
+    configuration("/api/path") {
+        // Apply only GET method of this API
+        get {
+            header {
+                request {
+                    "X-Request-ID" to "ID-1" // override the config
+                }
+            }
+        }
+    }
+}
+----

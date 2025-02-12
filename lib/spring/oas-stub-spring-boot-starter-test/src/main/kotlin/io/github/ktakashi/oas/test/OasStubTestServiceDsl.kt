@@ -31,6 +31,8 @@ import org.springframework.core.io.Resource
  *     headers {
  *         request {
  *             header("Extra-Request-Header", "value0", "value1")
+ *             // or
+ *             "X-Request-ID" to listOf("ID-1")
  *         }
  *         response {
  *             header("Extra-Response-Header", "value0", "value1")
@@ -48,7 +50,15 @@ import org.springframework.core.io.Resource
  *     configuration("/v1/pets") {
  *         plugin(ClasspathResource("classpath:/plugins/PostPetPlugin.groovy"))
  *         data {
-  *             entry("/v1/pets/2", mapOf("key" to "value"))
+ *             entry("/v1/pets/2", mapOf("key" to "value"))
+ *         }
+ *         // Per HTTP method configuration
+ *         get {
+ *             data {
+ *                 entry("/v1/pets/3", 404) {
+ *                     header("Request-ID", "1")
+ *                 }
+ *             }
  *         }
  *     }
  * }
@@ -375,6 +385,10 @@ class OasStubApiHeaderDsl internal  constructor(private val init: OasStubApiHead
 
     infix fun String.to(value: List<String>) {
         header(this, value)
+    }
+
+    infix fun String.to(value: String) {
+        header(this, listOf(value))
     }
 
     internal fun save(): SortedMap<String, List<String>> {

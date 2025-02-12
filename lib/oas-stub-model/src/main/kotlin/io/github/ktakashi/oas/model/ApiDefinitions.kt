@@ -253,6 +253,16 @@ class ApiData
  * [delegate] is the API data
  */
 @JvmOverloads constructor(private val delegate: MutableMap<String, Any> = mutableMapOf()): MutableMap<String, Any> by delegate, MergeableApiConfig<ApiData> {
+    companion object {
+        /**
+         * Creates ApiData from the [data]
+         *
+         * The [data] will be copied
+         */
+        @JvmStatic
+        fun fromMap(data: Map<String, Any>): ApiData = ApiData(data.toMutableMap())
+    }
+
     override fun merge(other: ApiData): ApiData = ApiData((other + this).toMutableMap())
 
     /**

@@ -20,6 +20,7 @@ import io.restassured.RestAssured.given
 import io.restassured.filter.log.RequestLoggingFilter
 import io.restassured.filter.log.ResponseLoggingFilter
 import java.net.URI
+import java.util.UUID
 import kotlin.time.DurationUnit
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -79,6 +80,7 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
             headers {
                 request {
                     "Stub-Request-Header" to listOf("ok")
+                    "X-Request-Id" to UUID.randomUUID().toString()
                 }
                 response {
                     header("Stub-Response-Header", "ok")

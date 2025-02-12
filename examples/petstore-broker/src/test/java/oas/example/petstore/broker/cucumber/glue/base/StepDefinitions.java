@@ -7,7 +7,6 @@ import io.cucumber.java.en.When;
 import io.github.ktakashi.oas.model.ApiConfiguration;
 import io.github.ktakashi.oas.model.ApiData;
 import io.github.ktakashi.oas.model.PluginDefinition;
-import io.github.ktakashi.oas.model.PluginType;
 import io.github.ktakashi.oas.test.OasStubTestResources;
 import io.github.ktakashi.oas.test.OasStubTestService;
 import io.restassured.RestAssured;
@@ -38,8 +37,10 @@ public class StepDefinitions {
 
     @Given("this pet is not found {long}")
     public void thisPetIsNotFoundId(long id) {
-        var config = new ApiConfiguration().updatePlugin(new PluginDefinition(PluginType.GROOVY, OasStubTestResources.DEFAULT_PLUGIN_SCRIPT))
-                .updateData(new ApiData(Map.of("/v2/pets/" + id, new OasStubTestResources.DefaultResponseModel(404))));
+        var config = ApiConfiguration.builder()
+                .plugin(PluginDefinition.groovyPlugin(OasStubTestResources.DEFAULT_PLUGIN_SCRIPT))
+                .data(ApiData.fromMap(Map.of("/v2/pets/" + id, OasStubTestResources.DefaultResponseModel.builder().status(404).build())))
+                .build();
         oasStubTestService.getTestApiContext("petstore")
                 .updateApi("/v2/pets/" + id, config)
                 .save();
