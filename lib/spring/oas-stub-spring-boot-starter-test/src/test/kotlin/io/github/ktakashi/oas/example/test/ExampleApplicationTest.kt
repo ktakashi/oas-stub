@@ -24,6 +24,7 @@ import java.util.UUID
 import kotlin.time.DurationUnit
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertIterableEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -170,8 +171,8 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
         val context = oasStubTestService.getTestApiContext("dsl-test")
         val definitions = context.apiDefinitions
         assertNotNull(definitions.headers)
-        assertEquals(setOf("Stub-Request-Header"), definitions.headers?.request?.keys)
-        assertEquals(setOf("Stub-Response-Header", "Stub-Response-Header2"), definitions.headers?.response?.keys)
+        assertIterableEquals(setOf("Stub-Request-Header", "X-Request-Id"), definitions.headers?.request?.keys)
+        assertIterableEquals(setOf("Stub-Response-Header", "Stub-Response-Header2"), definitions.headers?.response?.keys)
         assertNotNull(definitions.options)
         assertEquals(ApiOptions(shouldValidate = true,
             latency = ApiLatency(1, DurationUnit.NANOSECONDS),
@@ -184,8 +185,8 @@ class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_
         val configuration = definitions.configurations!!["/api0"]
         assertNotNull(configuration)
         assertNotNull(configuration?.headers)
-        assertEquals(setOf("API0-Request-Header"), configuration?.headers?.request?.keys)
-        assertEquals(setOf("API0-Response-Header"), configuration?.headers?.response?.keys)
+        assertIterableEquals(setOf("API0-Request-Header"), configuration?.headers?.request?.keys)
+        assertIterableEquals(setOf("API0-Response-Header"), configuration?.headers?.response?.keys)
         assertEquals(ApiFixedDelay(1 ), configuration?.delay)
         assertEquals(ApiOptions(failure = ApiHttpError(500)), configuration?.options)
         assertEquals(OasStubTestPlugin().toPluginDefinition(), configuration?.plugin)
