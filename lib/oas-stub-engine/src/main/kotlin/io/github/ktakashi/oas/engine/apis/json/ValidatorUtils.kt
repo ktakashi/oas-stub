@@ -19,9 +19,9 @@ internal fun checkRequired(value: JsonNode, property: String, schema: Schema<Any
     ?: success
 
 internal fun checkProperties(value: JsonNode, property: String, schema: Schema<Any>, checkSchema: (JsonNode, String, Schema<*>) -> ApiValidationResult): ApiValidationResult {
-    val props = schema.properties
+    val props: Map<String, Schema<Any>> = schema.properties
     val additionalProperties = schema.additionalProperties
-    return value.fields().asSequence()
+    return value.properties().asSequence()
         .map { e -> checkProperty(e, property, props, additionalProperties, checkSchema) }
         .fold(success) { a, b -> a.merge(b) }
 }

@@ -15,7 +15,7 @@ object OasStubStaticConfigParser {
     fun parse(path: URI): Map<String, ApiDefinitions> {
         val node = path.load()
         require (node is ObjectNode) { "Must be a YAML map or JSON object: $path" }
-        return node.fields().asSequence().map { (context, path) ->
+        return node.properties().asSequence().map { (context, path) ->
             val uri = URI.create(path.asText())
             context to objectMapper.treeToValue(uri.load(), ApiDefinitions::class.java)
         }.map { (context, definition) ->
