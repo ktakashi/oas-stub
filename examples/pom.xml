@@ -24,8 +24,8 @@
         <maven.compiler.source>${maven.compiler.release}</maven.compiler.source>
         <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
         <cucumber.version>7.13.0</cucumber.version>
-        <oas-stub.version>2.2.1-SNAPSHOT</oas-stub.version>
-        <!-- SpringBoot provide old version -->
+        <oas-stub.version>2.2.2-SNAPSHOT</oas-stub.version>
+        <!-- SpringBoot provides old version -->
         <kotlin.version>2.2.0</kotlin.version>
     </properties>
 
