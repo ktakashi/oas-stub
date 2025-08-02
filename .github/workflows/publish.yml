@@ -57,3 +57,11 @@ jobs:
         run: ./gradlew build -x test
       - name: Publish
         run: ./gradlew publish -Psigning.password=${{ secrets.password }} -Pdeployment.username=${{secrets.mavenUsername }} -Pdeployment.password=${{ secrets.mavenPassword }}
+      - name: OSSRH Staging API call
+        run: |
+          bearer=$(echo "${{ secrets.mavenUsername }}:${{ secrets.mavenPassword }}" | base64)
+          version=$(cat gradle.properties | grep 'version' | sed -E 's/version=(.+)/\1/')
+          curl -X 'POST' \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.github.ktakashi?publishing_type=user_managed&deployment_name=oas-stub-$version" \
+            -H 'accept: */*' \
+            -H "Authorization: Bearer $bearer"
