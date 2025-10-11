@@ -1,3 +1,5 @@
+rootProject.name = "oas-stub-build-src"
+
 pluginManagement {
     repositories {
         mavenCentral()

@@ -17,7 +17,8 @@ tasks.asciidoctor {
             "delay.adoc",
             "storages.adoc",
             "static.adoc",
-            "testing.adoc"
+            "testing.adoc",
+            "forwarding.adoc"
             )
     })
     setOutputDir(file("build/doc"))

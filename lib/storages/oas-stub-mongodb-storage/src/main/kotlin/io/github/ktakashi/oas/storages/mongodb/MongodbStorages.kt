@@ -64,4 +64,4 @@ class MongodbPersistentStorage(objectMapper: ObjectMapper, mongoClient: MongoCli
 }
 
 data class MongoEntry
-@BsonCreator constructor(@BsonProperty("name") val name: String, @BsonProperty("value") val value: String)
+@BsonCreator constructor(@param:BsonProperty("name") val name: String, @param:BsonProperty("value") val value: String)

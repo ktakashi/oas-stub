@@ -17,8 +17,10 @@ import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.jetbrains.dokka.gradle.DokkaExtension
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -47,29 +49,51 @@ internal fun configureJavaConventions(project: Project) {
 
 internal fun configureKotlinConventions(project: Project) {
     project.plugins.withId("org.jetbrains.kotlin.jvm") { _ ->
+        project.plugins.apply("org.jetbrains.dokka")
+        project.plugins.apply("org.jetbrains.dokka-javadoc")
         project.plugins.apply(DokkaPlugin::class.java)
-        project.tasks.register("dokkaJavadocJar", Jar::class.java) { jar ->
-            jar.archiveClassifier.set("javadoc")
-            val dokkaJavadoc = project.tasks.named("dokkaJavadoc")
-            jar.dependsOn(dokkaJavadoc)
-            jar.from(dokkaJavadoc.flatMap { task -> (task as DokkaTask).outputDirectory })
-        }
-        project.plugins.withId("org.jetbrains.kotlin.kapt") {
-            project.tasks.withType(KaptWithoutKotlincTask::class.java) { kaptKotlin ->
-                val dokkaJavadoc = project.tasks.named("dokkaJavadoc")
-                dokkaJavadoc.configure { it.dependsOn(kaptKotlin) }
+        project.extensions.configure(DokkaExtension::class.java) { dokka ->
+            dokka.moduleVersion.set(project.name)
+            dokka.dokkaPublications.named("javadoc") { publication ->
+                publication.suppressInheritedMembers.set(true)
+                publication.failOnWarning.set(true)
+            }
+            dokka.dokkaSourceSets.named("main") { dss ->
+                dss.sourceLink {
+                    it.localDirectory.set(project.file("src/main/kotlin"))
+                    it.remoteUrl.set(URI.create("https://github.com/ktaakashi/oas-stub"))
+                }
+            }
+
+            val dokkaTask = project.tasks.named("dokkaGeneratePublicationJavadoc")
+            fun setupJarTask(jar: Jar) {
+                jar.archiveClassifier.set("javadoc")
+                jar.dependsOn(dokkaTask)
+                jar.from(dokkaTask.flatMap { (it as DokkaGeneratePublicationTask).outputDirectory })
+            }
+            project.tasks.findByName("dokkaJavadocJar")?.let {
+                setupJarTask(it as Jar)
+            } ?: project.tasks.register("dokkaJavadocJar", Jar::class.java) { jar ->
+                setupJarTask(jar)
+            }
+            project.plugins.withId("org.jetbrains.kotlin.kapt") {
+                project.tasks.withType(KaptWithoutKotlincTask::class.java) { kaptKotlin ->
+                    project.tasks.withType(DokkaTask::class.java) { dokkaTask ->
+                        dokkaTask.dependsOn(kaptKotlin)
+                    }
+                }
             }
         }
 
         project.tasks.withType(KotlinCompilationTask::class.java) { task ->
             (task.compilerOptions as KotlinJvmCompilerOptions).apply {
                 freeCompilerArgs.addAll(listOf("-Xjvm-default=all", "-Xjsr305=strict"))
-                apiVersion.set(KotlinVersion.KOTLIN_2_1)
-                languageVersion.set(KotlinVersion.KOTLIN_2_1)
-                jvmTarget.set(JvmTarget.JVM_17)
+                apiVersion.set(KotlinVersion.KOTLIN_2_2)
+                languageVersion.set(KotlinVersion.KOTLIN_2_2)
+                jvmTarget.set(JvmTarget.JVM_21)
             }
         }
-        project.extensions.getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(17)
+        project.extensions.getByType(KotlinJvmProjectExtension::class.java).jvmToolchain(21)
     }
 }
 

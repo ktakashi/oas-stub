@@ -21,8 +21,8 @@ import org.springframework.web.util.UriTemplate
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureOasStubServer(port = 0)
-class MetricsTest(@OasStubServerPort private val port: Int,
-                  @Autowired private val oasStubTestService: OasStubTestService) {
+class MetricsTest(@param:OasStubServerPort private val port: Int,
+                  @param:Autowired private val oasStubTestService: OasStubTestService) {
     @BeforeEach
     fun init() {
         oasStubTestService.context("petstore") {

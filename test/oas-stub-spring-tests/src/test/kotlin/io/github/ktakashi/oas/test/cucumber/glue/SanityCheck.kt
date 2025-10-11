@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Value
 
 class SanityCheck(private val sessionStorage: SessionStorage,
                   private val persistentStorage: PersistentStorage,
-                  @Value("\${${OAS_STUB_STORAGE_TYPE_PERSISTENT}:inmemory}") private val persistentStorageType: String,
-                  @Value("\${${OAS_STUB_STORAGE_TYPE_SESSION}:inmemory}") private val sessionStorageType: String) {
+                  @param:Value("\${${OAS_STUB_STORAGE_TYPE_PERSISTENT}:inmemory}") private val persistentStorageType: String,
+                  @param:Value("\${${OAS_STUB_STORAGE_TYPE_SESSION}:inmemory}") private val sessionStorageType: String) {
 
     @Then("I have proper storages")
     fun `I have proper storages`() {

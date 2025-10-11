@@ -6,7 +6,7 @@ import java.time.OffsetDateTime
 
 data class ApiMetric(
     val requestTimestamp: OffsetDateTime,
-    @JsonFormat(shape = JsonFormat.Shape.STRING) val executionTime: Duration,
+    @get:JsonFormat(shape = JsonFormat.Shape.STRING) val executionTime: Duration,
     val apiPath: String,
     val httpMethod: String,
     val httpStatus: Int,

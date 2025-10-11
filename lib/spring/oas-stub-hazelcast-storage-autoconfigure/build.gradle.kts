@@ -1,3 +1,5 @@
+import org.jetbrains.dokka.gradle.DokkaTask
+
 plugins {
     `java-library`
     kotlin("kapt")
@@ -10,8 +12,8 @@ plugins {
 group = "$group.spring"
 description = "OAS stub hazelcast storage starter"
 
-tasks.dokkaHtml {
-    dependsOn(tasks.findByName("kaptKotlin"))
+tasks.withType<DokkaTask>().configureEach {
+    tasks.findByName("kaptKotlin")?.let { task -> dependsOn(task)}
 }
 
 dependencies {
