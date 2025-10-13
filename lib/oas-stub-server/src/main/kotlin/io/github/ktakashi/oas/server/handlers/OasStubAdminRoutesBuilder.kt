@@ -1,8 +1,6 @@
 package io.github.ktakashi.oas.server.handlers
 
-import io.github.ktakashi.oas.api.plugin.ApiPlugin
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
-import io.github.ktakashi.oas.model.ApiCommonConfigurations
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.ApiEntryConfiguration
@@ -159,18 +157,19 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
 
     private fun updateConfigurationProperty(request: RouterHttpRequest, updater: (ApiEntryConfiguration<*>) -> ApiEntryConfiguration<*>) =
         request.param(PATH_VARIABLE_NAME)?.let { context ->
-            apiRegistrationService.getApiDefinitions(context).mapNotNull { def ->
-                request.queryParameters[API_PARAMETER_NAME]?.get(0)?.let {
-                    apiRegistrationService.validPath(def, URLDecoder.decode(it, StandardCharsets.UTF_8)).map { api ->
-                        val newDef = if (def.configurations == null) def.updateConfigurations(mapOf()) else def
-                        val configuration = newDef.configurations?.get(api) ?: ApiConfiguration()
-                        request.queryParameters[METHOD_PARAMETER_NAME]?.get(0)?.let { method ->
-                            val methods = configuration.methods?.get(method) ?: ApiMethodConfiguration()
-                            updater(methods).let { config -> newDef.updateConfiguration(api, configuration.updateMethod(method, config as ApiMethodConfiguration)) }
-                        } ?: updater(configuration).let { config -> newDef.updateConfiguration(api, config as ApiConfiguration) }
+            apiRegistrationService.getApiDefinitions(context).flatMap { def ->
+                Mono.justOrEmpty(request.queryParameters[API_PARAMETER_NAME]?.firstOrNull())
+                    .flatMap {
+                        apiRegistrationService.validPath(def, URLDecoder.decode(it, StandardCharsets.UTF_8)).map { api ->
+                            val newDef = if (def.configurations == null) def.updateConfigurations(mapOf()) else def
+                            val configuration = newDef.configurations?.get(api) ?: ApiConfiguration()
+                            request.queryParameters[METHOD_PARAMETER_NAME]?.firstOrNull()?.let { method ->
+                                val methods = configuration.methods?.get(method) ?: ApiMethodConfiguration()
+                                updater(methods).let { config -> newDef.updateConfiguration(api, configuration.updateMethod(method, config as ApiMethodConfiguration)) }
+                            } ?: updater(configuration).let { config -> newDef.updateConfiguration(api, config as ApiConfiguration) }
+                        }
                     }
-                }
-            }.flatMap { it }.flatMap {def -> apiRegistrationService.saveApiDefinitions(context, def) }
+            }.flatMap { def -> apiRegistrationService.saveApiDefinitions(context, def) }
         } ?: Mono.empty()
 
     private fun <T> getConfigurationProperty(request: RouterHttpRequest, retriever: (ApiEntryConfiguration<*>) -> T?) =

@@ -1,7 +1,6 @@
 package io.github.ktakashi.oas.engine.data.regexp
 
 import io.github.ktakashi.oas.engine.data.charset.CharSet
-import java.text.ParseException
 import java.util.concurrent.CompletionException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -82,7 +81,7 @@ class RegexpParserTest {
 private fun constructAst(ast: String): RegexpNode {
     fun parseNameAndContent(ast: String): Pair<String, String> {
         val index = ast.indexOf('(')
-        val name = ast.substring(0, index)
+        val name = ast.take(index)
         val rindex = ast.lastIndexOf(')')
         return name.trim() to ast.substring(index + 1, rindex)
     }

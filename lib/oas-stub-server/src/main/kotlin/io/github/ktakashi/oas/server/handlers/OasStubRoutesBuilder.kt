@@ -223,10 +223,8 @@ private fun toByteArray(body: Any?, objectMapper: ObjectMapper): ByteArray? = wh
 
 
 private fun ensureResponse(newRequest: OasStubServerHttpRequest, v: Any?): RouterHttpResponse {
-    return if (v is RouterHttpResponse) {
-        v
-    } else {
-        newRequest.responseBuilder().ok()
+    return v as? RouterHttpResponse
+        ?: newRequest.responseBuilder().ok()
             .apply {
                 if (v != null) {
                     when (v) {
@@ -238,7 +236,6 @@ private fun ensureResponse(newRequest: OasStubServerHttpRequest, v: Any?): Route
                 }
             }
             .body(v)
-    }
 }
 
 /**

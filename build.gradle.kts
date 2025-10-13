@@ -8,7 +8,7 @@ if (publishPropertiesFile.exists()) {
         Properties().apply {
             load(s)
         }
-    }.forEach { k, v ->
+    }.forEach { (k, v) ->
         ext[k as String] = v
     }
 }

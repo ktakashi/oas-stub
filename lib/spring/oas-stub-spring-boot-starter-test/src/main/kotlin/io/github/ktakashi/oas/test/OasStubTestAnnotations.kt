@@ -37,7 +37,7 @@ annotation class AutoConfigureOasStubServer(val port: Int = 0, val httpsPort: In
 ])
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-@Value("\${$OAS_STUB_SERVER_PROPERTY_PREFIX.port}")
+@Value($$"${$$OAS_STUB_SERVER_PROPERTY_PREFIX.port}")
 annotation class OasStubServerPort
 
 /**
@@ -56,5 +56,5 @@ annotation class OasStubServerPort
 ])
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-@Value("\${$OAS_STUB_SERVER_PROPERTY_PREFIX.https-port}")
+@Value($$"${$$OAS_STUB_SERVER_PROPERTY_PREFIX.https-port}")
 annotation class OasStubServerHttpsPort

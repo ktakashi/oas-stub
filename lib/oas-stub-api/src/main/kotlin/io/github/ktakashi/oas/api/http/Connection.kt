@@ -1,5 +1,5 @@
 package io.github.ktakashi.oas.api.http
 
-interface Connection {
+fun interface Connection {
     fun close()
 }

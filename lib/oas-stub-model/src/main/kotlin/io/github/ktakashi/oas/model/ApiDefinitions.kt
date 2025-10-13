@@ -527,7 +527,7 @@ data class ApiDefinitions
     /**
      * API configuration.
      *
-     * The key must be a API path either URI template or concrete URI
+     * The key must be an API path either URI template or concrete URI
      */
     val configurations: Map<String, ApiConfiguration>? = null,
     // global data, these are applied to all APIs of this context
@@ -540,7 +540,7 @@ data class ApiDefinitions
     /**
      * API options
      *
-     * This options are applied on entire API context level.
+     * These options are applied on entire API context level.
      */
     override val options: ApiOptions? = null,
     /**

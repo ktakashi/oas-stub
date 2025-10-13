@@ -21,6 +21,4 @@ abstract class ApiDataProcessor(private val version: SpecVersion): MediaSupport,
 
 abstract class AbstractApiDataValidator<T>(version: SpecVersion): ApiDataProcessor(version), ApiDataValidator<T>
 
-abstract class AbstractApiDataPopulator(version: SpecVersion): ApiDataProcessor(version), ApiDataPopulator {
-
-}
+abstract class AbstractApiDataPopulator(version: SpecVersion): ApiDataProcessor(version), ApiDataPopulator

@@ -31,9 +31,9 @@ enum class RegexpParserOption {
     MULTILINE
 }
 
-private const val REGEXP_SPECIAL_CHARACTERS = "^\$\\.*+?()[]{}|"
+private const val REGEXP_SPECIAL_CHARACTERS = "^$\\.*+?()[]{}|"
 // We can also write RegexpComplement(node) for _NON_ charset
-// but to restrict types, we do like this. It's a bit memory inefficient though
+// but to restrict types, we do like this. It's a bit of memory inefficient way though
 private val REGEXP_DIGIT_SET = RegexpCharSet(CharSet.fromRange('0', '9').immutable())
 private val REGEXP_NON_DIGIT_SET = RegexpCharSet(REGEXP_DIGIT_SET.charset.complement())
 private val REGEXP_WORD_SET = RegexpCharSet(CharSet.fromRange('a', 'z').addRange('A', 'Z').add(REGEXP_DIGIT_SET.charset).add('_').immutable())

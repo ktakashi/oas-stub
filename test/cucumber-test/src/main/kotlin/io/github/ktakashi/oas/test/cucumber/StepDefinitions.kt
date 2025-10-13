@@ -22,7 +22,6 @@ import java.io.IOException
 import java.net.URI
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import java.util.concurrent.ForkJoinPool
 import java.util.function.Supplier
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
@@ -329,7 +328,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
             condition.split(';').forEach { cond ->
                 val (path, matcher) = cond.lastIndexOf('=').let {
                     if (it < 0) cond to equalTo(null)
-                    else cond.substring(0, it) to checkMarker(cond.substring(it + 1))
+                    else cond.take(it) to checkMarker(cond.substring(it + 1))
                 }
                 validatableResponse.body(path, matcher)
             }

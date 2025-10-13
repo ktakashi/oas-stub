@@ -271,7 +271,7 @@ class OasStubServer(options: OasStubOptions) {
 
     private class SslContextSpec(sslContextBuilder: SslContextBuilder): AbstractProtocolSslContextSpec<SslContextSpec>(sslContextBuilder) {
         companion object {
-            internal val DEFAULT_CONFIGURATOR: Consumer<SslContextBuilder> =
+            val DEFAULT_CONFIGURATOR: Consumer<SslContextBuilder> =
                 Consumer<SslContextBuilder> { sslCtxBuilder: SslContextBuilder ->
                     sslCtxBuilder.sslProvider(if (SslProvider.isAlpnSupported(SslProvider.OPENSSL)) SslProvider.OPENSSL else SslProvider.JDK)
                         .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)

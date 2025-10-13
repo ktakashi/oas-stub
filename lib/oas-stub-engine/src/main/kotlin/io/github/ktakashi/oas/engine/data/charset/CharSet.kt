@@ -25,7 +25,7 @@ sealed class CharSet {
     internal val large: NavigableMap<Int, Int> = TreeMap()    // characters larger than 128
 
     companion object {
-        const val MAX_CODE_POINT = 0x10FFFF // for some reason, this doesn't exist or I'm missing then
+        const val MAX_CODE_POINT = 0x10FFFF // for some reason, this doesn't exist, or I'm missing then
         const val SMALL_CHARS = 128
         @JvmStatic
         fun empty(): CharSet = MutableCharSet()

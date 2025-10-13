@@ -2,7 +2,6 @@ package io.github.ktakashi.oas.server.http
 
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
-import java.io.OutputStream
 import reactor.netty.http.server.HttpServerResponse
 
 internal class OasStubServerHttpResponse(private val response: HttpServerResponse,

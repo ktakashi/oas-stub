@@ -9,7 +9,6 @@ import io.github.ktakashi.oas.model.ApiLatency
 import io.github.ktakashi.oas.model.ApiOptions
 import io.github.ktakashi.oas.model.ApiProtocolFailure
 import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
-import io.github.ktakashi.oas.test.OasStubApiHeaderDsl
 import io.github.ktakashi.oas.test.OasStubTestPlugin
 import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestResources
@@ -37,8 +36,8 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureOasStubServer(port = 0, stubConfigurations = ["classpath:/stub-configuration.json"])
-class ExampleApplicationTest(@Value("\${${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.port}") private val localPort: Int,
-                             @Autowired private val oasStubTestService: OasStubTestService) {
+class ExampleApplicationTest(@param:Value($$"${$${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.port}") private val localPort: Int,
+                             @param:Autowired private val oasStubTestService: OasStubTestService) {
     @Test
     fun testPetstore() {
         val name = "petstore"

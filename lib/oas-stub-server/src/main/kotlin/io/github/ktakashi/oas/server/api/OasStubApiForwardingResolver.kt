@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.server.api
 
-import io.github.ktakashi.oas.api.http.HttpRequest
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 

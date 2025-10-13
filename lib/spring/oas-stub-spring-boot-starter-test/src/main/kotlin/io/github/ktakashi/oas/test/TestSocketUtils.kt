@@ -2,7 +2,6 @@
 package io.github.ktakashi.oas.test
 
 import java.net.InetAddress
-import java.net.ServerSocket
 import javax.net.ServerSocketFactory
 import kotlin.random.Random
 
