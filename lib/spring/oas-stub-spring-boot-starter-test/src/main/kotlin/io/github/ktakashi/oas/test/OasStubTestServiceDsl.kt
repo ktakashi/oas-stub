@@ -176,6 +176,7 @@ open class OasStubApiEntryConfigurationDsl<D: OasStubApiEntryConfigurationDsl<D,
 }
 
 private typealias OasStubApiConfigurationDslFunc = OasStubApiEntryConfigurationDsl<OasStubApiConfigurationDsl, ApiConfiguration>.() -> Unit
+@Suppress("UNCHECKED_CAST")
 class OasStubApiConfigurationDsl internal constructor(init: OasStubApiConfigurationDsl.() -> Unit)
     : OasStubApiEntryConfigurationDsl<OasStubApiConfigurationDsl, ApiConfiguration>(init as OasStubApiConfigurationDslFunc, ApiConfiguration(plugin = defaultPluginDefinition)) {
     /**
