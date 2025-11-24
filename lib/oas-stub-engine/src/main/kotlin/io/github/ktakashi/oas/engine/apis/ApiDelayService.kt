@@ -26,7 +26,7 @@ class ApiDelayService(private val apiContextService: ApiContextService) {
         } ?: completableStage
     }
 
-    fun <T> delayMono(apiContext: ApiContext, mono: Mono<T>) = System.currentTimeMillis().let { start ->
+    fun <T: Any> delayMono(apiContext: ApiContext, mono: Mono<T>) = System.currentTimeMillis().let { start ->
         apiContext.mergeProperty(ApiCommonConfigurations<*>::delay)?.let { config ->
             computeDelay(config, System.currentTimeMillis() - start)?.let { (delay, timeUnit) ->
                 mono.delayElement(Duration.of(delay, timeUnit.toChronoUnit()))
@@ -34,7 +34,7 @@ class ApiDelayService(private val apiContextService: ApiContextService) {
         } ?: mono
     }
 
-    fun <T> delayMono(context: String, method: String, path: String, mono: Mono<T>) = System.currentTimeMillis().let { start ->
+    fun <T: Any> delayMono(context: String, method: String, path: String, mono: Mono<T>) = System.currentTimeMillis().let { start ->
         apiContextService.getApiContext(context, path, method).flatMap { context ->
             context.mergeProperty(ApiCommonConfigurations<*>::delay)?.let { config ->
                 computeDelay(config, System.currentTimeMillis() - start)?.let { (delay, timeUnit) ->

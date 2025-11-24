@@ -175,7 +175,7 @@ internal constructor(private val context: String,
     }
 }
 
-private fun <T> defaultDelayTransformer(corePublisher: Mono<CorePublisher<T>>): Mono<CorePublisher<T>> = corePublisher
+private fun <T: Any> defaultDelayTransformer(corePublisher: Mono<CorePublisher<T>>): Mono<CorePublisher<T>> = corePublisher
 private typealias ResponseTransformer = (Mono<CorePublisher<ByteArray>>) -> Mono<CorePublisher<ByteArray>>
 
 private val defaultFailureHandler: (RouterHttpRequest) -> Mono<RouterHttpResponse> = { Mono.empty() }

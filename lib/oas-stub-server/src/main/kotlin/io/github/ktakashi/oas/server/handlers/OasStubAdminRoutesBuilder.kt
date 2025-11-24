@@ -142,7 +142,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
         }
     }
 
-    private inline fun <reified T> putConfigurationProperty(request: RouterHttpRequest, noinline updater: (ApiEntryConfiguration<*>, T) -> ApiEntryConfiguration<*>) =
+    private inline fun <reified T: Any> putConfigurationProperty(request: RouterHttpRequest, noinline updater: (ApiEntryConfiguration<*>, T) -> ApiEntryConfiguration<*>) =
         request.bodyToMono(T::class.java).flatMap { body ->
             updateConfigurationProperty(request) { config -> updater(config, body) }
                 .map { v -> request.responseBuilder().ok()
@@ -187,7 +187,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
             }.switchIfEmpty(Mono.defer { notFound(request) })
         } ?: notFound(request)
 
-    private inline fun <reified T> putApiDefinitionsProperty(request: RouterHttpRequest, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
+    private inline fun <reified T: Any> putApiDefinitionsProperty(request: RouterHttpRequest, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
         request.bodyToMono(T::class.java).flatMap { body ->
             updateApiDefinitionProperty(request) { def -> updater(def, body) }
                 .map { v -> request.responseBuilder()
@@ -196,7 +196,7 @@ class OasStubAdminRoutesBuilder(private val options: OasStubStubOptions): OasStu
                     .body(v) }
         }.switchIfEmpty(Mono.defer { notFound(request) })
 
-    private inline fun <reified T> deleteApiDefinitionsProperty(request: RouterHttpRequest, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
+    private inline fun <reified T: Any> deleteApiDefinitionsProperty(request: RouterHttpRequest, noinline updater: (ApiDefinitions, T?) -> ApiDefinitions) =
         request.bodyToMono(T::class.java).flatMap {
             updateApiDefinitionProperty(request) { def -> updater(def, null) }
                 .map { request.responseBuilder().noContent().build() }

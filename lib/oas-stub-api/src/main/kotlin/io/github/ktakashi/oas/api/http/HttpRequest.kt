@@ -61,7 +61,7 @@ interface HttpRequest {
     /**
      * Convert request body to [Mono] of [T]
      */
-    fun <T> bodyToMono(type: Class<T>): Mono<T>
+    fun <T: Any> bodyToMono(type: Class<T>): Mono<T>
 
     /**
      * Connection
@@ -69,4 +69,4 @@ interface HttpRequest {
     val connection: Connection
 }
 
-inline fun <reified T> HttpRequest.body() = this.bodyToMono(T::class.java)
+inline fun <reified T: Any> HttpRequest.body() = this.bodyToMono(T::class.java)

@@ -55,7 +55,7 @@ internal open class OasStubServerHttpRequest(private val request: HttpServerRequ
         .asInputStream()
         .switchIfEmpty(Mono.just(InputStream.nullInputStream()))
 
-    override fun <T> bodyToMono(type: Class<T>): Mono<T> = bodyToInputStream()
+    override fun <T: Any> bodyToMono(type: Class<T>): Mono<T> = bodyToInputStream()
         .map { jsonMapper.readValue(it, type) }
 
     override fun responseBuilder(): HttpRouterResponseBuilder = OasStubServerResponseBuilder(response)

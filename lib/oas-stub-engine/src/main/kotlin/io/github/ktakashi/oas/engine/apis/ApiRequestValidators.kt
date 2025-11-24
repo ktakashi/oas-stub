@@ -137,14 +137,14 @@ private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
         "integer" -> try {
             JsonNodeFactory.instance.numberNode(BigInteger(s))
         } catch (e: Exception) {
-            JsonNodeFactory.instance.textNode(s)
+            JsonNodeFactory.instance.stringNode(s)
         }
         "number" -> try {
             JsonNodeFactory.instance.numberNode(BigDecimal(s))
         } catch (e: Exception) {
-            JsonNodeFactory.instance.textNode(s)
+            JsonNodeFactory.instance.stringNode(s)
         }
-        else -> JsonNodeFactory.instance.textNode(s)
+        else -> JsonNodeFactory.instance.stringNode(s)
     }
 } ?: JsonNodeFactory.instance.nullNode()
 

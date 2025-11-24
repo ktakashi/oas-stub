@@ -94,7 +94,7 @@ class JsonOpenApi30DataValidator(private val jsonMapper: JsonMapper,
         checkNumberRange(value, property, schema)
     } else failedResult("Not a number '$value'", property)
 
-    private fun checkString(value: JsonNode, property: String, schema: Schema<*>): ApiValidationResult = if (value.isTextual) {
+    private fun checkString(value: JsonNode, property: String, schema: Schema<*>): ApiValidationResult = if (value.isString) {
         checkText(value, property, schema, validators) { _, textValue ->
             when (schema) {
                 is UUIDSchema, is DateSchema, is DateTimeSchema, is EmailSchema -> StringValidationContext(textValue, schema.format)

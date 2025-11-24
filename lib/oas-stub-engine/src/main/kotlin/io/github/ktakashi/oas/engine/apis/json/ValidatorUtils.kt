@@ -75,7 +75,7 @@ internal fun checkText(value: JsonNode, property: String, schema: Schema<*>, val
 internal fun checkNumberRange(value: JsonNode, property: String, schema: Schema<*>): ApiValidationResult {
     val max = schema.maximum
     val min = schema.minimum
-    val v = BigDecimal(value.asText())
+    val v = BigDecimal(value.asString())
     return if (max != null && v > max) {
         failedResult("Maximum value is $max", property)
     } else if (min != null && v < min) {

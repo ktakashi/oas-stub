@@ -35,7 +35,7 @@ class ApiFailureService(private val apiContextService: ApiContextService) {
         }
     }
 
-    private fun <T> close(request: HttpRequest): Mono<T> {
+    private fun <T: Any> close(request: HttpRequest): Mono<T> {
         request.connection.close()
         return Mono.error { throw ApiConnectionException("Configured connection error on ${request.requestURI}") }
     }
