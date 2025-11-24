@@ -5,7 +5,7 @@ import io.github.ktakashi.oas.storages.hazelcast.configurations.AutoHazelcastSes
 import io.github.ktakashi.oas.storages.mongodb.configurations.AutoMongodbPersistentStorageConfiguration
 import io.github.ktakashi.oas.storages.mongodb.configurations.AutoMongodbSessionStorageConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+import org.springframework.boot.mongodb.autoconfigure.MongoAutoConfiguration
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 

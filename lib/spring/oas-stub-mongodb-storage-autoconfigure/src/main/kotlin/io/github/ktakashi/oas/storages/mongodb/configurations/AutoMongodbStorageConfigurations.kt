@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.storages.mongodb.configurations
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.mongodb.client.MongoClient
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
@@ -16,12 +15,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
+import org.springframework.boot.mongodb.autoconfigure.MongoAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import tools.jackson.databind.json.JsonMapper
 
 private const val OAS_STUB_STORAGE_MONGODB = "${OAS_STUB_STORAGE}.mongodb"
 @AutoConfiguration(
@@ -36,9 +36,9 @@ private const val OAS_STUB_STORAGE_MONGODB = "${OAS_STUB_STORAGE}.mongodb"
 class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStorageProperties) {
     @Bean
     @ConditionalOnMissingBean(SessionStorage::class)
-    fun sessionStorage(mongoClient: MongoClient, objectMapper: ObjectMapper): SessionStorage {
+    fun sessionStorage(mongoClient: MongoClient, jsonMapper: JsonMapper): SessionStorage {
         val session = properties.session ?: throw IllegalStateException("'${OAS_STUB_STORAGE_MONGODB}.session' must be provided")
-        return MongodbSessionStorage(objectMapper, mongoClient, session.database, session.collection)
+        return MongodbSessionStorage(jsonMapper, mongoClient, session.database, session.collection)
     }
 }
 
@@ -53,9 +53,9 @@ class AutoMongodbSessionStorageConfiguration(private val properties: MongodbStor
 class AutoMongodbPersistentStorageConfiguration(private val properties: MongodbStorageProperties) {
     @Bean
     @ConditionalOnMissingBean(PersistentStorage::class)
-    fun persistentStorage(mongoClient: MongoClient, objectMapper: ObjectMapper): PersistentStorage {
+    fun persistentStorage(mongoClient: MongoClient, jsonMapper: JsonMapper): PersistentStorage {
         val persistent = properties.persistent?: throw IllegalStateException("'${OAS_STUB_STORAGE_MONGODB}.persistent' must be provided")
-        return MongodbPersistentStorage(objectMapper, mongoClient, persistent.database, persistent.collection)
+        return MongodbPersistentStorage(jsonMapper, mongoClient, persistent.database, persistent.collection)
     }
 }
 

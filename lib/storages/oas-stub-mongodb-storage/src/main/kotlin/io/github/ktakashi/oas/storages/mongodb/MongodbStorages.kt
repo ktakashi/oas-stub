@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.storages.mongodb
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoCollection
@@ -16,8 +15,9 @@ import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.pojo.PojoCodecProvider
 import org.bson.codecs.pojo.annotations.BsonCreator
 import org.bson.codecs.pojo.annotations.BsonProperty
+import tools.jackson.databind.json.JsonMapper
 
-abstract class MongodbStorage(private val objectMapper: ObjectMapper,
+abstract class MongodbStorage(private val jsonMapper: JsonMapper,
                               mongoClient: MongoClient,
                               database: String,
                               collection: String) {
@@ -27,21 +27,21 @@ abstract class MongodbStorage(private val objectMapper: ObjectMapper,
     private val mongoCollection: MongoCollection<MongoEntry> = mongoDatabase.getCollection(collection, MongoEntry::class.java)
     private val updateOptions = UpdateOptions().upsert(true)
 
-    protected fun <T> upsert(key: String, value: T) = objectMapper.writeValueAsString(value).let {
+    protected fun <T> upsert(key: String, value: T) = jsonMapper.writeValueAsString(value).let {
         mongoCollection.updateOne(eq("name", key), Updates.set("value", it), updateOptions)
     }
 
     protected fun <T : Any> findOne(key: String, type: Class<T>): Optional<T> = Optional.ofNullable(mongoCollection.find(eq("name", key)).first())
             .map { e -> e.value }
-            .map { v -> objectMapper.readValue(v, type)}
+            .map { v -> jsonMapper.readValue(v, type)}
 
     protected fun deleteOne(key: String) = mongoCollection.deleteOne(eq("name", key))
 
     protected fun listNames() = mongoCollection.find().map { e -> e.name }.toSet()
 }
 
-class MongodbSessionStorage(objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
-    : MongodbStorage(objectMapper, mongoClient, database, collection), SessionStorage {
+class MongodbSessionStorage(jsonMapper: JsonMapper, mongoClient: MongoClient, database: String, collection: String)
+    : MongodbStorage(jsonMapper, mongoClient, database, collection), SessionStorage {
 
     // TODO ttl
     override fun <T> put(key: String, value: T, ttl: Duration): Boolean = upsert(key, value).wasAcknowledged()
@@ -52,8 +52,8 @@ class MongodbSessionStorage(objectMapper: ObjectMapper, mongoClient: MongoClient
 
 }
 
-class MongodbPersistentStorage(objectMapper: ObjectMapper, mongoClient: MongoClient, database: String, collection: String)
-    : MongodbStorage(objectMapper, mongoClient, database, collection), PersistentStorage {
+class MongodbPersistentStorage(jsonMapper: JsonMapper, mongoClient: MongoClient, database: String, collection: String)
+    : MongodbStorage(jsonMapper, mongoClient, database, collection), PersistentStorage {
     override fun getApiDefinition(applicationName: String): Optional<ApiDefinitions> = findOne(applicationName, ApiDefinitions::class.java)
 
     override fun setApiDefinition(applicationName: String, apiDefinitions: ApiDefinitions): Boolean = upsert(applicationName, apiDefinitions).wasAcknowledged()

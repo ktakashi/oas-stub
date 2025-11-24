@@ -1,7 +1,5 @@
 package io.github.ktakashi.oas.server.modules
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.api.storage.Storage
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.github.ktakashi.oas.engine.apis.ApiContentDecider
@@ -48,6 +46,8 @@ import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 
 internal val validatorModule = module {
     singleOf(::FormatValidator) {
@@ -75,8 +75,8 @@ internal val validatorModule = module {
         bind<ApiRequestValidator>()
     }
 
-    single { JsonOpenApi30DataValidator(get<ObjectMapper>(), getAll<Validator<Any>>().toSet()) } bind ApiDataValidator::class
-    single { JsonOpenApi31DataValidator(get<ObjectMapper>(), getAll<Validator<Any>>().toSet()) } bind ApiDataValidator::class
+    single { JsonOpenApi30DataValidator(get<JsonMapper>(), getAll<Validator<Any>>().toSet()) } bind ApiDataValidator::class
+    single { JsonOpenApi31DataValidator(get<JsonMapper>(), getAll<Validator<Any>>().toSet()) } bind ApiDataValidator::class
     singleOf(::JsonOpenApi30DataPopulator) {
         bind<ApiDataPopulator>()
         bind<ApiAnyDataPopulator>()
@@ -90,7 +90,7 @@ internal val validatorModule = module {
 fun makeEngineModule(options: OasStubStubOptions) = module {
     singleOf(::ParsingService)
     singleOf(::StorageService)
-    single { ApiContentDecider(getAll<ApiRequestValidator>().toSet(), get<ObjectMapper>()) }
+    single { ApiContentDecider(getAll<ApiRequestValidator>().toSet(), get<JsonMapper>()) }
     single { ApiResultProvider(get<ApiContentDecider>(), getAll<ApiDataPopulator>().toSet(), getAll<ApiAnyDataPopulator>().toSet()) }
     singleOf(::DefaultApiContextService) {
         bind<ApiContextService>()
@@ -110,9 +110,9 @@ fun makeEngineModule(options: OasStubStubOptions) = module {
         bind<PluginCompiler>()
     }
 
-    single { PluginService(getAll<PluginCompiler>().toSet(), get<ApiContextService>(), get<StorageService>(), get<ObjectMapper>()) }
+    single { PluginService(getAll<PluginCompiler>().toSet(), get<ApiContextService>(), get<StorageService>(), get<JsonMapper>()) }
     single { ApiPathService(options.stubPath) }
-    single { options.objectMapper }
+    single { options.jsonMapper }
 }
 
 internal fun makeStorageModule(persistentStorage: PersistentStorage, sessionStorage: SessionStorage) = module {

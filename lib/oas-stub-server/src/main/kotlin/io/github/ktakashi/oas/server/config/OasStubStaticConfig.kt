@@ -1,23 +1,24 @@
 package io.github.ktakashi.oas.server.config
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiDefinitions
 import io.github.ktakashi.oas.model.PluginDefinition
 import java.io.InputStream
 import java.net.URI
 import org.yaml.snakeyaml.Yaml
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.module.kotlin.KotlinModule
 
 object OasStubStaticConfigParser {
-    internal val objectMapper = ObjectMapper().findAndRegisterModules()
+    internal val jsonMapper = JsonMapper.builder().findAndAddModules().addModule(KotlinModule.Builder().build()).build()
     fun parse(path: URI): Map<String, ApiDefinitions> {
         val node = path.load()
         require (node is ObjectNode) { "Must be a YAML map or JSON object: $path" }
         return node.properties().asSequence().map { (context, path) ->
-            val uri = URI.create(path.asText())
-            context to objectMapper.treeToValue(uri.load(), ApiDefinitions::class.java)
+            val uri = URI.create(path.asString())
+            context to jsonMapper.treeToValue(uri.load(), ApiDefinitions::class.java)
         }.map { (context, definition) ->
             context to definition.mutate()
                 .also { builder ->
@@ -28,15 +29,14 @@ object OasStubStaticConfigParser {
     }
 
     private fun fixupConfiguration(config: Map<String, ApiConfiguration>) = config.asSequence().map { (context, config) ->
-        // config can be null due to the ObjectMapper thing
-        config?.let { c ->
+        config.let { c ->
             context to c.mutate().also { builder ->
                 config.plugin?.let { plugin ->
                     builder.plugin(PluginDefinition(plugin.type, URI.create(plugin.script).readText()!!))
                 }
             }.build()
         }
-    }.filterNotNull().toMap()
+    }.toMap()
 }
 
 private fun URI.load() = this.path.let { path ->
@@ -49,9 +49,9 @@ private fun URI.load() = this.path.let { path ->
 
 private fun URI.readYaml() = Yaml().let { yaml ->
     val map: Map<String, Any> = this.openStream()?.let(yaml::load) ?: throw IllegalArgumentException("$this doesn't exists")
-    OasStubStaticConfigParser.objectMapper.valueToTree<JsonNode>(map)
+    OasStubStaticConfigParser.jsonMapper.valueToTree<JsonNode>(map)
 }
-private fun URI.readJson() = this.openStream()?.let { OasStubStaticConfigParser.objectMapper.readTree(it) }
+private fun URI.readJson() = this.openStream()?.let { OasStubStaticConfigParser.jsonMapper.readTree(it) }
     ?: throw IllegalArgumentException("$this doesn't exists")
 
 private fun URI.openStream(): InputStream? = when (this.scheme) {

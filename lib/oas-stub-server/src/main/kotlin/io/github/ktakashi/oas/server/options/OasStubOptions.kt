@@ -1,8 +1,5 @@
 package io.github.ktakashi.oas.server.options
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.ktakashi.oas.server.api.OasStubApiForwardingResolver
 import io.github.ktakashi.oas.server.handlers.OasStubRoutesBuilder
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
@@ -10,6 +7,8 @@ import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemoryPersistentStorage
 import io.github.ktakashi.oas.storages.inmemory.InMemorySessionStorage
 import java.security.KeyStore
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
 
 /**
  * OAS Stub options.
@@ -133,7 +132,7 @@ internal constructor(internal val stubPath: String,
                      internal val enableAdmin: Boolean,
                      internal val enableMetrics: Boolean,
                      internal val enableRecord: Boolean,
-                     internal val objectMapper: ObjectMapper,
+                     internal val jsonMapper: JsonMapper,
                      internal val routesBuilders: List<OasStubRoutesBuilder>,
                      internal val persistentStorage: PersistentStorage,
                      internal val sessionStorage: SessionStorage,
@@ -155,7 +154,7 @@ internal constructor(internal val stubPath: String,
                   private var enableMetrics: Boolean = true,
                   private var enableRecords: Boolean = false,
                   private var routesBuilders: MutableList<OasStubRoutesBuilder> = mutableListOf(),
-                  private var objectMapper: ObjectMapper = ObjectMapper().findAndRegisterModules(),
+                  private var jsonMapper: JsonMapper = JsonMapper.builder().findAndAddModules().build(),
                   private var persistentStorage: PersistentStorage = InMemoryPersistentStorage(),
                   private var sessionStorage: SessionStorage = InMemorySessionStorage(),
                   private var staticConfigurations: MutableList<String> = mutableListOf(),
@@ -206,7 +205,7 @@ internal constructor(internal val stubPath: String,
          * The object mapper will be copied when the option is built. Which means,
          * changing its configuration at runtime is not possible.
          */
-        fun objectMapper(objectMapper: ObjectMapper) = apply { this.objectMapper = objectMapper }
+        fun jsonMapper(jsonMapper: JsonMapper) = apply { this.jsonMapper = jsonMapper }
 
         /**
          * Sets persistent storage. Default storage is [InMemoryPersistentStorage]
@@ -256,7 +255,7 @@ internal constructor(internal val stubPath: String,
         internal fun build() = OasStubStubOptions(stubPath, adminPath, forwardingPath,
             metricsPath, recordsPath,
             enableAdmin, enableMetrics, enableRecords,
-            objectMapper.copy().registerModules(KotlinModule.Builder().build(), Jdk8Module()),
+            jsonMapper.rebuild().addModule(KotlinModule.Builder().build()).build(),
             routesBuilders,
             persistentStorage, sessionStorage, staticConfigurations, forwardingResolvers)
     }

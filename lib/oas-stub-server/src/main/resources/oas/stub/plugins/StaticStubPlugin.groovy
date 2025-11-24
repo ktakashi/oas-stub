@@ -1,6 +1,6 @@
 package oas.stub.plugins
 
-import com.fasterxml.jackson.databind.ObjectWriter
+import tools.jackson.databind.ObjectWriter
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.api.plugin.ApiPlugin
 import io.github.ktakashi.oas.api.plugin.PluginContext

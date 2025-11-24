@@ -24,5 +24,5 @@ configurations:
     plugin:
       type: GROOVY
       script: "classpath:/plugins/PetStoreGetPetPlugin.groovy"
-  # invalid config, filtered out
-  '/v1/pets':
+  # invalid config, this will be an error since 3.0.0 (by Jackson)
+  # '/v1/pets':

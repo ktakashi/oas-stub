@@ -1,8 +1,5 @@
 package io.github.ktakashi.oas.engine.plugins
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.ObjectReader
-import com.fasterxml.jackson.databind.ObjectWriter
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.ktakashi.oas.api.http.RequestContext
@@ -19,13 +16,17 @@ import java.time.Duration
 import java.util.Optional
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
+import tools.jackson.databind.ObjectReader
+import tools.jackson.databind.ObjectWriter
+import tools.jackson.databind.json.JsonMapper
 
 private val logger = LoggerFactory.getLogger(PluginService::class.java)
 
 class PluginService(private val pluginCompilers: Set<PluginCompiler>,
                     private val apiContextService: ApiContextService,
                     private val storageService: StorageService,
-                    private val objectMapper: ObjectMapper) {
+                    private val jsonMapper: JsonMapper
+) {
 
     private val pluginCache = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofHours(1))
@@ -41,7 +42,7 @@ class PluginService(private val pluginCompilers: Set<PluginCompiler>,
                     .mapNotNull { apiData ->
                         pluginCache[plugin]?.let { compiled ->
                             val code = compiled.getConstructor().newInstance()
-                            val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData!!, objectMapper)
+                            val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData!!, jsonMapper)
                             code.customize(context)
                         }
                     }.onErrorResume { e ->
@@ -55,12 +56,12 @@ data class PluginContextData(override val requestContext: RequestContext,
                              override val responseContext: ResponseContext,
                              override val sessionStorage: Storage,
                              private val apiData: Map<String, Any>,
-                             private val objectMapper: ObjectMapper) : PluginContext {
+                             private val jsonMapper: JsonMapper) : PluginContext {
     override val objectReader: ObjectReader
-        get() = objectMapper.reader()
+        get() = jsonMapper.reader()
 
     override val objectWriter: ObjectWriter
-        get() = objectMapper.writer()
+        get() = jsonMapper.writer()
 
     override fun <T> getApiData(label: String, clazz: Class<T>): Optional<T & Any> = Optional.ofNullable(apiData[label]?.let { v ->
         clazz.cast(if (clazz.isAssignableFrom(v.javaClass)) {
@@ -74,7 +75,7 @@ data class PluginContextData(override val requestContext: RequestContext,
         is String -> if (String::class.java.isAssignableFrom(clazz)) v else null
         is Number -> if (Number::class.java.isAssignableFrom(clazz)) v else null
         is ByteArray -> if (ByteArray::class.java.isAssignableFrom(clazz)) v else null
-        is Map<*, *> -> objectMapper.convertValue(v, clazz)
+        is Map<*, *> -> jsonMapper.convertValue(v, clazz)
         else -> if (v.javaClass.isAssignableFrom(clazz)) v else null
     }
 

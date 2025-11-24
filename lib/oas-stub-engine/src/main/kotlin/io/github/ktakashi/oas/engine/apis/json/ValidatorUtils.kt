@@ -1,15 +1,15 @@
 package io.github.ktakashi.oas.engine.apis.json
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.github.ktakashi.oas.engine.apis.ApiValidationResult
 import io.github.ktakashi.oas.engine.apis.failedResult
 import io.github.ktakashi.oas.engine.apis.success
 import io.github.ktakashi.oas.engine.validators.ValidationContext
 import io.github.ktakashi.oas.engine.validators.Validator
 import io.swagger.v3.core.util.Yaml
-
 import io.swagger.v3.oas.models.media.Schema
 import java.math.BigDecimal
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.ArrayNode
 
 internal fun toPrettyString(schema: List<Schema<*>>): String = Yaml.pretty(schema)
 internal fun checkRequired(value: JsonNode, property: String, schema: Schema<Any>) = schema.required
@@ -44,7 +44,7 @@ private fun checkProperty(e: Map.Entry<String, JsonNode>,
     return checkSchema(e.value, p, schema)
 }
 
-internal fun checkElements(value: JsonNode, property: String, schema: Schema<Any>, checkSchema: (JsonNode, String, Schema<*>) -> ApiValidationResult): ApiValidationResult {
+internal fun checkElements(value: ArrayNode, property: String, schema: Schema<Any>, checkSchema: (JsonNode, String, Schema<*>) -> ApiValidationResult): ApiValidationResult {
     val max = schema.maxItems
     if (max != null && value.size() > max) {
         return failedResult("At most $max elements are allowed", property)
@@ -60,7 +60,7 @@ internal fun checkElements(value: JsonNode, property: String, schema: Schema<Any
 }
 
 internal fun checkText(value: JsonNode, property: String, schema: Schema<*>, validators: Set<Validator<Any>>, makeContext: (Schema<*>, String) -> ValidationContext<Any>): ApiValidationResult {
-    val textValue = value.asText()
+    val textValue = value.asString()
     val context = makeContext(schema, textValue)
     val result = validators.map { v -> v.tryValidate(context) }.fold(true) { a, b -> a && b }
     return if (!result) {

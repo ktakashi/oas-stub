@@ -1,7 +1,6 @@
 @file:JvmName("OasStubTestConfigurations")
 package io.github.ktakashi.oas.test
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.model.ApiConfiguration
 import io.github.ktakashi.oas.model.ApiData
@@ -23,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
+import tools.jackson.databind.json.JsonMapper
 
 
 @ConfigurationProperties(prefix = OasStubTestProperties.OAS_STUB_TEST_PROPERTY_PREFIX)
@@ -46,7 +46,7 @@ data class OasStubTestProperties(
         const val OAS_STUB_SERVER_PROPERTY_PREFIX = "${OAS_STUB_TEST_PROPERTY_PREFIX}.server"
     }
 
-    fun toOasStubOptions(objectMapper: ObjectMapper,
+    fun toOasStubOptions(jsonMapper: JsonMapper,
                          sessionStorage: SessionStorage,
                          persistentStorage: PersistentStorage,
                          oasStubRoutesBuilders: Set<OasStubRoutesBuilder>,
@@ -61,7 +61,7 @@ data class OasStubTestProperties(
         .enableAdmin(server.enableAdmin)
         .enableMetrics(server.enableMetrics)
         .enableRecords(server.enableRecords)
-        .objectMapper(objectMapper)
+        .jsonMapper(jsonMapper)
         .sessionStorage(sessionStorage)
         .persistentStorage(persistentStorage)
         .routesBuilders(oasStubRoutesBuilders)

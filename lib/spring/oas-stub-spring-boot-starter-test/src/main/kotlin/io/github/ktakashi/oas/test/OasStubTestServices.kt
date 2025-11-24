@@ -1,8 +1,5 @@
 package io.github.ktakashi.oas.test
 
-import com.fasterxml.jackson.core.JsonPointer
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
@@ -21,6 +18,9 @@ import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
 import org.springframework.core.io.Resource
 import org.springframework.web.util.UriTemplate
+import tools.jackson.core.JsonPointer
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 
 /**
  * Providing test utilities
@@ -32,7 +32,7 @@ class OasStubTestService(private val properties: OasStubTestProperties,
                          private val apiRegistrationService: ApiRegistrationService,
                          private val apiObserver: ApiObserver,
                          private val apiRecorder: ApiRecorder,
-                         private val objectMapper: ObjectMapper) {
+                         private val jsonMapper: JsonMapper) {
     fun setup() {
         clear()
         properties.definitions.forEach { (k, v) ->
@@ -91,7 +91,7 @@ class OasStubTestService(private val properties: OasStubTestProperties,
     fun clearTestApiMetrics() = apiObserver.clearApiMetrics()
 
     fun getTestApiRecords(name: String): OasStubTestApiRecordAggregator = OasStubTestApiRecordAggregator(
-        apiRecorder.getApiRecords(name).map { it.records.map { record -> StubRecord(record, objectMapper) } }
+        apiRecorder.getApiRecords(name).map { it.records.map { record -> StubRecord(record, jsonMapper) } }
             .orElseGet { listOf() }
     )
 
@@ -212,9 +212,9 @@ data class OasStubTestApiMetricsAggregator(private val metrics: List<ApiMetric>)
     fun count(): Int = metrics.size
 }
 
-private fun ObjectMapper.safeReadTree(value: ByteArray): JsonNode? = try {
+private fun JsonMapper.safeReadTree(value: ByteArray): JsonNode? = try {
     this.readTree(value)
-} catch (e: Exception) {
+} catch (_: Exception) {
     null
 }
 
@@ -229,9 +229,9 @@ internal interface BaseStubRecord {
 }
 
 data class StubRequestRecord(private val request: ApiRequestRecord,
-                             private val objectMapper: ObjectMapper): BaseStubRecord {
+                             private val jsonMapper: JsonMapper): BaseStubRecord {
     private val cacheJson: Optional<JsonNode> by lazy {
-        request.body.map { objectMapper.safeReadTree(it) }
+        request.body.map { jsonMapper.safeReadTree(it) }
     }
     override fun json(): Optional<JsonNode> = cacheJson
 
@@ -239,9 +239,9 @@ data class StubRequestRecord(private val request: ApiRequestRecord,
     override val headers = request.headers
 }
 data class StubResponseRecord(private val response: ApiResponseRecord,
-                              private val objectMapper: ObjectMapper): BaseStubRecord {
+                              private val jsonMapper: JsonMapper): BaseStubRecord {
     private val cacheJson: Optional<JsonNode> by lazy {
-        response.body.map { objectMapper.safeReadTree(it) }
+        response.body.map { jsonMapper.safeReadTree(it) }
     }
     override fun json(): Optional<JsonNode> = cacheJson
 
@@ -253,19 +253,19 @@ data class StubResponseRecord(private val response: ApiResponseRecord,
  * Stub invocation record
  */
 data class StubRecord(private val record: ApiRecord,
-                      private val objectMapper: ObjectMapper) {
+                      private val jsonMapper: JsonMapper) {
     private val rawRequest: ApiRequestRecord = record.request
     internal val rawResponse: ApiResponseRecord = record.response
 
     /**
      * Returns request of this invocation
      */
-    val request: StubRequestRecord by lazy { StubRequestRecord(rawRequest, objectMapper) }
+    val request: StubRequestRecord by lazy { StubRequestRecord(rawRequest, jsonMapper) }
 
     /**
      * Returns response of this invocation
      */
-    val response: StubResponseRecord by lazy { StubResponseRecord(rawResponse, objectMapper) }
+    val response: StubResponseRecord by lazy { StubResponseRecord(rawResponse, jsonMapper) }
 
     /**
      * HTTP method of this invocation

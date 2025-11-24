@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.server.handlers
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.ApiConnectionException
 import io.github.ktakashi.oas.engine.apis.ApiDelayService
 import io.github.ktakashi.oas.engine.apis.ApiFailureService
@@ -23,6 +22,7 @@ import reactor.core.publisher.Mono
 import reactor.netty.http.server.HttpServerRequest
 import reactor.netty.http.server.HttpServerResponse
 import reactor.netty.http.server.HttpServerRoutes
+import tools.jackson.databind.json.JsonMapper
 
 private typealias ReactorResponseHandler = BiFunction<HttpServerRequest, HttpServerResponse, Publisher<Void>>
 
@@ -38,37 +38,37 @@ private val logger = LoggerFactory.getLogger(OasStubRoutes::class.java)
 class OasStubRoutes
     internal constructor(internal val routes: HttpServerRoutes,
                          private val koin: Koin): (OasStubRoutes.() -> Unit) -> Unit {
-    private val objectMapper = koin.get<ObjectMapper>()
+    private val jsonMapper = koin.get<JsonMapper>()
 
     /**
      * GET route
      */
-    fun get(path: String, handler: OasStubRouteHandler) = apply { routes.get(path, adjustHandler(handler, objectMapper)) }
+    fun get(path: String, handler: OasStubRouteHandler) = apply { routes.get(path, adjustHandler(handler, jsonMapper)) }
 
     /**
      * POST route
      */
-    fun post(path: String, handler: OasStubRouteHandler) = apply { routes.post(path, adjustHandler(handler, objectMapper)) }
+    fun post(path: String, handler: OasStubRouteHandler) = apply { routes.post(path, adjustHandler(handler, jsonMapper)) }
 
     /**
      * PUT route
      */
-    fun put(path: String, handler: OasStubRouteHandler) = apply { routes.put(path, adjustHandler(handler, objectMapper)) }
+    fun put(path: String, handler: OasStubRouteHandler) = apply { routes.put(path, adjustHandler(handler, jsonMapper)) }
 
     /**
      * DELETE route
      */
-    fun delete(path: String, handler: OasStubRouteHandler) = apply { routes.delete(path, adjustHandler(handler, objectMapper)) }
+    fun delete(path: String, handler: OasStubRouteHandler) = apply { routes.delete(path, adjustHandler(handler, jsonMapper)) }
 
     /**
      * Handling `GET`, `POST`, `PUT` and `DELETE` method in the given [path]
      */
     fun path(path: String, handler: OasStubRouteHandler) = apply {
         routes.also {
-            it.get(path, adjustHandler(handler, objectMapper))
-            it.post(path, adjustHandler(handler, objectMapper))
-            it.put(path, adjustHandler(handler, objectMapper))
-            it.delete(path, adjustHandler(handler, objectMapper))
+            it.get(path, adjustHandler(handler, jsonMapper))
+            it.post(path, adjustHandler(handler, jsonMapper))
+            it.put(path, adjustHandler(handler, jsonMapper))
+            it.delete(path, adjustHandler(handler, jsonMapper))
         }
     }
 
@@ -108,7 +108,7 @@ internal constructor(private val context: String,
                      private val routes: OasStubRoutes,
                      koin: Koin): (ContextOasStubRoutes.() -> Unit) -> Unit {
     private val apiRegistrationService by koin.inject<ApiRegistrationService>()
-    private val objectMapper by koin.inject<ObjectMapper>()
+    private val jsonMapper by koin.inject<JsonMapper>()
     private val delayService by koin.inject<ApiDelayService>()
     private val failureService by koin.inject<ApiFailureService>()
 
@@ -151,7 +151,7 @@ internal constructor(private val context: String,
 
     private fun adjustPath(path: String): String = "/$context$path"
     private fun optionAwareHandler(method: String, path: String, handler: OasStubRouteHandler): ReactorResponseHandler {
-        return adjustHandler(handler, objectMapper, checkFailure(path)) { execution ->
+        return adjustHandler(handler, jsonMapper, checkFailure(path)) { execution ->
             delayService.delayMono(context, method, path, execution)
         }
     }
@@ -181,14 +181,14 @@ private typealias ResponseTransformer = (Mono<CorePublisher<ByteArray>>) -> Mono
 private val defaultFailureHandler: (RouterHttpRequest) -> Mono<RouterHttpResponse> = { Mono.empty() }
 
 private fun adjustHandler(handler: OasStubRouteHandler,
-                          objectMapper: ObjectMapper,
+                          jsonMapper: JsonMapper,
                           failureHandler: (RouterHttpRequest) -> Mono<RouterHttpResponse> = defaultFailureHandler,
                           delayTransformer: ResponseTransformer = ::defaultDelayTransformer)
         : ReactorResponseHandler {
     return BiFunction { request: HttpServerRequest, response: HttpServerResponse ->
-        val newRequest = OasStubServerHttpRequest(request, response, objectMapper)
+        val newRequest = OasStubServerHttpRequest(request, response, jsonMapper)
         failureHandler(newRequest).switchIfEmpty(Mono.defer { invokeHandler(handler, newRequest) })
-            .map { resp -> toMonoByteArray(resp, objectMapper) }
+            .map { resp -> toMonoByteArray(resp, jsonMapper) }
             .switchIfEmpty(Mono.just(Mono.just(byteArrayOf())))
             .transform(delayTransformer)
             .flatMap { resp -> emitResponse(resp, response) }
@@ -204,21 +204,21 @@ private fun emitResponse(content: CorePublisher<ByteArray>, response: HttpServer
     return response.sendByteArray(content).then()
 }
 
-private fun toMonoByteArray(resp: RouterHttpResponse, objectMapper: ObjectMapper): CorePublisher<ByteArray> = resp.body?.let {
+private fun toMonoByteArray(resp: RouterHttpResponse, jsonMapper: JsonMapper): CorePublisher<ByteArray> = resp.body?.let {
     when (it) {
-        is Mono<*> -> it.mapNotNull { body -> toByteArray(body, objectMapper) }
-        is Flux<*> -> it.mapNotNull { body -> toByteArray(body, objectMapper) }
+        is Mono<*> -> it.mapNotNull { body -> toByteArray(body, jsonMapper) }
+        is Flux<*> -> it.mapNotNull { body -> toByteArray(body, jsonMapper) }
         is CompletionStage<*> -> Mono.fromFuture(it.toCompletableFuture())
-            .mapNotNull { body -> toByteArray(body, objectMapper) }
+            .mapNotNull { body -> toByteArray(body, jsonMapper) }
 
-        else -> Mono.justOrEmpty(toByteArray(it, objectMapper))
+        else -> Mono.justOrEmpty(toByteArray(it, jsonMapper))
     }
 } ?: Mono.empty()
 
-private fun toByteArray(body: Any?, objectMapper: ObjectMapper): ByteArray? = when (body) {
+private fun toByteArray(body: Any?, jsonMapper: JsonMapper): ByteArray? = when (body) {
     is ByteArray -> body
     is String -> body.toByteArray()
-    else -> objectMapper.writeValueAsBytes(body)
+    else -> jsonMapper.writeValueAsBytes(body)
 }
 
 

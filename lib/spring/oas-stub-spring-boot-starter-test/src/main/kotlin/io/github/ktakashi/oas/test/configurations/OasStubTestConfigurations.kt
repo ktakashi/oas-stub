@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.test.configurations
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.ApiRegistrationService
 import io.github.ktakashi.oas.engine.apis.monitor.ApiObserver
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
@@ -19,13 +18,14 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.SmartLifecycle
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import tools.jackson.databind.json.JsonMapper
 
 
 @Configuration(OAS_STUB_SERVER_CONFIGURATION_BEAN_NAME)
 @EnableConfigurationProperties(OasStubTestProperties::class)
 @EnableAutoConfiguration
 class OasStubServerConfiguration(internal val properties: OasStubTestProperties,
-                                 private val objectMapper: ObjectMapper,
+                                 private val jsonMapper: JsonMapper,
                                  private val oasStubRoutesBuilders: Set<OasStubRoutesBuilder>,
                                  private val oasStubApiForwardingResolvers: Set<OasStubApiForwardingResolver>): KoinComponent, SmartLifecycle {
     private lateinit var oasStubTestService: OasStubTestService
@@ -33,7 +33,7 @@ class OasStubServerConfiguration(internal val properties: OasStubTestProperties,
 
     @Bean
     fun oasStubServer(sessionStorage: SessionStorage, persistentStorage: PersistentStorage): OasStubServer {
-        oasStubServer = OasStubServer(properties.toOasStubOptions(objectMapper, sessionStorage, persistentStorage, oasStubRoutesBuilders, oasStubApiForwardingResolvers))
+        oasStubServer = OasStubServer(properties.toOasStubOptions(jsonMapper, sessionStorage, persistentStorage, oasStubRoutesBuilders, oasStubApiForwardingResolvers))
         oasStubServer.init()
         return oasStubServer
     }
@@ -44,7 +44,7 @@ class OasStubServerConfiguration(internal val properties: OasStubTestProperties,
             inject<ApiRegistrationService>().value,
             inject<ApiObserver>().value,
             inject<ApiRecorder>().value,
-            inject<ObjectMapper>().value)
+            inject<JsonMapper>().value)
         return oasStubTestService
     }
 

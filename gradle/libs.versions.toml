@@ -1,14 +1,14 @@
 [versions]
-kotlin = "2.2.0"
+kotlin = "2.2.21"
 dokka = "2.0.0"
 koin = "4.1.0"
-jackson = "2.20.0"
+jackson = "3.0.2"
 junit = "5.11.4"
 hazelcast = "5.5.0"
 mongodb = "5.3.1"
 groovy = "4.0.25"
-spring = "6.2.11"
-spring-boot="3.5.6"
+spring = "7.0.1"
+spring-boot="4.0.0-RC2"
 projectreactor = "3.7.2"
 reactor-addon = "3.5.2"
 guava = "33.4.0-jre"
@@ -32,9 +32,9 @@ koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin"
 koin-jvm = { group = "io.insert-koin", name = "koin-core-jvm", version.ref = "koin"}
 
 jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = "2.20" }
-jackson-databind-core = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
-jackson-datatype-jdk8 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jdk8", version.ref = "jackson" }
-jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
+jackson-databind-core = { group = "tools.jackson.core", name = "jackson-databind", version.ref = "jackson" }
+# jackson-datatype-jdk8 = { group = "tools.jackson.datatype", name = "jackson-datatype-jdk8", version.ref = "jackson" }
+jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 
 dokka-gradle-plugin = { group = "org.jetbrains.dokka", name = "org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
@@ -69,6 +69,8 @@ spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring
 spring-boot-test-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-test-autoconfigure", version.ref = "spring-boot" }
 spring-boot-configuration-processor = { group = "org.springframework.boot", name = "spring-boot-configuration-processor", version.ref = "spring-boot" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-starter-jackson = { group = "org.springframework.boot", name = "spring-boot-starter-jackson", version.ref = "spring-boot" }
+spring-boot-starter-mongodb = { group = "org.springframework.boot", name = "spring-boot-starter-mongodb", version.ref = "spring-boot" }
 
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava"}
 

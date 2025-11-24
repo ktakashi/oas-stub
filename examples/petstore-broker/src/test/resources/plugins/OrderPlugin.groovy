@@ -1,11 +1,11 @@
 package plugins
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.api.plugin.ApiPlugin
 import io.github.ktakashi.oas.api.plugin.PluginContext
 import oas.example.petstore.broker.models.order.NewOrder
 import oas.example.petstore.broker.models.order.Order
+import tools.jackson.databind.ObjectMapper
 
 class OrderPlugin implements ApiPlugin {
     def objectMapper = new ObjectMapper()

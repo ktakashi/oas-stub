@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas
 
-import com.fasterxml.jackson.databind.node.TextNode
 import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
 import io.github.ktakashi.oas.test.OasStubServerPort
 import io.github.ktakashi.oas.test.OasStubTestService
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.ClassPathResource
 import org.springframework.web.util.UriTemplate
+import tools.jackson.databind.node.StringNode
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureOasStubServer(port = 0)
@@ -82,7 +82,7 @@ class MetricsTest(@param:OasStubServerPort private val port: Int,
         assertEquals(ids.size, records.byRequestBody().count())
         assertEquals(1, records.byRequestBody("""{"name":"name-1","tag":"tag-1"}""".toByteArray()).count())
         assertEquals(7, records.byRequestJson("/name").count())
-        assertEquals(1, records.byRequestJson("/name", TextNode.valueOf("name-1")).count())
+        assertEquals(1, records.byRequestJson("/name", StringNode.valueOf("name-1")).count())
 
 
         assertEquals(ids.size, records.byResponseHeader("Content-Type").count())
@@ -91,6 +91,6 @@ class MetricsTest(@param:OasStubServerPort private val port: Int,
         assertEquals(ids.size, records.byResponseBody().count())
         assertEquals(7, records.byResponseBody("""{"name":"string","tag":"string","id":0}""".toByteArray()).count())
         assertEquals(7, records.byResponseJson("/name").count())
-        assertEquals(7, records.byResponseJson("/name", TextNode.valueOf("string")).count())
+        assertEquals(7, records.byResponseJson("/name", StringNode.valueOf("string")).count())
     }
 }

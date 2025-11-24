@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.spring.web)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
+    implementation(libs.spring.boot.starter.jackson)
     implementation(libs.annotation.api)
     implementation(libs.kotlin.stdlib)
     implementation(libs.koin.core)

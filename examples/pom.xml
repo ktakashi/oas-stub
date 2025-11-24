@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.3</version>
+        <version>4.0.0-RC2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.ktakashi.oas.example</groupId>
@@ -19,14 +19,15 @@
     </modules>
 
     <properties>
-        <java.release>17</java.release>
+        <java.release>21</java.release>
         <maven.compiler.release>${java.release}</maven.compiler.release>
         <maven.compiler.source>${maven.compiler.release}</maven.compiler.source>
         <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
         <cucumber.version>7.13.0</cucumber.version>
-        <oas-stub.version>2.2.2-SNAPSHOT</oas-stub.version>
+        <oas-stub.version>3.0.0-SNAPSHOT</oas-stub.version>
         <!-- SpringBoot provides old version -->
         <kotlin.version>2.2.0</kotlin.version>
+        <rest-assured.version>5.5.6</rest-assured.version>
     </properties>
 
     <dependencyManagement>
@@ -42,6 +43,13 @@
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
                 <version>${cucumber.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>io.rest-assured</groupId>
+                <artifactId>rest-assured-bom</artifactId>
+                <version>${rest-assured.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>

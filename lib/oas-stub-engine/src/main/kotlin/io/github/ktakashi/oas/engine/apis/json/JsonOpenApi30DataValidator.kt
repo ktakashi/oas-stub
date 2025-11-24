@@ -1,7 +1,5 @@
 package io.github.ktakashi.oas.engine.apis.json
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.AbstractApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiValidationResult
 import io.github.ktakashi.oas.engine.apis.failedResult
@@ -24,11 +22,14 @@ import io.swagger.v3.oas.models.media.UUIDSchema
 import java.io.IOException
 import java.util.Optional
 import java.util.regex.Pattern
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ArrayNode
 
-class JsonOpenApi30DataValidator(private val objectMapper: ObjectMapper,
+class JsonOpenApi30DataValidator(private val jsonMapper: JsonMapper,
                                  private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V30), JsonMediaSupport {
     override fun validate(input: ByteArray, schema: Schema<*>): ApiValidationResult = try {
-        checkSchema(objectMapper.readTree(input), "$", schema)
+        checkSchema(jsonMapper.readTree(input), "$", schema)
     } catch (e: IOException) {
         failedResult(e.message as String)
     }
@@ -75,7 +76,7 @@ class JsonOpenApi30DataValidator(private val objectMapper: ObjectMapper,
     } else failedResult("Not an object '$value'", property)
 
     private fun checkArray(value: JsonNode, property: String, schema: ArraySchema): ApiValidationResult = if (value.isArray) {
-        checkElements(value, property, schema, ::checkSchema)
+        checkElements(value as ArrayNode, property, schema, ::checkSchema)
     } else {
         failedResult("Not an array '$value'", property)
     }

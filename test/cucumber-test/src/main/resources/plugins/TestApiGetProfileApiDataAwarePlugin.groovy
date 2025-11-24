@@ -1,13 +1,14 @@
 package plugins
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
+import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.api.plugin.ApiPlugin
 import io.github.ktakashi.oas.api.plugin.PluginContext
-import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.test.models.Profile
+import tools.jackson.databind.json.JsonMapper
 
 class TestApiGetProfileApiDataAwarePlugin implements ApiPlugin {
-    def objectMapper = new ObjectMapper()
+    def objectMapper = new JsonMapper()
     @Override
     ResponseContext customize(PluginContext pluginContext) {
         def response = pluginContext.responseContext

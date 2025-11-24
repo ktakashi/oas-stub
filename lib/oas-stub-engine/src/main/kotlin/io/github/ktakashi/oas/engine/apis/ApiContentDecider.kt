@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.engine.apis
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
@@ -8,6 +7,7 @@ import io.swagger.v3.oas.models.media.Content
 import java.net.HttpURLConnection
 import java.util.Optional
 import org.slf4j.LoggerFactory
+import tools.jackson.databind.json.JsonMapper
 
 sealed interface ContentDecision
 // 201 can be defined without any content, so content can be optional
@@ -18,7 +18,7 @@ private val logger = LoggerFactory.getLogger(ApiContentDecider::class.java)
 private val contentType = Optional.of(APPLICATION_PROBLEM_JSON)
 
 class ApiContentDecider(private val validators: Set<ApiRequestValidator>,
-                        private val objectMapper: ObjectMapper) {
+                        private val jsonMapper: JsonMapper) {
     fun decideContent(requestContext: ApiContextAwareRequestContext, path: PathItem, operation: Operation): ContentDecision {
         val r = decideContentImpl(requestContext, path, operation)
         logger.debug("Request {}: decision -> {}", requestContext.apiPath, r)
@@ -44,12 +44,12 @@ class ApiContentDecider(private val validators: Set<ApiRequestValidator>,
                             ?.let { ContentFound(status.toInt(), Optional.ofNullable(it.content)) }
                             ?: ContentNotFound(DefaultResponseContext(
                                     status = status.toInt(),
-                                    content = result.toJsonProblemDetails(status.toInt(), objectMapper),
+                                    content = result.toJsonProblemDetails(status.toInt(), jsonMapper),
                                     contentType = contentType))
                 } ?: operation.responses["default"]?.let { ContentFound(baseStatus, Optional.ofNullable(it.content)) }
         ?: ContentNotFound(DefaultResponseContext(
                 status = HttpURLConnection.HTTP_BAD_REQUEST,
-                content = result.toJsonProblemDetails(baseStatus, objectMapper),
+                content = result.toJsonProblemDetails(baseStatus, jsonMapper),
                 contentType = contentType))
     }
 
