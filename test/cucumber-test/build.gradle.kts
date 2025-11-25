@@ -8,10 +8,7 @@ group = "$group.test"
 description = "OAS stub Cucumber test utilities"
 
 dependencies {
-    api(libs.rest.assured) {
-        exclude(group = "commons-codec")
-        exclude(group = "org.apache.groovy")
-    }
+    api(libs.bundles.ktor.client.ecosystem)
     implementation(libs.commons.codec)
     implementation(libs.groovy.xml)
     implementation(libs.groovy.json)

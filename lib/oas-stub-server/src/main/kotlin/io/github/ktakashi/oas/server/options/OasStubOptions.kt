@@ -287,8 +287,8 @@ internal constructor(internal val keyStore: KeyStore?,
     internal constructor(private val parent: OasStubServerOptions.Builder,
                          private var keyStore: KeyStore? = null,
                          private var keyAlias: String? = null,
+                         private var keyPassword: String? = null,
                          private var clientAuth: ClientAuth = ClientAuth.NONE,
-                         private var keyStorePassword: String? = null,
                          private var trustStore: KeyStore? = null) {
         /**
          * Sets the keystore for TLS key.
@@ -299,6 +299,11 @@ internal constructor(internal val keyStore: KeyStore?,
          * Sets the key alias to be used.
          */
         fun keyAlias(keyAlias: String) = apply { this.keyAlias = keyAlias }
+
+        /**
+         * Sets the key password for the TLS key.
+         */
+        fun keyPassword(keyPassword: String) = apply { this.keyPassword = keyPassword }
 
         /**
          * Specify client authentication
@@ -315,7 +320,7 @@ internal constructor(internal val keyStore: KeyStore?,
          */
         fun parent() = parent
 
-        internal fun build() = OasStubServerSSLOptions(keyStore, keyAlias, clientAuth, keyStorePassword, trustStore)
+        internal fun build() = OasStubServerSSLOptions(keyStore, keyAlias, clientAuth, keyPassword, trustStore)
     }
 
 }

@@ -32,9 +32,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation(libs.spring.web)
-    testImplementation(libs.rest.assured) {
-        exclude(group = "org.apache.groovy")
-    }
     testImplementation(libs.groovy.core)
     testImplementation(libs.groovy.json)
     testImplementation(libs.groovy.xml)

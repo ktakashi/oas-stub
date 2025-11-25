@@ -4,11 +4,17 @@ import io.github.ktakashi.oas.test.AutoConfigureOasStubServer
 import io.github.ktakashi.oas.test.OasStubServerPort
 import io.github.ktakashi.oas.test.OasStubTestService
 import io.github.ktakashi.oas.test.context
-import io.restassured.RestAssured
-import io.restassured.RestAssured.given
-import io.restassured.filter.log.RequestLoggingFilter
-import io.restassured.filter.log.ResponseLoggingFilter
-import java.net.URI
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -16,12 +22,14 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.ClassPathResource
+import org.springframework.test.web.client.match.MockRestRequestMatchers.header
 import org.springframework.web.util.UriTemplate
 import tools.jackson.databind.node.StringNode
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureOasStubServer(port = 0)
 class MetricsTest(@param:OasStubServerPort private val port: Int,
+                  @param:Autowired private val httpClient: HttpClient,
                   @param:Autowired private val oasStubTestService: OasStubTestService) {
     @BeforeEach
     fun init() {
@@ -43,9 +51,15 @@ class MetricsTest(@param:OasStubServerPort private val port: Int,
     @Test
     fun `test metrics endpoint`() {
         val ids = listOf(1, 2, 3, 4, 5, 400, 404)
-        ids.forEach { id ->
-            given().get(URI.create("http://localhost:$port/oas/petstore/v2/pets/$id"))
+        runBlocking {
+            ids.map { id ->
+                httpClient.get("http://localhost:$port/oas/petstore/v2/pets/$id") {
+                    contentType(ContentType.Application.Json)
+                }.bodyAsText()
+            }
         }
+        runBlocking { delay(100) }
+
         val metrics = oasStubTestService.getTestApiMetrics("petstore")
         assertEquals(5, metrics.byStatus(200).count())
         assertEquals(1, metrics.byStatus(400).count())
@@ -61,14 +75,19 @@ class MetricsTest(@param:OasStubServerPort private val port: Int,
 
     @Test
     fun `test records endpoint`() {
-        RestAssured.filters(RequestLoggingFilter(), ResponseLoggingFilter())
         val ids = listOf(1, 2, 3, 4, 5, 400, 404)
-        ids.forEach { id ->
-            given()
-                .header("Content-Type", "application/json")
-                .body("""{"name":"name-$id","tag":"tag-$id"}""")
-                .post(URI.create("http://localhost:$port/oas/petstore/v2/pets"))
+        val r = runBlocking {
+            ids.map { id ->
+                httpClient.post("http://localhost:$port/oas/petstore/v2/pets") {
+                    header("Content-Type", "application/json")
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"name":"name-$id","tag":"tag-$id"}""")
+                }.bodyAsText()
+            }
         }
+        // wait for records to be stored
+        runBlocking { delay(100) }
+
         val records = oasStubTestService.getTestApiRecords("petstore")
         assertEquals(ids.size, records.byStatus(200).count())
         assertEquals(ids.size, records.byMethod("POST").count())

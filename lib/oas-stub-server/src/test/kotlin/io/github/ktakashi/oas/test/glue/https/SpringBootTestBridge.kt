@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.test.glue.https
 
-import io.cucumber.java.BeforeAll
 import io.cucumber.spring.CucumberContextConfiguration
 import io.github.ktakashi.oas.server.OasStubServer
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
@@ -8,9 +7,12 @@ import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.test.cucumber.TestContext
 import io.github.ktakashi.oas.test.cucumber.TestContextSupplier
 import io.github.ktakashi.oas.test.cucumber.plugin.OasStubServerPlugin
-import io.restassured.RestAssured
-import io.restassured.config.SSLConfig
+import io.github.ktakashi.oas.test.ktor.createHttpClient
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import java.security.KeyStore
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.springframework.context.annotation.Bean
@@ -36,14 +38,12 @@ class SpringBootTestBridge: KoinComponent {
 
     @Bean @Lazy
     fun oasStubServer() = OasStubServerPlugin.server
-}
 
-@BeforeAll
-fun initialize() {
-    val server = OasStubServerPlugin.server
-    val ks = KeyStore.getInstance("JKS")
-    ks.load(null)
-    ks.setCertificateEntry("oas-stub", server.certificate())
-    val sslConfig = SSLConfig().trustStore(ks)
-    RestAssured.config = RestAssured.config().sslConfig(sslConfig)
+    @Bean @Lazy
+    fun httpClient(server: OasStubServer) = CIO.createHttpClient(server.keyStore())
+
+    private fun OasStubServer.keyStore() = KeyStore.getInstance("JKS").apply {
+        load(null)
+        setCertificateEntry("oas-stub", certificate())
+    }
 }

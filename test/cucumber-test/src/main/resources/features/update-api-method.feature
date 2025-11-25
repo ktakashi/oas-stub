@@ -14,9 +14,9 @@ Feature: Update single API by method
     And I get http status <check status>
     @v3 @petstore
     Examples:
-      | api           | plugin                       | method | path       | status | responseContentType | response              | check method | check content    | check content type | check status |
-      | /v2/pets      | PetStoreGetPetsPlugin.groovy | GET    | /v2/pets   | 200    | application/json    | $.size().toString()=1 | POST         | {"name": "Tama"} | application/json   | 200          |
-      | /v2/pets/{id} | PetStoreGetPetPlugin.groovy  | GET    | /v2/pets/1 | 200    | application/json    | id.toString()=1       | DELETE       |                  |                    | 204          |
+      | api           | plugin                       | method | path       | status | responseContentType | response  | check method | check content    | check content type | check status |
+      | /v2/pets      | PetStoreGetPetsPlugin.groovy | GET    | /v2/pets   | 200    | application/json    | #size()=1 | POST         | {"name": "Tama"} | application/json   | 200          |
+      | /v2/pets/{id} | PetStoreGetPetPlugin.groovy  | GET    | /v2/pets/1 | 200    | application/json    | id=1      | DELETE       |                  |                    | 204          |
 
   @update @method @options @single
   Scenario Outline: Update API options by method

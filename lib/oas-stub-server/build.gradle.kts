@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.snakeyaml)
     implementation(libs.bcpkix.jdk18on)
     implementation(libs.bcprov.jdk18on)
+    implementation(libs.netty.pkitesting)
 
     testImplementation(project(":test:cucumber-test"))
     testImplementation(libs.hazelcast)

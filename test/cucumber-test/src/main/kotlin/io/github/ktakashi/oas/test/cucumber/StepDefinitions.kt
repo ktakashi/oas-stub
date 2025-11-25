@@ -9,31 +9,36 @@ import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import io.github.ktakashi.oas.storages.apis.PersistentStorage
 import io.github.ktakashi.oas.storages.apis.SessionStorage
-import io.restassured.RestAssured
-import io.restassured.RestAssured.given
-import io.restassured.config.RedirectConfig
-import io.restassured.filter.log.RequestLoggingFilter
-import io.restassured.filter.log.ResponseLoggingFilter
-import io.restassured.http.ContentType
-import io.restassured.http.Header
-import io.restassured.http.Headers
-import io.restassured.response.Response
+import io.ktor.client.HttpClient
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.http.headers
 import java.io.IOException
 import java.net.URI
-import java.util.concurrent.Callable
-import java.util.concurrent.Executors
 import java.util.function.Supplier
 import kotlin.time.DurationUnit
 import kotlin.time.toTimeUnit
-import org.hamcrest.Matcher
-import org.hamcrest.Matchers.equalTo
-import org.hamcrest.Matchers.greaterThanOrEqualTo
-import org.hamcrest.Matchers.lessThanOrEqualTo
-import org.hamcrest.Matchers.matchesPattern
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.util.UriComponentsBuilder
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 
 
 data class TestContext(var applicationUrl: String,
@@ -41,10 +46,10 @@ data class TestContext(var applicationUrl: String,
                        var adminPrefix: String,
                        var apiDefinitionPath: String = "",
                        var apiName: String = "",
-                       var headers: MutableList<Header> = mutableListOf(),
-                       var response: Response? = null,
+                       var headers: MutableList<Pair<String, String>> = mutableListOf(),
+                       var response: HttpResponse? = null,
                        var responseTime: Long? = null) {
-    val responses = mutableListOf<Response>()
+    val responses = mutableListOf<HttpResponse>()
 }
 
 fun interface TestContextSupplier: Supplier<TestContext>
@@ -52,20 +57,17 @@ fun interface TestContextSupplier: Supplier<TestContext>
 @Suppress("UNCHECKED_CAST")
 class StepDefinitions(private val persistentStorage: PersistentStorage,
                       private val sessionStorage: SessionStorage,
+                      private val client: HttpClient,
                       private val testContextSupplier: TestContextSupplier) {
 
     private lateinit var testContext: TestContext
-    companion object {
-        init {
-            RestAssured.filters(RequestLoggingFilter(), ResponseLoggingFilter())
-        }
-    }
+    private val jsonMapper = JsonMapper.builder().findAndAddModules().build()
 
     @Before
     fun setup() {
         testContext = testContextSupplier.get()
         sessionStorage.clearApiMetrics()
-        RestAssured.config = RestAssured.config().redirect(RedirectConfig().followRedirects(false))
+        //RestAssured.config = RestAssured.config().redirect(RedirectConfig().followRedirects(false))
     }
 
     @ParameterType("yes|no")
@@ -88,7 +90,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     @Given("these HTTP headers")
     fun `these HTTP headers`(table: DataTable) {
         table.asMaps(String::class.java, String::class.java).forEach { m ->
-            testContext.headers.add(Header(m["name"] as String, m["value"] as String))
+            testContext.headers.add(m["name"] as String to m["value"] as String)
         }
     }
 
@@ -100,25 +102,31 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     @When("I create {string} API definition")
     fun `I create {string} API definition`(context: String) {
         persistentStorage.deleteApiDefinition(context)
-        createAPI(context, "classpath:${testContext.apiDefinitionPath}", ContentType.TEXT)
+        createAPI(context, "classpath:${testContext.apiDefinitionPath}", ContentType.Text.Plain)
     }
 
     @When("I create {string} API definition with {string}")
     fun iCreateApiDefinitionWithContent(context: String, configurations: String) {
-        createAPI(context, configurations, ContentType.JSON)
+        createAPI(context, configurations, ContentType.Application.Json)
     }
 
     private fun createAPI(context: String, configurations: String, contentType: ContentType) {
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(testContext.adminPrefix).pathSegment(context)
                 .build().toUri()
-        val response = given().contentType(contentType)
-                .body(maybeContent(configurations)?.let(::String))
-                .post(uri)
+        val response = runBlocking {
+            client.post(uri.toURL()) {
+                this.contentType(contentType)
+                setBody(maybeContent(configurations))
+            }
+        }
+
         testContext.apiName = context
         testContext.response = response
-        response.then().statusCode(201)
-                .and().header("Location", "/${context}")
+
+        assertEquals(HttpStatusCode.Created, response.status)
+        val location = response.headers["Location"] ?: error("Response location not found")
+        assertEquals("/${context}", location)
     }
 
     @When("I delete the API definition")
@@ -126,7 +134,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
                 .path(testContext.adminPrefix).pathSegment(testContext.apiName)
                 .build().toUri()
-        testContext.response = given().delete(uri)
+        testContext.response = runBlocking { client.delete(uri.toURL()) }
     }
 
     @And("I update API definition with {string} via {string} of content type {string}")
@@ -138,9 +146,12 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
                 .path(adminApi.path)
                 .query(adminApi.query)
                 .build().toUri()
-        testContext.response = given().contentType(contentType)
-                .body(maybeContent(value)?.let(::String))
-                .put(uri)
+        testContext.response = runBlocking {
+            client.put(uri.toURL()) {
+                this.contentType(ContentType.parse(contentType))
+                setBody(maybeContent(value))
+            }
+        }
     }
 
     @And("I get API definition via {string}")
@@ -152,7 +163,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
                 .path(adminApi.path)
                 .query(adminApi.query)
                 .build().toUri()
-        testContext.response = given().get(uri)
+        testContext.response = runBlocking { client.get(uri.toURL()) }
     }
 
     @And("I get metrics of {string}")
@@ -162,7 +173,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
             .pathSegment("metrics", context)
             .build()
             .toUri()
-        testContext.response = given().get(uri)
+        testContext.response = runBlocking { client.get(uri.toURL()) }
     }
 
     @Then("I get records of {string}")
@@ -172,7 +183,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
             .pathSegment("records", context)
             .build()
             .toUri()
-        testContext.response = given().get(uri)
+        testContext.response = runBlocking { client.get(uri.toURL()) }
     }
 
     @And("I update API {string} with {string} via {string} of content type {string}")
@@ -183,9 +194,12 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
                 .path(path)
                 .queryParam("api", api)
                 .build().toUri()
-        testContext.response = given().contentType(contentType)
-                .body(maybeContent(value))
-                .put(uri)
+        testContext.response = runBlocking {
+            client.put(uri.toURL()) {
+                this.contentType(ContentType.parse(contentType))
+                setBody(maybeContent(value))
+            }
+        }
     }
 
     @And("I update API {string} of {string} method with {string} via {string} of content type {string}")
@@ -197,9 +211,12 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
             .queryParam("api", api)
             .queryParam("method", method)
             .build().toUri()
-        testContext.response = given().contentType(contentType)
-            .body(maybeContent(value))
-            .put(uri)
+        testContext.response = runBlocking {
+            client.put(uri.toURL()) {
+                this.contentType(ContentType.parse(contentType))
+                setBody(maybeContent(value))
+            }
+        }
     }
 
     @And("I delete API {string} via {string}")
@@ -210,7 +227,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
                 .path(path)
                 .queryParam("api", api)
                 .build().toUri()
-        testContext.response = given().delete(uri)
+        testContext.response = runBlocking { client.delete(uri.toURL()) }
     }
 
     @Then("I delete all metrics")
@@ -220,7 +237,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
             .pathSegment("metrics")
             .build()
             .toUri()
-        testContext.response = given().delete(uri)
+        testContext.response = runBlocking { client.delete(uri.toURL()) }
     }
 
     @Then("I {string} to {string} with {string} as {string}")
@@ -230,21 +247,15 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
 
     @Then("I {string} to {string} with {string} as {string} for {int} times in {int} batches")
     fun iRequestToPathWithContentAsContentTypeForNTimes(method: String, path: String, content: String, contentType: String, count: Int, batch: Int) {
-        val filters = RestAssured.filters()
-        RestAssured.replaceFiltersWith(listOf())
-        val batchUnit = count / batch
-        val executor = Executors.newFixedThreadPool(batchUnit)
-        val responses = (1..batch).flatMap {
-            (1..batchUnit).map {
-                executor.submit(Callable {
+        val responses = runBlocking {
+            (1..count).map {
+                async {
                     requestApiInner(path, contentType, content, method)
-                })
-            }.map { it.get() }
+                }
+            }.awaitAll()
         }
-        executor.shutdown()
         testContext.responses.addAll(responses)
         testContext.response = testContext.responses.firstOrNull()
-        RestAssured.replaceFiltersWith(filters)
     }
 
 
@@ -262,11 +273,11 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
 
     private fun requestApi(path: String, contentType: String, content: String, method: String) {
         val start = System.currentTimeMillis()
-        testContext.response = requestApiInner(path, contentType, content, method)
+        testContext.response = runBlocking { requestApiInner(path, contentType, content, method) }
         testContext.responseTime = System.currentTimeMillis() - start
     }
 
-    private fun requestApiInner(path: String, contentType: String, content: String, method: String): Response {
+    private suspend fun requestApiInner(path: String, contentType: String, content: String, method: String): HttpResponse {
         val p = URI.create(path)
         val uri = UriComponentsBuilder.fromUriString(testContext.applicationUrl)
             .path(testContext.prefix)
@@ -275,27 +286,18 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
             .query(p.query)
             .build()
             .toUri()
-        val spec = given().also {
-            if (contentType.isNotBlank()) {
-                it.contentType(contentType)
-            }
-        }.headers(Headers(testContext.headers))
-
-        val body = maybeContent(content)?.let(::String)
-        return when (method.uppercase()) {
-            "GET" -> spec.get(uri)
-            "POST" -> spec.apply { body?.let { spec.body(body) } }.post(uri)
-            "PUT" -> spec.apply { body?.let { spec.body(body) } }.put(uri)
-            "DELETE" -> spec.delete(uri)
-            "PATCH" -> spec.apply { body?.let { spec.body(body) } }.patch(uri)
-            "OPTIONS" -> spec.options(uri)
-            else -> throw IllegalArgumentException("Not supported (yet?)")
+        return client.request(uri.toURL()) {
+            this.method = HttpMethod.parse(method)
+            contentType(ContentType.parse(contentType))
+            testContext.headers.forEach { (k, v) -> header(k, v) }
+            maybeContent(content)?.let(::setBody)
         }
     }
 
     @Then("I get http status {int}")
     fun iGetHttpStatus(status: Int) {
-        testContext.response?.then()?.statusCode(status) ?: throw IllegalStateException("No response")
+        val result = testContext.response?.status ?: error("No response")
+        assertEquals(HttpStatusCode.fromValue(status), result)
     }
 
     @Then("I save the response")
@@ -307,45 +309,79 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     fun theResponsesAreNotTheSame(areSame: Boolean) {
         assert(testContext.response != null) { "Response is null" }
         assert(testContext.responses.lastOrNull() != null) { "The previous response must be saved" }
-
-        assertEquals(areSame, testContext.responses.last().thenReturn().body.asByteArray().contentEquals(testContext.response!!.thenReturn().body.asByteArray()))
+        runBlocking {
+            val response = testContext.response?.bodyAsBytes()!!
+            assertEquals(areSame, testContext.responses.last().bodyAsBytes().contentEquals(response))
+        }
     }
 
     @Then("I get response header of {string} with {string}")
     fun iGetResponseHeaderOfWith(name: String, value: String) {
-        val matcher = if ("<null>" != value) equalTo(value) else equalTo(null)
-        testContext.response?.then()?.header(name, matcher) ?: throw IllegalStateException("no response")
+        val response = testContext.response
+        assert(response != null)
+        val headerValue = response!!.headers[name]
+        when (value) {
+            "<null>" -> assertTrue(headerValue == null)
+            else -> assertEquals(value, headerValue!!)
+
+        }
     }
 
     @Then("I get response JSON satisfies this {string}")
     fun iGetResponseJsonSatisfiesThis(condition: String) {
         if ("<null>" == condition) {
-            val body = testContext.response?.body() ?: throw IllegalStateException("no response")
-            val r = body.asByteArray()
+            val response = testContext.response ?: error("no response")
+            val r = runBlocking { response.bodyAsBytes() }
             assertEquals(0, r.size)
         } else {
-            val validatableResponse = testContext.response?.then()?: throw IllegalStateException("No response")
+            val validatableResponse = testContext.response ?: error("No response")
+            val node = runBlocking {
+                val body = validatableResponse.bodyAsBytes()
+                jsonMapper.readTree(body)
+            }
             condition.split(';').forEach { cond ->
-                val (path, matcher) = cond.lastIndexOf('=').let {
-                    if (it < 0) cond to equalTo(null)
-                    else cond.take(it) to checkMarker(cond.substring(it + 1))
+                val (path, value) = when (val hash = cond.indexOf('#')) {
+                    -1 -> when (val eq = cond.indexOf('=')) {
+                        -1 -> cond to { v -> v == null || v.isNull }
+                        else -> cond.take(eq) to checkMarker(cond.substring(eq + 1))
+                    }
+                    else -> cond.take(hash) to resolveDSL(cond.substring(hash + 1))
                 }
-                validatableResponse.body(path, matcher)
+                val normalized = path.replace('.', '/').replace("[", "").replace("]", "")
+                val v = node.at(if (normalized.isEmpty()) "" else "/$normalized")
+                assertTrue(value(v))
             }
         }
     }
 
     @Then("I get pattern of {string} as response")
     fun iGetPatternOfAsResponse(body: String) {
-        testContext.response?.then()?.body(matchesPattern(body)) ?: throw IllegalStateException("No response")
+        val response = testContext.response ?: error("No response")
+        val content = runBlocking { response.bodyAsText() }
+        assertTrue(Regex(body).matches(content))
     }
 
-    private fun checkMarker(value: String): Matcher<Any?> {
+    private fun resolveDSL(value: String): (JsonNode?) -> Boolean {
+        val eq = value.indexOf('=')
+        if (eq < 0) error("Invalid DSL: $value")
+        val func = value.take(eq)
+        val value = value.substring(eq + 1)
+        return when (func) {
+            "size()" -> { v -> v != null && v.isArray && v.size() == value.toInt() }
+            else -> error("Unsupported DSL function: $func")
+        }
+    }
+
+    private fun checkMarker(value: String): (JsonNode?) -> Boolean {
         return when (value) {
-            "<null>" -> equalTo(null)
-            "<uuid>" -> matchesPattern("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}") as Matcher<Any?>
-            "true", "false" -> equalTo(value.toBoolean())
-            else -> equalTo(value)
+            "<null>" -> { v -> v?.isNull ?: true }
+            "<uuid>" -> Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").let {
+                { v -> v != null && v.isString && it.matches(v.asString()) }
+            }
+            "true", "false" -> value.toBoolean().let {
+                { v -> v != null && v.isBoolean && v.asBoolean() == it }
+            }
+            else -> { v -> v != null && v.asString() == value }
         }
     }
 
@@ -353,13 +389,17 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
     @Then("I waited at least {long} {string}")
     fun `I waited at least {int} {string}`(duration: Long, unit: String) {
         val durationUnit = DurationUnit.valueOf(unit.uppercase())
-        testContext.response?.then()?.time(greaterThanOrEqualTo(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
+        val response = testContext.response ?: error("No response")
+        val time = response.responseTime.timestamp - response.requestTime.timestamp
+        assertTrue(time > durationUnit.toTimeUnit().toMillis(duration))
     }
 
     @Then("I waited at most {long} {string}")
     fun `I waited at most {int} {string}`(duration: Long, unit: String) {
         val durationUnit = DurationUnit.valueOf(unit.uppercase())
-        testContext.response?.then()?.time(lessThanOrEqualTo(duration), durationUnit.toTimeUnit()) ?: throw IllegalStateException("No response")
+        val response = testContext.response ?: error("No response")
+        val time = response.responseTime.timestamp - response.requestTime.timestamp
+        assertTrue(time <= durationUnit.toTimeUnit().toMillis(duration))
     }
 
     @Then("Reading response took at least {long} {string}")

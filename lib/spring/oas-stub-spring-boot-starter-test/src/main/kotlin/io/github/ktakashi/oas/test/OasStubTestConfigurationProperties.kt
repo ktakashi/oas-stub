@@ -75,6 +75,7 @@ data class OasStubTestProperties(
             server.ssl?.let {
                 it.keystore?.let { ks ->
                     ssl.keyAlias(ks.keyAlias)
+                        .keyPassword(ks.keyPassword)
                         .keyStore(ks.toKeyStore())
                 }
                 it.truststore?.let { ks ->

@@ -7,6 +7,8 @@ import io.github.ktakashi.oas.storages.apis.SessionStorage
 import io.github.ktakashi.oas.test.cucumber.TestContext
 import io.github.ktakashi.oas.test.cucumber.TestContextSupplier
 import io.github.ktakashi.oas.test.cucumber.plugin.OasStubServerPlugin
+import io.github.ktakashi.oas.test.ktor.createHttpClient
+import io.ktor.client.engine.cio.CIO
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.springframework.context.annotation.Bean
@@ -32,4 +34,7 @@ class SpringBootTestBridge: KoinComponent {
 
     @Bean @Lazy
     fun oasStubServer() = OasStubServerPlugin.server
+
+    @Bean
+    fun httpClient() = CIO.createHttpClient()
 }

@@ -12,8 +12,8 @@ Feature: Error cases
     And I get response JSON satisfies this '<response>'
     @v3 @petstore
     Examples:
-      | schema                   | context  | api      | plugin                                        | method | path     | content | contentType | status | responseContentType | response               |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets | classpath:/plugins/PetStoreErrorPlugin.groovy | GET    | /v1/pets |         |             | 200    | application/json    | $.size().toString()=10 |
+      | schema                   | context  | api      | plugin                                        | method | path     | content | contentType | status | responseContentType | response   |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets | classpath:/plugins/PetStoreErrorPlugin.groovy | GET    | /v1/pets |         |             | 200    | application/json    | #size()=10 |
 
   @error @failure @protocol
   Scenario Outline: Protocol error
