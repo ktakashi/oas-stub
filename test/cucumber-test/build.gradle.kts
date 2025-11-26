@@ -10,8 +10,6 @@ description = "OAS stub Cucumber test utilities"
 dependencies {
     api(libs.bundles.ktor.client.ecosystem)
     implementation(libs.commons.codec)
-    implementation(libs.groovy.xml)
-    implementation(libs.groovy.json)
     implementation(project(":lib:oas-stub-storage-api"))
     implementation(libs.spring.web)
     implementation(libs.jackson.databind.core)

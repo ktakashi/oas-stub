@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.0-RC2</version>
+        <version>4.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.ktakashi.oas.example</groupId>
@@ -25,9 +25,8 @@
         <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
         <cucumber.version>7.13.0</cucumber.version>
         <oas-stub.version>3.0.0-SNAPSHOT</oas-stub.version>
-        <!-- SpringBoot provides old version -->
-        <kotlin.version>2.2.0</kotlin.version>
         <rest-assured.version>5.5.6</rest-assured.version>
+        <groovy.version>4.0.29</groovy.version> <!-- rest assured requires this version -->
     </properties>
 
     <dependencyManagement>

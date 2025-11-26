@@ -22,7 +22,10 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.kotlin.stdlib)
     implementation(libs.jackson.databind.core)
-    implementation(libs.spring.boot.starter.mongodb)
+    implementation(libs.spring.boot.starter.mongodb) {
+        // must be explicitly provided
+        exclude(group = "org.mongodb", module = "mongodb-driver-sync")
+    }
     compileOnly(libs.mongodb.driver.sync)
 
     kapt(libs.spring.boot.configuration.processor)
