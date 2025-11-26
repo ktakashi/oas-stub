@@ -1,7 +1,5 @@
 package io.github.ktakashi.oas.storages.hazelcast
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.nio.serialization.ByteArraySerializer
 import io.github.ktakashi.oas.model.ApiDefinitions
@@ -10,6 +8,8 @@ import io.github.ktakashi.oas.storages.apis.SessionStorage
 import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.TimeUnit
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 
 class HazelcastStorage(private val objectMapper: ObjectMapper,
                        hazelcastInstance: HazelcastInstance,

@@ -25,7 +25,7 @@ import io.netty.handler.ssl.ClientAuth
 import io.netty.handler.ssl.SslContextBuilder
 import io.netty.handler.ssl.SslProvider
 import io.netty.handler.ssl.SupportedCipherSuiteFilter
-import io.netty.handler.ssl.util.SelfSignedCertificate
+import io.netty.pkitesting.CertificateBuilder
 import java.net.URI
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -56,7 +56,10 @@ class OasStubServer(options: OasStubOptions) {
     companion object {
         private var koinInitialized: Boolean = false
         @JvmStatic
-        private val selfSignedCertificate = SelfSignedCertificate()
+        private val selfSignedCertificate = CertificateBuilder()
+            .subject("CN=localhost")
+            .setIsCertificateAuthority(true)
+            .buildSelfSigned()
     }
     private var initialized = false
     private val builderCreators: Set<(OasStubStubOptions) -> OasStubRoutesBuilder> = setOf(::OasStubAdminRoutesBuilder, ::OasStubMetricsRoutesBuilder, ::OasStubRecordsRoutesBuilder)
@@ -105,7 +108,7 @@ class OasStubServer(options: OasStubOptions) {
                     null
                 }
             } ?: selfSignedCertificate.let {
-                it.cert() to it.key()
+                it.certificate to it.keyPair.private
             }
             reloadStaticStub()
             certificate = cert.first

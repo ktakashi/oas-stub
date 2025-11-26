@@ -1,15 +1,15 @@
 package io.github.ktakashi.oas.engine.apis.json
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.JsonSchema
 import io.swagger.v3.oas.models.media.Schema
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.ObjectNode
 
-class JsonOpenApi31DataPopulator(objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, JsonApiDataPopulator(objectMapper, SpecVersion.V31) {
+class JsonOpenApi31DataPopulator(jsonMapper: JsonMapper): JsonMediaSupport, ApiAnyDataPopulator, JsonApiDataPopulator(jsonMapper, SpecVersion.V31) {
     override fun populateNode(schema: Schema<*>): JsonNode = when {
         schema.anyOf != null && schema.anyOf.isNotEmpty() -> populateNode(schema.anyOf[0] as JsonSchema)
         schema.oneOf != null && schema.oneOf.isNotEmpty() -> populateNode(schema.oneOf[0] as JsonSchema)
@@ -24,7 +24,7 @@ class JsonOpenApi31DataPopulator(objectMapper: ObjectMapper): JsonMediaSupport, 
         "boolean" -> populateBooleanNode(schema)
         "array" -> populateArrayNode(schema)
         "object" -> populateObjectNode(schema)
-        "any" -> ObjectNode(objectMapper.nodeFactory) // let's make it an empty object then
+        "any" -> ObjectNode(jsonMapper.nodeFactory) // let's make it an empty object then
         else -> NullNode.instance
     }
 }

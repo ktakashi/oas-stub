@@ -1,9 +1,5 @@
 package io.github.ktakashi.oas.engine.apis
 
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import io.github.ktakashi.oas.engine.apis.json.guessType
 import io.github.ktakashi.oas.engine.paths.findMatchingPath
 import io.swagger.v3.oas.models.OpenAPI
@@ -18,6 +14,10 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.Optional
 import org.glassfish.jersey.uri.UriTemplate
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.JsonNodeFactory
 
 data class ValidationDetail(val message: String, val property: Optional<String> = Optional.empty())
 enum class ApiValidationResultType {
@@ -40,15 +40,15 @@ data class ApiValidationResult(val resultType: ApiValidationResultType,
         get() = resultType == ApiValidationResultType.SUCCESS
     fun merge(other: ApiValidationResult) =
             ApiValidationResult(resultType.merge(other.resultType),validationDetails + other.validationDetails)
-    fun toJsonProblemDetails(status: Int, objectMapper: ObjectMapper): Optional<ByteArray> = try {
+    fun toJsonProblemDetails(status: Int, jsonMapper: JsonMapper): Optional<ByteArray> = try {
         if (isValid) {
             Optional.empty()
         } else {
             val invalidParams = validationDetails.map { v -> InvalidParams(v.property.orElse("N/A"), v.message) }
             val details = JsonProblemDetails("validation-error", "Validation error", status, invalidParams)
-            Optional.of(objectMapper.writeValueAsBytes(details))
+            Optional.of(jsonMapper.writeValueAsBytes(details))
         }
-    } catch (e: JsonProcessingException) {
+    } catch (_: JacksonException) {
         Optional.empty()
     }
 }
@@ -137,14 +137,14 @@ private fun convertToJsonNode(s: String?, schema: Schema<*>) = s?.let {
         "integer" -> try {
             JsonNodeFactory.instance.numberNode(BigInteger(s))
         } catch (e: Exception) {
-            JsonNodeFactory.instance.textNode(s)
+            JsonNodeFactory.instance.stringNode(s)
         }
         "number" -> try {
             JsonNodeFactory.instance.numberNode(BigDecimal(s))
         } catch (e: Exception) {
-            JsonNodeFactory.instance.textNode(s)
+            JsonNodeFactory.instance.stringNode(s)
         }
-        else -> JsonNodeFactory.instance.textNode(s)
+        else -> JsonNodeFactory.instance.stringNode(s)
     }
 } ?: JsonNodeFactory.instance.nullNode()
 

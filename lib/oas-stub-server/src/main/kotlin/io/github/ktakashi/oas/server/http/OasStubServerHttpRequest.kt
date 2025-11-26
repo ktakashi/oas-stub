@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.server.http
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.api.http.Connection
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.QueryStringDecoder
@@ -10,6 +9,7 @@ import java.net.URI
 import reactor.core.publisher.Mono
 import reactor.netty.http.server.HttpServerRequest
 import reactor.netty.http.server.HttpServerResponse
+import tools.jackson.databind.json.JsonMapper
 
 private typealias NConnection = reactor.netty.Connection
 
@@ -21,7 +21,7 @@ internal class OasStubServerConnection(private val connection: NConnection): Con
 
 internal open class OasStubServerHttpRequest(private val request: HttpServerRequest,
                                              private val response: HttpServerResponse,
-                                             private val objectMapper: ObjectMapper): RouterHttpRequest {
+                                             private val jsonMapper: JsonMapper): RouterHttpRequest {
     private val uri = URI.create(request.uri())
     private val qp by lazy { QueryStringDecoder(request.uri()).parameters() }
     override val connection by lazy { OasStubServerConnection(request as NConnection) }
@@ -55,8 +55,8 @@ internal open class OasStubServerHttpRequest(private val request: HttpServerRequ
         .asInputStream()
         .switchIfEmpty(Mono.just(InputStream.nullInputStream()))
 
-    override fun <T> bodyToMono(type: Class<T>): Mono<T> = bodyToInputStream()
-        .map { objectMapper.readValue(it, type) }
+    override fun <T: Any> bodyToMono(type: Class<T>): Mono<T> = bodyToInputStream()
+        .map { jsonMapper.readValue(it, type) }
 
     override fun responseBuilder(): HttpRouterResponseBuilder = OasStubServerResponseBuilder(response)
 }

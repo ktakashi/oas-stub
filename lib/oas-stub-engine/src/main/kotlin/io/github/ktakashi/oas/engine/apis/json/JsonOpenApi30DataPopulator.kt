@@ -1,8 +1,5 @@
 package io.github.ktakashi.oas.engine.apis.json
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.NullNode
 import io.github.ktakashi.oas.engine.apis.ApiAnyDataPopulator
 import io.swagger.v3.oas.models.SpecVersion
 import io.swagger.v3.oas.models.media.ArraySchema
@@ -11,8 +8,11 @@ import io.swagger.v3.oas.models.media.ComposedSchema
 import io.swagger.v3.oas.models.media.IntegerSchema
 import io.swagger.v3.oas.models.media.NumberSchema
 import io.swagger.v3.oas.models.media.Schema
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.NullNode
 
-class JsonOpenApi30DataPopulator(objectMapper: ObjectMapper): JsonMediaSupport, ApiAnyDataPopulator, JsonApiDataPopulator(objectMapper, SpecVersion.V30) {
+class JsonOpenApi30DataPopulator(jsonMapper: JsonMapper): JsonMediaSupport, ApiAnyDataPopulator, JsonApiDataPopulator(jsonMapper, SpecVersion.V30) {
     override fun populateNode(schema: Schema<*>): JsonNode = when (schema) {
         is ComposedSchema -> when {
             schema.anyOf != null && schema.anyOf.isNotEmpty() -> populateNode(schema.anyOf[0])

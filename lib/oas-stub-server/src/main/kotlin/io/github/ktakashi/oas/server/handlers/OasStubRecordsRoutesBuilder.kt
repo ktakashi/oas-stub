@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.server.handlers
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.APPLICATION_JSON
 import io.github.ktakashi.oas.engine.apis.APPLICATION_PROBLEM_JSON
 import io.github.ktakashi.oas.engine.apis.record.ApiRecorder
@@ -12,10 +11,11 @@ import java.util.Optional
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import reactor.core.publisher.Mono
+import tools.jackson.databind.json.JsonMapper
 
 class OasStubRecordsRoutesBuilder(private val options: OasStubStubOptions): OasStubRoutesBuilder, KoinComponent {
     private val apiRecorder by inject<ApiRecorder>()
-    private val objectMapper by inject<ObjectMapper>()
+    private val jsonMapper by inject<JsonMapper>()
 
     override fun build(routes: OasStubRoutes) {
         if (options.enableRecord) {
@@ -63,7 +63,7 @@ class OasStubRecordsRoutesBuilder(private val options: OasStubStubOptions): OasS
     private fun Optional<ByteArray>.tryStringify(contentType: String) = if (contentType.startsWith("text/")) {
         map { String(it) }
     } else if (contentType.startsWith(APPLICATION_JSON) || contentType.endsWith(APPLICATION_PROBLEM_JSON)) {
-        map { objectMapper.readTree(it) }
+        map { jsonMapper.readTree(it) }
     } else {
         this
     }

@@ -1,11 +1,11 @@
 package io.github.ktakashi.oas.api.plugin
 
-import com.fasterxml.jackson.databind.ObjectReader
-import com.fasterxml.jackson.databind.ObjectWriter
 import io.github.ktakashi.oas.api.http.RequestContext
 import io.github.ktakashi.oas.api.http.ResponseContext
 import io.github.ktakashi.oas.api.storage.Storage
 import java.util.Optional
+import tools.jackson.databind.ObjectReader
+import tools.jackson.databind.ObjectWriter
 
 /**
  * Plugin context
@@ -34,14 +34,14 @@ interface PluginContext {
     /**
      * Default [ObjectReader]
      *
-     * This is derived the stub application [ObjectMapper]
+     * This is derived the stub application [JsonMapper]
      */
     val objectReader: ObjectReader
 
     /**
      * Default [ObjectWriter]
      *
-     * This is derived the stub application [ObjectMapper]
+     * This is derived the stub application [JsonMapper]
      */
     val objectWriter: ObjectWriter
 }

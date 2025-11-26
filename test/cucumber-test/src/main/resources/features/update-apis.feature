@@ -33,7 +33,7 @@ Feature: Update APIs
     Then I get http status 200
     And I get API definition via '/headers'
     Then I get http status 200
-    And I get response JSON satisfies this 'request.Request-ID[0]=<uuid>;response.X-Trace-ID[0]=trace-id'
+    And I get response JSON satisfies this 'request/Request-ID/0=<uuid>;response/X-Trace-ID/0=trace-id'
     Then I 'GET' to '<path>' with '' as ''
     Then I get http status 200
     And I get response header of 'X-Trace-ID' with 'trace-id'

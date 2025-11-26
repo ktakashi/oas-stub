@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.spring.web)
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.boot.test.autoconfigure)
+    implementation(libs.spring.boot.starter.jackson)
     implementation(libs.annotation.api)
     implementation(libs.kotlin.stdlib)
     implementation(libs.koin.core)
@@ -31,11 +32,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation(libs.spring.web)
-    testImplementation(libs.rest.assured) {
-        exclude(group = "org.apache.groovy")
-    }
-    testImplementation(libs.groovy.core)
-    testImplementation(libs.groovy.json)
-    testImplementation(libs.groovy.xml)
+    testImplementation(project(":test:cucumber-test")) // for TestHttpClient
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

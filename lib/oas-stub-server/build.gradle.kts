@@ -17,10 +17,10 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(libs.projectreactor.reactor.core)
     implementation(libs.jackson.module.kotlin)
-    implementation(libs.jackson.datatype.jdk8)
     implementation(libs.snakeyaml)
     implementation(libs.bcpkix.jdk18on)
     implementation(libs.bcprov.jdk18on)
+    implementation(libs.netty.pkitesting)
 
     testImplementation(project(":test:cucumber-test"))
     testImplementation(libs.hazelcast)

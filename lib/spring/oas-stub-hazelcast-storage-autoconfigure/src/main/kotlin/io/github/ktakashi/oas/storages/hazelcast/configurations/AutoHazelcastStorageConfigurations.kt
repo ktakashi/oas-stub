@@ -2,12 +2,10 @@ package io.github.ktakashi.oas.storages.hazelcast.configurations
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.client.config.ClientFailoverConfig
-import com.hazelcast.client.impl.connection.tcp.RoutingMode
+import com.hazelcast.client.config.RoutingMode
 import com.hazelcast.config.SerializerConfig
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.nio.serialization.Serializer
@@ -36,6 +34,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 
 
 @AutoConfiguration

@@ -30,12 +30,12 @@ Feature: Create APIs from OAS file
     And I get http status 204
     @v3 @petstore
     Examples:
-      | schema                   | method | path             | content | contentType | status | responseContentType | response               |
-      | /schema/v3/petstore.yaml | GET    | /v1/pets         |         |             | 200    | application/json    | $.size().toString()=10 |
-      | /schema/v3/petstore.yaml | GET    | /v1/pets/1       |         |             | 200    | application/json    | id.toString()=0        |
-      | /schema/v3/petstore.yaml | POST   | /v1/pets         |         |             | 201    | <null>              | <null>                 |
-      | /schema/v3/petstore.yaml | GET    | /v1/pets?limit=1 |         |             | 200    | application/json    | $.size().toString()=10 |
-      | /schema/v3/petstore.yaml | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code.toString()=0      |
+      | schema                   | method | path             | content | contentType | status | responseContentType | response   |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets         |         |             | 200    | application/json    | #size()=10 |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets/1       |         |             | 200    | application/json    | id=0       |
+      | /schema/v3/petstore.yaml | POST   | /v1/pets         |         |             | 201    | <null>              | <null>     |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets?limit=1 |         |             | 200    | application/json    | #size()=10 |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code=0     |
     @v3 @petstore-extended
     Examples:
       | schema                            | method | path          | content                        | contentType      | status | responseContentType | response       |
@@ -46,18 +46,18 @@ Feature: Create APIs from OAS file
       | /schema/v3/petstore-extended.yaml | DELETE | /v2/pets/tama |                                |                  | 400    | application/json    | message=string |
     @v3_1 @petstore
     Examples:
-      | schema                     | method | path             | content | contentType | status | responseContentType | response               |
-      | /schema/v3_1/petstore.yaml | GET    | /v1/pets         |         |             | 200    | application/json    | $.size().toString()=10 |
-      | /schema/v3_1/petstore.yaml | GET    | /v1/pets/1       |         |             | 200    | application/json    | id.toString()=0        |
-      | /schema/v3_1/petstore.yaml | POST   | /v1/pets         |         |             | 201    | <null>              | <null>                 |
-      | /schema/v3_1/petstore.yaml | GET    | /v1/pets?limit=1 |         |             | 200    | application/json    | $.size().toString()=10 |
-      | /schema/v3_1/petstore.yaml | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code.toString()=0      |
+      | schema                     | method | path             | content | contentType | status | responseContentType | response   |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets         |         |             | 200    | application/json    | #size()=10 |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets/1       |         |             | 200    | application/json    | id=0       |
+      | /schema/v3_1/petstore.yaml | POST   | /v1/pets         |         |             | 201    | <null>              | <null>     |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets?limit=1 |         |             | 200    | application/json    | #size()=10 |
+      | /schema/v3_1/petstore.yaml | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code=0     |
     @v2 @petstore
     Examples:
-      | schema                   | method | path       | content | contentType | status | responseContentType | response              |
-      | /schema/v2/petstore.yaml | GET    | /v1/pets   |         |             | 200    | application/json    | $.size().toString()=1 |
-      | /schema/v2/petstore.yaml | GET    | /v1/pets/2 |         |             | 200    | application/json    | [0].id.toString()=0   |
-      | /schema/v2/petstore.yaml | POST   | /v1/pets   |         |             | 201    | <null>              | <null>                |
+      | schema                   | method | path       | content | contentType | status | responseContentType | response  |
+      | /schema/v2/petstore.yaml | GET    | /v1/pets   |         |             | 200    | application/json    | #size()=1 |
+      | /schema/v2/petstore.yaml | GET    | /v1/pets/2 |         |             | 200    | application/json    | [0]/id=0  |
+      | /schema/v2/petstore.yaml | POST   | /v1/pets   |         |             | 201    | <null>              | <null>    |
     @v2 @uber
     Examples:
       | schema               | method | path                                                       | content | contentType | status | responseContentType | response              |
@@ -85,9 +85,9 @@ Feature: Create APIs from OAS file
     And I get http status 200
     @v3 @petstore
     Examples:
-      | schema                   | method | path             | status |
-      | /schema/v3/petstore.yaml | GET    | /v1/pets         | 200    |
-      | /schema/v3/petstore.yaml | GET    | /v1/pets/1       | 200    |
+      | schema                   | method | path       | status |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets   | 200    |
+      | /schema/v3/petstore.yaml | GET    | /v1/pets/1 | 200    |
 
   @deletion
   Scenario Outline: Delete Stub APIs

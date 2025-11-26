@@ -1,6 +1,5 @@
 package io.github.ktakashi.oas.server.handlers
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.api.http.HttpRequest
 import io.github.ktakashi.oas.api.http.HttpResponse
 import io.github.ktakashi.oas.api.http.ResponseContext
@@ -27,6 +26,7 @@ import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
 import reactor.netty.http.server.HttpServerRequest
 import reactor.netty.http.server.HttpServerResponse
+import tools.jackson.databind.json.JsonMapper
 
 private val logger = LoggerFactory.getLogger(OasStubApiHandler::class.java)
 
@@ -34,13 +34,13 @@ open class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpS
     private val apiExecutionService by inject<ApiExecutionService>()
     private val apiObserver by inject<ApiObserver>()
     private val apiDelayService by inject<ApiDelayService>()
-    private val objectMapper by inject<ObjectMapper>()
+    private val jsonMapper by inject<JsonMapper>()
 
     override fun apply(request: HttpServerRequest, response: HttpServerResponse): Publisher<Void> {
         logger.debug("Request {} {}", request.method(), request.uri())
         val now = OffsetDateTime.now()
         val ref = AtomicReference<ApiContext>()
-        val newRequest = newOasStubServerHttpRequest(request, response, objectMapper)
+        val newRequest = newOasStubServerHttpRequest(request, response, jsonMapper)
         val newResponse = newOasStubServerHttpResponse(response)
 
         return apiExecutionService.getApiContext(newRequest)
@@ -70,8 +70,8 @@ open class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpS
     protected open fun newOasStubServerHttpResponse(response: HttpServerResponse): HttpResponse =
         OasStubServerHttpResponse(response)
 
-    protected open fun newOasStubServerHttpRequest(request: HttpServerRequest, response: HttpServerResponse, objectMapper: ObjectMapper): HttpRequest =
-        OasStubServerHttpRequest(request, response, objectMapper)
+    protected open fun newOasStubServerHttpRequest(request: HttpServerRequest, response: HttpServerResponse, jsonMapper: JsonMapper): HttpRequest =
+        OasStubServerHttpRequest(request, response, jsonMapper)
 
     private fun report(context: ApiContext, request: HttpServerRequest, response: ResponseContext, start: OffsetDateTime, e: Throwable? = null) {
         fun rec() {
@@ -89,14 +89,14 @@ open class OasStubApiHandler: KoinComponent, BiFunction<HttpServerRequest, HttpS
 }
 
 class OasStubForwardingApiHandler(private val options: OasStubStubOptions): OasStubApiHandler() {
-    override fun newOasStubServerHttpRequest(request: HttpServerRequest, response: HttpServerResponse, objectMapper: ObjectMapper): HttpRequest =
-        OasStubServerForwardingHttpRequest(options, request, response, objectMapper)
+    override fun newOasStubServerHttpRequest(request: HttpServerRequest, response: HttpServerResponse, jsonMapper: JsonMapper): HttpRequest =
+        OasStubServerForwardingHttpRequest(options, request, response, jsonMapper)
 }
 
 internal class OasStubServerForwardingHttpRequest(private val options: OasStubStubOptions,
                                                   request: HttpServerRequest,
                                                   response: HttpServerResponse,
-                                                  objectMapper: ObjectMapper): OasStubServerHttpRequest(request, response, objectMapper) {
+                                                  jsonMapper: JsonMapper): OasStubServerHttpRequest(request, response, jsonMapper) {
     private val resolvedURI: String? by lazy {
         val context = ForwardingContext(this, super.requestURI, options.stubPath)
         options.forwardingResolvers.asSequence().mapNotNull { it.resolveRequestUri(context) }.firstOrNull()

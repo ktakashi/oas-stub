@@ -1,13 +1,5 @@
 package io.github.ktakashi.oas.engine.apis.json
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.NumericNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
 import io.github.ktakashi.oas.engine.apis.AbstractApiDataValidator
 import io.github.ktakashi.oas.engine.apis.ApiValidationResult
 import io.github.ktakashi.oas.engine.apis.failedResult
@@ -20,6 +12,14 @@ import io.swagger.v3.oas.models.media.Schema
 import java.io.IOException
 import java.util.Optional
 import java.util.regex.Pattern
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.NumericNode
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.databind.node.StringNode
 
 class JsonOpenApi31DataValidator(private val objectMapper: ObjectMapper,
                                  private val validators: Set<Validator<Any>>) : AbstractApiDataValidator<JsonNode>(SpecVersion.V31), JsonMediaSupport {
@@ -49,7 +49,7 @@ class JsonOpenApi31DataValidator(private val objectMapper: ObjectMapper,
     private fun checkJsonSchema(value: JsonNode, property: String, schema: JsonSchema): ApiValidationResult = when (value) {
         is ObjectNode -> checkObject(value, property, schema)
         is ArrayNode -> checkArray(value, property, schema)
-        is TextNode -> checkString(value, property, schema)
+        is StringNode -> checkString(value, property, schema)
         is BooleanNode -> checkBoolean(value, property, schema)
         is NumericNode -> checkNumber(value, property, schema)
         is NullNode -> checkNull(value, property, schema)
@@ -68,7 +68,7 @@ class JsonOpenApi31DataValidator(private val objectMapper: ObjectMapper,
         success
     } else failedResult("Not a boolean '$value'", property)
 
-    private fun checkString(value: TextNode, property: String, schema: JsonSchema): ApiValidationResult = if (hasType("string", schema)) {
+    private fun checkString(value: StringNode, property: String, schema: JsonSchema): ApiValidationResult = if (hasType("string", schema)) {
         checkText(value, property, schema, validators) { _, textValue ->
             schema.format?.let {
                 StringValidationContext(textValue, it)

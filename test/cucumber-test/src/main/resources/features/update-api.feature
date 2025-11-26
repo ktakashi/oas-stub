@@ -12,11 +12,11 @@ Feature: Update single API
     And I get response JSON satisfies this '<response>'
     @v3 @petstore
     Examples:
-      | schema                   | context  | api              | plugin                                          | method | path       | content | contentType | status | responseContentType | response              |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets         | classpath:/plugins/PetStoreGetPetsPlugin.groovy | GET    | /v1/pets   |         |             | 200    | application/json    | $.size().toString()=1 |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/1 |         |             | 200    | application/json    | id.toString()=1       |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id.toString()=0       |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets/{petId} | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id.toString()=1       |
+      | schema                   | context  | api              | plugin                                          | method | path       | content | contentType | status | responseContentType | response  |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets         | classpath:/plugins/PetStoreGetPetsPlugin.groovy | GET    | /v1/pets   |         |             | 200    | application/json    | #size()=1 |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/1 |         |             | 200    | application/json    | id=1      |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id=0      |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/{petId} | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id=1      |
 
   @update @plugin @single @error
   Scenario Outline: Update API plugin with non existing API
@@ -47,11 +47,11 @@ Feature: Update single API
     And I get response JSON satisfies this '<response>'
     @v3 @petstore
     Examples:
-      | schema                   | context  | api              | plugin                                          | method | path       | content | contentType | status | responseContentType | response               |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets         | classpath:/plugins/PetStoreGetPetsPlugin.groovy | GET    | /v1/pets   |         |             | 200    | application/json    | $.size().toString()=10 |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/1 |         |             | 200    | application/json    | id.toString()=0        |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id.toString()=0        |
-      | /schema/v3/petstore.yaml | petstore | /v1/pets/{petId} | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id.toString()=0        |
+      | schema                   | context  | api              | plugin                                          | method | path       | content | contentType | status | responseContentType | response   |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets         | classpath:/plugins/PetStoreGetPetsPlugin.groovy | GET    | /v1/pets   |         |             | 200    | application/json    | #size()=10 |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/1 |         |             | 200    | application/json    | id=0       |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/1       | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id=0       |
+      | /schema/v3/petstore.yaml | petstore | /v1/pets/{petId} | classpath:/plugins/PetStoreGetPetPlugin.groovy  | GET    | /v1/pets/2 |         |             | 200    | application/json    | id=0       |
 
   @update @options @single
   Scenario Outline: Update single API options

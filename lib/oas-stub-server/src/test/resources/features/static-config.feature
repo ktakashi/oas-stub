@@ -1,4 +1,5 @@
 Feature: Static Stub configuration
+
   @static
   Scenario Outline: Create Stub APIs
     Given this static stub 'petstore-static'
@@ -8,10 +9,10 @@ Feature: Static Stub configuration
     And I get response JSON satisfies this '<response>'
     Then I get API definition via ''
     Examples:
-      | method | path             | content | contentType | status | responseContentType | response               |
-      | GET    | /v1/pets         |         |             | 200    | application/json    | $.size().toString()=10 |
-      | GET    | /v1/pets/1       |         |             | 200    | application/json    | id.toString()=1        |
-      | GET    | /v1/pets/2       |         |             | 200    | application/json    | id.toString()=1        |
-      | POST   | /v1/pets         |         |             | 201    | <null>              | <null>                 |
-      | GET    | /v1/pets?limit=1 |         |             | 200    | application/json    | $.size().toString()=10 |
-      | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code.toString()=0      |
+      | method | path             | content | contentType | status | responseContentType | response   |
+      | GET    | /v1/pets         |         |             | 200    | application/json    | #size()=10 |
+      | GET    | /v1/pets/1       |         |             | 200    | application/json    | id=1      |
+      | GET    | /v1/pets/2       |         |             | 200    | application/json    | id=1      |
+      | POST   | /v1/pets         |         |             | 201    | <null>              | <null>     |
+      | GET    | /v1/pets?limit=1 |         |             | 200    | application/json    | #size()=10 |
+      | GET    | /v1/pets?limit=a |         |             | 400    | application/json    | code=0    |

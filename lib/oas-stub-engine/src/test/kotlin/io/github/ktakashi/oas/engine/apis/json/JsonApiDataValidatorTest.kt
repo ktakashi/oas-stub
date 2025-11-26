@@ -1,7 +1,5 @@
 package io.github.ktakashi.oas.engine.apis.json
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ktakashi.oas.engine.apis.ApiDataValidator
 import io.github.ktakashi.oas.engine.readBinaryContent
 import io.github.ktakashi.oas.engine.readStringContent
@@ -19,10 +17,12 @@ import org.junit.jupiter.params.aggregator.ArgumentsAggregationException
 import org.junit.jupiter.params.aggregator.ArgumentsAggregator
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.platform.commons.util.Preconditions
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 
 class JsonApiDataValidatorTest {
-    private val jsonApi30DataValidator = JsonOpenApi30DataValidator(ObjectMapper(), setOf())
-    private val jsonApi31DataValidator = JsonOpenApi31DataValidator(ObjectMapper(), setOf())
+    private val jsonApi30DataValidator = JsonOpenApi30DataValidator(JsonMapper(), setOf())
+    private val jsonApi31DataValidator = JsonOpenApi31DataValidator(JsonMapper(), setOf())
     private val openApiV3Parser = OpenAPIV3Parser()
     private val swaggerConverter = SwaggerConverter()
     private val parserOptions = ParseOptions().also {
