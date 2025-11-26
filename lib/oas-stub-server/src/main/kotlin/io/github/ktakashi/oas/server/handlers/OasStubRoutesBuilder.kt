@@ -107,10 +107,10 @@ class ContextOasStubRoutes
 internal constructor(private val context: String,
                      private val routes: OasStubRoutes,
                      koin: Koin): (ContextOasStubRoutes.() -> Unit) -> Unit {
-    private val apiRegistrationService by koin.inject<ApiRegistrationService>()
-    private val jsonMapper by koin.inject<JsonMapper>()
-    private val delayService by koin.inject<ApiDelayService>()
-    private val failureService by koin.inject<ApiFailureService>()
+    private val apiRegistrationService = koin.get<ApiRegistrationService>()
+    private val jsonMapper = koin.get<JsonMapper>()
+    private val delayService = koin.get<ApiDelayService>()
+    private val failureService = koin.get<ApiFailureService>()
 
     /**
      * GET route

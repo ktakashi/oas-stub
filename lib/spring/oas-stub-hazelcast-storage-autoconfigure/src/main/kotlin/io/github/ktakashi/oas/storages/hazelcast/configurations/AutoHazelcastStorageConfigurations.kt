@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.client.config.ClientFailoverConfig
-import com.hazelcast.client.impl.connection.tcp.RoutingMode
+import com.hazelcast.client.config.RoutingMode
 import com.hazelcast.config.SerializerConfig
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.nio.serialization.Serializer

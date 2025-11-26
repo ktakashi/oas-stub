@@ -349,7 +349,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
                 }
                 val normalized = path.replace('.', '/').replace("[", "").replace("]", "")
                 val v = node.at(if (normalized.isEmpty()) "" else "/$normalized")
-                assertTrue(value(v))
+                assertTrue(value(v), "$path = $v")
             }
         }
     }
@@ -372,9 +372,12 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
         }
     }
 
+    val JsonNode?.isNullOrMissing: Boolean
+        get() = this == null || this.isNull || this.isMissingNode
+
     private fun checkMarker(value: String): (JsonNode?) -> Boolean {
         return when (value) {
-            "<null>" -> { v -> v?.isNull ?: true }
+            "<null>" -> { v -> v.isNullOrMissing }
             "<uuid>" -> Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").let {
                 { v -> v != null && v.isString && it.matches(v.asString()) }
             }

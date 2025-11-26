@@ -1,30 +1,25 @@
 package io.github.ktakashi.oas.test.cucumber.plugins
 
-import de.flapdoodle.embed.mongo.distribution.Version
-import de.flapdoodle.embed.mongo.transitions.Mongod
-import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess
-import de.flapdoodle.reverse.TransitionWalker
 import io.cucumber.plugin.EventListener
 import io.cucumber.plugin.event.EventPublisher
 import io.cucumber.plugin.event.TestRunFinished
 import io.cucumber.plugin.event.TestRunStarted
+import org.testcontainers.mongodb.MongoDBContainer
 
 class MongodbPlugin: EventListener {
     companion object {
-        lateinit var transitions: TransitionWalker.ReachedState<RunningMongodProcess>
+        val MONGO_CONTAINER = MongoDBContainer("mongodb/mongodb-community-server:7.0.26-ubuntu2204")
+            .withExposedPorts(27017)
 
         fun setup() {
-            // see https://github.com/flapdoodle-oss/de.flapdoodle.embed.mongo/issues/515
-            // libssl1 is not supported on Ubuntu 22+, and GitHub Actions uses Ubuntu 24+
-            transitions = Mongod.instance().start(Version.Main.V7_0)
-            val serverAddress = transitions.current().serverAddress
-            System.setProperty("mongodb.host", serverAddress.host)
-            System.setProperty("mongodb.port", serverAddress.port.toString())
+            MONGO_CONTAINER.start()
+            System.setProperty("mongodb.host", MONGO_CONTAINER.host)
+            System.setProperty("mongodb.port", MONGO_CONTAINER.getMappedPort(27017).toString())
             System.setProperty("spring.profiles.active", "mongodb")
         }
 
         fun cleanup() {
-            transitions.close()
+            MONGO_CONTAINER.stop()
             System.clearProperty("mongodb.host")
             System.clearProperty("mongodb.port")
             System.clearProperty("spring.profiles.active")

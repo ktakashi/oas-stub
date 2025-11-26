@@ -14,7 +14,6 @@ oas.stub:
 # We don't provide own MongoClient autoconfiguration, so either users need to create their own
 # or use the one provided by spring data
 spring:
-  data:
-    mongodb:
-      host: ${mongodb.host}
-      port: ${mongodb.port}
+  mongodb:
+    host: ${mongodb.host}
+    port: ${mongodb.port}
