@@ -394,7 +394,7 @@ class StepDefinitions(private val persistentStorage: PersistentStorage,
         val durationUnit = DurationUnit.valueOf(unit.uppercase())
         val response = testContext.response ?: error("No response")
         val time = response.responseTime.timestamp - response.requestTime.timestamp
-        assertTrue(time > durationUnit.toTimeUnit().toMillis(duration))
+        assertTrue(time >= durationUnit.toTimeUnit().toMillis(duration))
     }
 
     @Then("I waited at most {long} {string}")
