@@ -32,8 +32,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation(libs.spring.web)
-    testImplementation(libs.groovy.core)
-    testImplementation(libs.groovy.json)
-    testImplementation(libs.groovy.xml)
+    testImplementation(project(":test:cucumber-test")) // for TestHttpClient
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

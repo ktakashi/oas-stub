@@ -14,14 +14,15 @@ import io.github.ktakashi.oas.test.OasStubTestProperties
 import io.github.ktakashi.oas.test.OasStubTestResources
 import io.github.ktakashi.oas.test.OasStubTestService
 import io.github.ktakashi.oas.test.context
-import io.restassured.RestAssured
-import io.restassured.RestAssured.given
-import io.restassured.filter.log.RequestLoggingFilter
-import io.restassured.filter.log.ResponseLoggingFilter
-import java.net.URI
+import io.github.ktakashi.oas.test.ktor.createHttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsBytes
+import io.ktor.http.HttpStatusCode
 import java.util.UUID
 import kotlin.time.DurationUnit
-import org.hamcrest.CoreMatchers.equalTo
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertIterableEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -31,13 +32,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
-
+import tools.jackson.databind.ObjectMapper
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureOasStubServer(port = 0, stubConfigurations = ["classpath:/stub-configuration.json"])
-class ExampleApplicationTest(@param:Value($$"${$${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.port}") private val localPort: Int,
-                             @param:Autowired private val oasStubTestService: OasStubTestService) {
+class ExampleApplicationTest(
+    @param:Value($$"${$${OasStubTestProperties.OAS_STUB_SERVER_PROPERTY_PREFIX}.port}") private val localPort: Int,
+    @param:Autowired private val oasStubTestService: OasStubTestService,
+    @param:Autowired private val objectMapper: ObjectMapper
+) {
+    private val client = CIO.createHttpClient()
     @Test
     fun testPetstore() {
         val name = "petstore"
@@ -52,11 +57,13 @@ class ExampleApplicationTest(@param:Value($$"${$${OasStubTestProperties.OAS_STUB
             context.updateApi("/v1/pets/{id}", config.updateData(ApiData(map!!))).save()
         }
 
-        given().get(URI.create("http://localhost:$localPort/oas/$name/v1/pets/2"))
-            .then()
-            .statusCode(200)
-            .header("Extra-Header", equalTo("extra-value"))
-            .body("id", equalTo(2))
+        val r = runBlocking {
+            client.get("http://localhost:$localPort/oas/$name/v1/pets/2")
+        }
+        assertEquals(HttpStatusCode.OK, r.status)
+        assertEquals("extra-value", r.headers["Extra-Header"])
+        val body = runBlocking { objectMapper.readTree(r.bodyAsBytes()) }
+        assertEquals(2, body.get("id").intValue())
     }
 
     @Test
@@ -66,12 +73,14 @@ class ExampleApplicationTest(@param:Value($$"${$${OasStubTestProperties.OAS_STUB
 
     @Test
     fun testForwardingResolver() {
-        given()
-            .headers(X_OAS_STUB_APPLICATION, "petstore")
-            .get(URI.create("http://localhost:$localPort/v1/pets/1"))
-            .then()
-            .statusCode(200)
-            .body("id", equalTo(1))
+        val r = runBlocking {
+            client.get("http://localhost:$localPort/v1/pets/1") {
+                header(X_OAS_STUB_APPLICATION, "petstore")
+            }
+        }
+        assertEquals(HttpStatusCode.OK, r.status)
+        val body = runBlocking { objectMapper.readTree(r.bodyAsBytes()) }
+        assertEquals(1, body.get("id").intValue())
     }
 
     @Test
@@ -207,18 +216,20 @@ class ExampleApplicationTest(@param:Value($$"${$${OasStubTestProperties.OAS_STUB
     }
 
     fun check(name: String) {
-        RestAssured.filters(RequestLoggingFilter(), ResponseLoggingFilter())
-
-        given().get(URI.create("http://localhost:$localPort/oas/$name/v1/pets/1"))
-                .then()
-                .statusCode(200)
-                .body("id", equalTo(1))
+        val r = runBlocking {
+            client.get("http://localhost:$localPort/oas/$name/v1/pets/1")
+        }
+        assertEquals(HttpStatusCode.OK, r.status)
+        val body = runBlocking { objectMapper.readTree(r.bodyAsBytes()) }
+        assertEquals(1, body.get("id").intValue())
         assertEquals(1, oasStubTestService.getTestApiMetrics(name).byPath("/v1/pets/1").count())
 
-        given().get(URI.create("http://localhost:$localPort/oas/$name/v1/pets/2"))
-                .then()
-                .statusCode(404)
-                .body("message", equalTo("No pet found"))
+        val r2 = runBlocking {
+            client.get("http://localhost:$localPort/oas/$name/v1/pets/2")
+        }
+        assertEquals(HttpStatusCode.NotFound, r2.status)
+        val body2 = runBlocking { objectMapper.readTree(r2.bodyAsBytes()) }
+        assertEquals("No pet found", body2.get("message").stringValue())
         assertEquals(1, oasStubTestService.getTestApiMetrics(name).byStatus(200).count())
         assertEquals(1, oasStubTestService.getTestApiMetrics(name).byStatus(404).count())
         assertEquals(2, oasStubTestService.getTestApiMetrics(name).filter { m -> m.httpMethod == "GET"}.count())

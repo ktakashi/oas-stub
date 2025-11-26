@@ -14,20 +14,23 @@ oas.stub.test:
         # Trusted certificate is extracted from the 'keystore.p12'
         # We use the same keystore on both server and client, due to my laziness
         base64: |
-          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
+          MIIDogIBAzCCA0wGCSqGSIb3DQEHAaCCAz0EggM5MIIDNTCCAzEGCSqGSIb3DQEHBqCCAyIwgg
+          MeAgEAMIIDFwYJKoZIhvcNAQcBMGYGCSqGSIb3DQEFDTBZMDgGCSqGSIb3DQEFDDArBBSXWL7P
+          zxx9xMmwSfYj3kZbOnRV7gICJxACASAwDAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEEPGWHk
+          PbdwQBmzOyqz86TPuAggKgUPdH/pRiiubQ5gwa6taBDb9mtKM5HOp7oMoiFhfXuptmgESBH9kd
+          Q1pxK3dzJVRVSmf/4qk/u6/otNNkQ6BR4sr6tDnkMi7v6sSPWAbIMnEsFaG+2uSeCrU0H5FnXn
+          52BDbfLcaShA7J8RcyVO3cag7Fyv6ERVcb/LV+K8V5jlO1zZmbwVuT5kSSx7wws5aKSoa8c9Oz
+          bDGjwHDAmDA6sOoQBWuIUDOrOKOLnIuh4VLJohUpFOFH9XtoZ7MFlLt8bxwmDwVfHflRfrvTUb
+          HyHH7G9Dprx/g4XIKWaGUvoDZiOEXzeVYFpATM9wokBsF25COvq5REtgRQaBlUW3bZceciH/Lj
+          6ObX9zApzuOl1uQC6aia5GdZGNL7IKZVzOmLzaWqrcPk31SWx7SytAVfYq1HZN/V15L3lC2kx3
+          Kbg0Xrh0sQnlNo232eHHQO6vibUltBDeU0bt2WOo4CssnJcyJjtcLk9E5kaE770sqwAC5uoUWw
+          +0WwAGz+NGowDv9KVEX8EQ8XPv2gd8AtR2d9BI9VMTfvNXMzLNuNYLmOGNQFGnatTWeOOl6e/m
+          C+A+iGDkEpGxXm+xTdjTn7F2vwp21MQMb3dCgBkhCsNxUtdDtl4fBNPl0EdVeJ4DhtpNcUva/u
+          NqD9rqcVyvrNi+hXhruw8rGC4kZm5ztXRcRQk44xTQLWMJn2iq6YJcPhpEqaMpaCeb80EvHigR
+          RWUjbDf0qh07y9bQ5eLf4WY5NKOWFLvOojG0MabJm84S8ZvCsh2W6QaYjrzHsfgamJLqi/HJkC
+          Lx79RdOYK5WIqL/dxDQA+cyOm8PB8sATFh6k9KFfib7Og98Cwb3icOjEVPDMM2+mpp5kwQVW0z
+          1FX2OdNxcWRn+M0RsKciyRbTFxurhIME0wMTANBglghkgBZQMEAgEFAAQgnAbcUG1t2unguMmI
+          CxLfIMNLyZYdwYar0Zzx5KzAMoQEFEGeSthhz87AN3sW4c7oE7vlBHS8AgInEA==
         password: password
         type: PKCS12
 

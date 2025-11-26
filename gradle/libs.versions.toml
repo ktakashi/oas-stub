@@ -32,6 +32,8 @@ kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", versio
 
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+ktor-client-java = { group = "io.ktor", name = "ktor-client-java", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
 
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin"}
@@ -93,4 +95,4 @@ gatling-charts-highcharts = { group = "io.gatling.highcharts", name = "gatling-c
 
 [bundles]
 # ktor is only for test, so we can bundle it
-ktor-client-ecosystem = ["ktor-client-core", "ktor-client-cio", "ktor-client-logging"]
+ktor-client-ecosystem = ["ktor-client-core", "ktor-client-cio", "ktor-client-logging", "ktor-client-java", "ktor-client-okhttp"]

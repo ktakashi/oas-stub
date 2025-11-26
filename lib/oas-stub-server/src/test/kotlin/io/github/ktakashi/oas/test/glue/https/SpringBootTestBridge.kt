@@ -8,11 +8,9 @@ import io.github.ktakashi.oas.test.cucumber.TestContext
 import io.github.ktakashi.oas.test.cucumber.TestContextSupplier
 import io.github.ktakashi.oas.test.cucumber.plugin.OasStubServerPlugin
 import io.github.ktakashi.oas.test.ktor.createHttpClient
-import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.java.Java
 import java.security.KeyStore
-import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.springframework.context.annotation.Bean
