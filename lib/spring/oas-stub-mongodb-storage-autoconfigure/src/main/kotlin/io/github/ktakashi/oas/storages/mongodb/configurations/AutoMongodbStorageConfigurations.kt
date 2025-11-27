@@ -29,7 +29,7 @@ private const val OAS_STUB_STORAGE_MONGODB = "${OAS_STUB_STORAGE}.mongodb"
         after = [MongoAutoConfiguration::class]
 )
 @Configuration
-@ConditionalOnClass(MongoClient::class)
+@ConditionalOnClass(value =[MongoAutoConfiguration::class, MongoClient::class])
 @ConditionalOnBean(value = [MongoClient::class])
 @ConditionalOnProperty(name = [ OAS_STUB_STORAGE_TYPE_SESSION ], havingValue = "mongodb")
 @EnableConfigurationProperties(MongodbStorageProperties::class)

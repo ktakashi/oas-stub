@@ -23,8 +23,6 @@ dependencies {
     implementation(libs.netty.pkitesting)
 
     testImplementation(project(":test:cucumber-test"))
-    testImplementation(libs.hazelcast)
-    testImplementation(libs.mongodb.driver.sync)
     testImplementation(enforcedPlatform(libs.cucumber.bom))
     testImplementation(platform(libs.junit.bom))
     testImplementation("org.junit.jupiter:junit-jupiter")
