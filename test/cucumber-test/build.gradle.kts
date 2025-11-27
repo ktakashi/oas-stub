@@ -24,7 +24,6 @@ dependencies {
 
     implementation(libs.hazelcast)
     implementation(libs.mongodb.driver.sync)
-    implementation(libs.flapdoodle.embed.mongo)
 
     runtimeOnly("org.junit.platform:junit-platform-launcher")
 }
