@@ -8,7 +8,7 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 
 class HazelcastContainer(dockerImageName: DockerImageName): GenericContainer<HazelcastContainer>(dockerImageName) {
-    constructor(): this("hazelcast/hazelcast:5.6.0-jdk21")
+    constructor(): this("hazelcast/hazelcast:5.6.0-slim-jdk21")
     constructor(imageName: String): this(DockerImageName.parse(imageName))
 }
 

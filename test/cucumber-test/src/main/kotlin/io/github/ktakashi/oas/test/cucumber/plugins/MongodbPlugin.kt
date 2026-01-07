@@ -8,7 +8,7 @@ import org.testcontainers.mongodb.MongoDBContainer
 
 class MongodbPlugin: EventListener {
     companion object {
-        val MONGO_CONTAINER: MongoDBContainer = MongoDBContainer("mongodb/mongodb-community-server:7.0.26-ubuntu2204")
+        val MONGO_CONTAINER: MongoDBContainer = MongoDBContainer("mongodb/mongodb-community-server:7.0-ubi8")
             .withExposedPorts(27017)
 
         fun setup() {
