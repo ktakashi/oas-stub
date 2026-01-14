@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+Version 3.0.0
+---
+
+This release is dependency update. Major dependencies are updated as below;
+- Spring Boot 3.5.x -> 4.0.x
+- Spring Framework 6.2.x -> 7.0.x
+- Jackson 2.x -> 3.x
+
 Version 2.1.0
 ---
 
