@@ -9,6 +9,8 @@ This release is dependency update. Major dependencies are updated as below;
 - Spring Framework 6.2.x -> 7.0.x
 - Jackson 2.x -> 3.x
 
+From this version, Java 21 is required.
+
 Version 2.1.0
 ---
 
