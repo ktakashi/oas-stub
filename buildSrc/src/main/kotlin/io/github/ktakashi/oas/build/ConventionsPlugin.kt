@@ -19,8 +19,8 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.dokka.gradle.DokkaExtension
 import org.jetbrains.dokka.gradle.DokkaPlugin
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
+import org.jetbrains.dokka.gradle.tasks.DokkaGenerateTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -78,7 +78,7 @@ internal fun configureKotlinConventions(project: Project) {
             }
             project.plugins.withId("org.jetbrains.kotlin.kapt") {
                 project.tasks.withType(KaptWithoutKotlincTask::class.java) { kaptKotlin ->
-                    project.tasks.withType(DokkaTask::class.java) { dokkaTask ->
+                    project.tasks.withType(DokkaGenerateTask::class.java) { dokkaTask ->
                         dokkaTask.dependsOn(kaptKotlin)
                     }
                 }
@@ -87,7 +87,7 @@ internal fun configureKotlinConventions(project: Project) {
 
         project.tasks.withType(KotlinCompilationTask::class.java) { task ->
             (task.compilerOptions as KotlinJvmCompilerOptions).apply {
-                freeCompilerArgs.addAll(listOf("-Xjvm-default=all", "-Xjsr305=strict"))
+                freeCompilerArgs.addAll(listOf("-jvm-default=all", "-Xjsr305=strict"))
                 apiVersion.set(KotlinVersion.KOTLIN_2_2)
                 languageVersion.set(KotlinVersion.KOTLIN_2_2)
                 jvmTarget.set(JvmTarget.JVM_21)

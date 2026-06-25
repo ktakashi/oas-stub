@@ -1,4 +1,4 @@
-import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.tasks.DokkaGenerateTask
 
 plugins {
     `java-library`
@@ -12,7 +12,7 @@ plugins {
 group = "$group.spring"
 description = "OAS stub mongodb storage starter"
 
-tasks.withType<DokkaTask>().configureEach {
+tasks.withType<DokkaGenerateTask>().configureEach {
     tasks.findByName("kaptKotlin")?.let { task -> dependsOn(task)}
 }
 

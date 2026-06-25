@@ -1,26 +1,30 @@
 [versions]
-kotlin = "2.2.21"
-ktor = "3.3.2"
-dokka = "2.0.0"
-koin = "4.1.1"
-jackson = "3.0.3"
-junit = "6.0.1"
-hazelcast = "5.6.0"
-mongodb = "5.6.1"
+kotlin = "2.4.0"
+ktor = "3.5.0"
+dokka = "2.2.0"
+koin = "4.2.2"
+jackson = "3.2.0"
+jackson-annotations="2.22"
+junit = "6.1.0"
+hazelcast = "5.7.0"
+mongodb = "5.8.0"
 groovy = "4.0.29"
-spring = "7.0.2"
-spring-boot="4.0.1"
-projectreactor = "3.8.0"
+spring = "7.0.8"
+spring-boot="4.1.0"
+projectreactor = "3.8.6"
 reactor-addon = "3.6.0"
-guava = "33.5.0-jre"
-netty = "4.2.9.Final"
-reactor-netty = "1.3.0"
-bouncy-castle = "1.82"
-commons-codec = "1.20.0"
-snakeyaml = "2.5"
-jersey = "4.0.0"
-gatling = "3.13.3"
-testcontainers = "2.0.2"
+guava = "33.6.0-jre"
+netty = "4.2.15.Final"
+reactor-netty = "1.3.6"
+bouncy-castle = "1.84"
+swagger="2.1.42"
+commons-codec = "1.22.0"
+snakeyaml = "2.6"
+jersey = "4.0.2"
+gatling = "3.15.1"
+testcontainers = "2.0.5"
+cucumber="7.32.0"
+slf4j = "2.0.18"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -39,7 +43,7 @@ ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin"}
 koin-jvm = { group = "io.insert-koin", name = "koin-core-jvm", version.ref = "koin"}
 
-jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version = "2.20" }
+jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson-annotations" }
 jackson-databind-core = { group = "tools.jackson.core", name = "jackson-databind", version.ref = "jackson" }
 jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 
@@ -51,11 +55,11 @@ reactor-netty = { group = "io.projectreactor.netty", name = "reactor-netty", ver
 netty-pkitesting = { group = "io.netty", name = "netty-pkitesting", version.ref = "netty" }
 
 ws-rs-api = { group = "jakarta.ws.rs", name = "jakarta.ws.rs-api", version = "4.0.0" }
-mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.1.3" }
+mail-api = { group = "jakarta.mail", name = "jakarta.mail-api", version = "2.1.5" }
 validation-api = { group = "jakarta.validation", name = "jakarta.validation-api", version = "3.1.1" }
 annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version = "3.0.0" }
 
-swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version = "2.1.36" }
+swagger-perser = { group = "io.swagger.parser.v3", name = "swagger-parser", version.ref = "swagger" }
 commons-codec = { group = "commons-codec", name = "commons-codec", version.ref = "commons-codec"}
 
 snakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" }
@@ -63,7 +67,7 @@ snakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" 
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version = "3.2.0" }
 groovy-core = { group = "org.apache.groovy", name = "groovy", version.ref = "groovy" }
 
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.17" }
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 
 hazelcast = { group = "com.hazelcast", name = "hazelcast", version.ref = "hazelcast" }
 mongodb-driver-sync = { group = "org.mongodb", name = "mongodb-driver-sync", version.ref = "mongodb" }
@@ -87,7 +91,7 @@ bcpkix-jdk18on = { group = "org.bouncycastle", name = "bcpkix-jdk18on", version.
 # test libraries
 # We use BOM only for test libraries if possible
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
-cucumber-bom = { group = "io.cucumber", name = "cucumber-bom", version = "7.32.0" }
+cucumber-bom = { group = "io.cucumber", name = "cucumber-bom", version.ref = "cucumber" }
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
 
 gatling-charts-highcharts = { group = "io.gatling.highcharts", name = "gatling-charts-highcharts", version.ref = "gatling" }
