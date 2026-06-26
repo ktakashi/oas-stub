@@ -33,15 +33,11 @@ interface PluginContext {
 
     /**
      * Default [ObjectReader]
-     *
-     * This is derived the stub application [JsonMapper]
      */
     val objectReader: ObjectReader
 
     /**
      * Default [ObjectWriter]
-     *
-     * This is derived the stub application [JsonMapper]
      */
     val objectWriter: ObjectWriter
 }
