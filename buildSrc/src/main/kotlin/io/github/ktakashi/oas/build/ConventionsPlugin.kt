@@ -21,6 +21,7 @@ import org.jetbrains.dokka.gradle.DokkaExtension
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
 import org.jetbrains.dokka.gradle.tasks.DokkaGenerateTask
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -87,9 +88,10 @@ internal fun configureKotlinConventions(project: Project) {
 
         project.tasks.withType(KotlinCompilationTask::class.java) { task ->
             (task.compilerOptions as KotlinJvmCompilerOptions).apply {
-                freeCompilerArgs.addAll(listOf("-jvm-default=all", "-Xjsr305=strict"))
-                apiVersion.set(KotlinVersion.KOTLIN_2_2)
-                languageVersion.set(KotlinVersion.KOTLIN_2_2)
+                freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
+                jvmDefault.set(JvmDefaultMode.NO_COMPATIBILITY)
+                apiVersion.set(KotlinVersion.KOTLIN_2_4)
+                languageVersion.set(KotlinVersion.KOTLIN_2_4)
                 jvmTarget.set(JvmTarget.JVM_21)
             }
         }

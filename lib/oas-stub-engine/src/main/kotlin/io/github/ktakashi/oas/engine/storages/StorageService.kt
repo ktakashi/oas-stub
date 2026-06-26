@@ -42,7 +42,7 @@ class StorageService(private val parsingService: ParsingService,
 
     fun getPluginDefinition(name: String, method: String, path: String): Mono<PluginDefinition> = apiDefinitions[name]
             .mapNotNull { v -> v.configurations }
-            .flatMap { v -> Mono.justOrEmpty(findMatchingPathValue(path, v as Map<String, ApiConfiguration>)) }
+            .flatMap { v -> Mono.justOrEmpty(findMatchingPathValue(path, v)) }
             .mapNotNull { v -> v.methods?.get(method)?.plugin ?: v.plugin }
 
     fun getApiNames(): Flux<String> = Flux.defer { Flux.fromIterable(persistentStorage.getNames()) }

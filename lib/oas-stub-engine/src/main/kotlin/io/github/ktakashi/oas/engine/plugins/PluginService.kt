@@ -42,7 +42,7 @@ class PluginService(private val pluginCompilers: Set<PluginCompiler>,
                     .mapNotNull { apiData ->
                         pluginCache[plugin]?.let { compiled ->
                             val code = compiled.getConstructor().newInstance()
-                            val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData!!, jsonMapper)
+                            val context = PluginContextData(requestContext, responseContext, storageService.sessionStorage, apiData, jsonMapper)
                             code.customize(context)
                         }
                     }.onErrorResume { e ->
